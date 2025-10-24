@@ -1,5 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import "../theme/theme.dart";
+import 'screens/settings.dart'; // Add this import
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive/hive.dart';
 
@@ -10,11 +12,15 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'YACK',
-      home: Scaffold(body: Center(child: Text('YACK Home'))),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      home: const SettingsScreen(), // Just to see the Settings Screen
     );
   }
 }
