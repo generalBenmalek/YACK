@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import "../theme/theme.dart";
 import 'screens/settings.dart'; 
+import 'screens/sign_contract.dart';
 import 'screens/create_contract.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive/hive.dart';
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const CreateContractScreen(), // Just to see the Settings Screen
+      home: const SignContractScreen(), // Just to see the Settings Screen
     );
   }
 }
