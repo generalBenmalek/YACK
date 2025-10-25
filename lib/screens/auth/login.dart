@@ -46,7 +46,7 @@ class LoginScreenState extends State<LoginScreen> {
                   TitleWidget(text: 'Welcome Back'),
                   SizedBox(height: 30),
                   CustomTextField(hintText: 'Email'),
-                  CustomTextField(hintText: 'Password'),
+                  CustomTextField(hintText: 'Password',isPassword: true,),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [HrefWidget(text: 'Forget Password')],
