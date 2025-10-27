@@ -28,7 +28,7 @@ class LoginScreenState extends State<LoginScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: Padding(
+      body: SafeArea(child:  Padding(
         padding: EdgeInsetsGeometry.all(10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -81,7 +81,7 @@ class LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

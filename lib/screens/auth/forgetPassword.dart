@@ -28,7 +28,7 @@ class ForgetPasswordState extends State<ForgetPassword> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: Padding(
+      body: SafeArea(child: Padding(
         padding: EdgeInsetsGeometry.all(10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -78,7 +78,7 @@ class ForgetPasswordState extends State<ForgetPassword> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }
