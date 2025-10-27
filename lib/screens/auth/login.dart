@@ -49,7 +49,10 @@ class LoginScreenState extends State<LoginScreen> {
                   CustomTextField(hintText: 'Password',isPassword: true,),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
-                    children: [HrefWidget(text: 'Forget Password')],
+                    children: [HrefWidget(text: 'Forget Password',
+                      onClick: (){
+                          Navigator.pushNamed(context, '/signup');
+                      },),],
                   ),
                   MaterialButton(
                     onPressed: () {},
@@ -76,7 +79,10 @@ class LoginScreenState extends State<LoginScreen> {
               spacing: 5,
               children: [
                 Text("Don't have an account?"),
-                HrefWidget(text: 'Sign Up'),
+                HrefWidget(text: 'Sign Up',
+                  onClick: (){
+                    Navigator.pushNamed(context, '/signup');
+                  },),
               ],
             ),
           ],

@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 
 class HrefWidget extends StatelessWidget {
   final String text;
-
+  final VoidCallback onClick;
 
   const HrefWidget({
     super.key,
     required this.text,
+    required this.onClick,
   });
 
   @override

@@ -84,7 +84,9 @@ class SignUpScreenState extends State<SignUpScreen> {
               spacing: 5,
               children: [
                 Text("Already have an account?"),
-                HrefWidget(text: 'Login'),
+                HrefWidget(text: 'Login',onClick: (){
+                  Navigator.pushNamed(context, '/login');
+                },),
               ],
             ),
           ],
