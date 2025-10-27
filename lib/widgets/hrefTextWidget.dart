@@ -17,7 +17,7 @@ class HrefWidget extends StatelessWidget {
 
     return MouseRegion(
       child: GestureDetector(
-          onTap: (){} ,
+          onTap: onClick,
           child: Text(text,style: TextStyle(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.bold
