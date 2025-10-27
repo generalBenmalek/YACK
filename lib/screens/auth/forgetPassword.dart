@@ -6,14 +6,14 @@ import 'package:yack/widgets/inputWidget.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgetPassword extends StatefulWidget {
+  const ForgetPassword({super.key});
 
   @override
-  State<StatefulWidget> createState() => LoginScreenState();
+  State<StatefulWidget> createState() => ForgetPasswordState();
 }
 
-class LoginScreenState extends State<LoginScreen> {
+class ForgetPasswordState extends State<ForgetPassword> {
   late final int buttonWidth;
 
   @override
@@ -43,14 +43,11 @@ class LoginScreenState extends State<LoginScreen> {
                 spacing: 10,
 
                 children: [
-                  TitleWidget(text: 'Welcome Back'),
+                  TitleWidget(text: 'Forget Password'),
+                  Text("Send a request to reset your account password"),
+
                   SizedBox(height: 30),
                   CustomTextField(hintText: 'Email'),
-                  CustomTextField(hintText: 'Password',isPassword: true,),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [HrefWidget(text: 'Forget Password')],
-                  ),
                   MaterialButton(
                     onPressed: () {},
                     shape: RoundedRectangleBorder(
@@ -61,7 +58,7 @@ class LoginScreenState extends State<LoginScreen> {
                     height: min(screenHeight * 0.08, 60),
                     color: theme.colorScheme.primary,
                     child: Text(
-                      'Login',
+                      'Reset',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
