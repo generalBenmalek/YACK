@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:yack/screens/auth/confirm.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
 import 'package:yack/screens/auth/login.dart';
 import 'package:yack/screens/auth/signup.dart';
+import 'package:yack/screens/welcome.dart';
 import '../theme/theme.dart';
 import 'screens/settings.dart';
 import 'screens/create_contract.dart';
@@ -50,13 +52,16 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routes: {
+        '/': (context) => const OnboardingScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
+        '/confirm': (context) => const ConfirmAccount(),
         '/settings': (context) => const SettingsScreen(),
         '/reset_password': (context) => const ForgetPassword(),
         '/contract/create': (context) => const CreateContractScreen(),
+
       },
-      initialRoute: initialRoute, // dynamic\
+      initialRoute: '/', // dynamic\
     );
   }
 }
