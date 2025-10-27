@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:yack/widgets/primaryActionButton.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import '../models/OnboardingData.dart';
@@ -60,7 +61,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  void _getStarted() {
+  Future<void> _getStarted() async{
+    final userBox = await Hive.openBox('user');
+    await userBox.put('didFirstTime', true);
+
     Navigator.pushReplacementNamed(context, '/signup');
   }
 
