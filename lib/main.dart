@@ -23,13 +23,13 @@ void main() async {
   late final String initialRoute;
 
   // Determine first-time or returning user
-  if (userBox.get('firstTime') == null || userBox.get('firstTime') == false) {
-    initialRoute = '/signup'; // later replaced with welcome screen
-    await userBox.put('firstTime', true);
+  if (userBox.get('didFirstTime') == null || userBox.get('didFirstTime') == false) {
+    initialRoute = '/'; // later replaced with welcome screen
+    await userBox.put('didFirstTime', true);
   } else if (userBox.get('didFirstLogin') == true) {
     initialRoute = '/login';
   } else {
-    initialRoute = '/signup';
+    initialRoute = '/';
   }
 
   // Initialize Firebase
@@ -57,11 +57,11 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/confirm': (context) => const ConfirmAccount(),
         '/settings': (context) => const SettingsScreen(),
-        '/reset_password': (context) => const ForgetPassword(),
+        '/forgot-password': (context) => const ForgetPassword(),
         '/contract/create': (context) => const CreateContractScreen(),
 
       },
-      initialRoute: '/', // dynamic\
+      initialRoute: initialRoute, // dynamic\
     );
   }
 }
