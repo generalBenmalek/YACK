@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
@@ -14,6 +15,16 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final brightness = WidgetsBinding.instance.window.platformBrightness;
+  final isDarkMode = brightness == Brightness.dark;
+
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness:
+    isDarkMode ? Brightness.light : Brightness.dark,
+  ));
+
+
   // Initialize Hive first
   await Hive.initFlutter();
 
@@ -24,12 +35,12 @@ void main() async {
 
   // Determine first-time or returning user
   if (userBox.get('didFirstTime') == null || userBox.get('didFirstTime') == false) {
-    initialRoute = '/'; // later replaced with welcome screen
+    initialRoute = '/welcome'; // later replaced with welcome screen
     await userBox.put('didFirstTime', true);
   } else if (userBox.get('didFirstLogin') == true) {
     initialRoute = '/login';
   } else {
-    initialRoute = '/';
+    initialRoute = '/signup';
   }
 
   // Initialize Firebase
@@ -46,13 +57,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routes: {
-        '/': (context) => const OnboardingScreen(),
+        '/welcome': (context) => const OnboardingScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
         '/confirm': (context) => const ConfirmAccount(),

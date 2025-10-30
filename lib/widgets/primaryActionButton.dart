@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 
 class PrimaryActionButton extends StatelessWidget {
-  const PrimaryActionButton({super.key, required this.action, required this.onClick});
+  const PrimaryActionButton({super.key, required this.action, required this.onClick,  this.isLoading = false});
 
   final String action;
-  final VoidCallback onClick;
+  final bool isLoading;
+  final FutureOr<void> Function() onClick;
 
 
 
@@ -16,7 +18,7 @@ class PrimaryActionButton extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return  MaterialButton(
-      onPressed: onClick,
+      onPressed: isLoading ? (){}:onClick,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(5),
       ),
@@ -24,7 +26,13 @@ class PrimaryActionButton extends StatelessWidget {
       minWidth: double.infinity,
       height: min(screenHeight * 0.08, 60),
       color: theme.colorScheme.primary,
-      child: Text(
+      child: isLoading ? SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          color: theme.colorScheme.onSurface,
+        ),
+      ): Text(
         action,
         style: TextStyle(
           fontSize: 15,

@@ -20,6 +20,8 @@ class CustomTextFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return TextFormField( // use TextFormField instead of TextField
         controller: controller ?? TextEditingController(),
         obscureText: isPassword,
@@ -29,7 +31,6 @@ class CustomTextFormField extends StatelessWidget {
           fontWeight: FontWeight.w400,
           fontStyle: FontStyle.normal,
           fontSize: 14,
-          color: Colors.black,
         ),
         decoration: InputDecoration(
           hintText: hintText,

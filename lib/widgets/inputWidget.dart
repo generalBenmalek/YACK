@@ -28,21 +28,8 @@ class CustomTextField extends StatelessWidget {
           fontWeight: FontWeight.w400,
           fontStyle: FontStyle.normal,
           fontSize: 14,
-          color: Colors.black,
         ),
         decoration: InputDecoration(
-          // disabledBorder: OutlineInputBorder(
-          //   borderRadius: BorderRadius.circular(20.0),
-          //
-          // ),
-          // focusedBorder: OutlineInputBorder(
-          //   borderRadius: BorderRadius.circular(20.0),
-          //
-          // ),
-          // enabledBorder: OutlineInputBorder(
-          //   borderRadius: BorderRadius.circular(20.0),
-          //
-          // ),
           hintText: hintText,
           hintStyle: const TextStyle(
             fontWeight: FontWeight.w400,

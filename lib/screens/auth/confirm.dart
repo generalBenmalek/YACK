@@ -1,9 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive/hive.dart';
 import 'package:yack/utils/platform.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
+import '../../utils/snackBarHandler.dart';
 import '../../widgets/primaryActionButton.dart';
 
 class ConfirmAccount extends StatefulWidget {
@@ -25,9 +27,8 @@ class ConfirmAccountState extends State<ConfirmAccount> {
 
       if (refreshedUser != null && refreshedUser.emailVerified) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Email verified!")),
-          );
+          SnackBarHandler.showSuccess(context, "Account Confirmed!");
+
 
           // // Step 2: Save additional info in Firestore
           // await _firestore.collection('users').doc(userCred.user!.uid).set({
@@ -36,13 +37,12 @@ class ConfirmAccountState extends State<ConfirmAccount> {
           //   'email': emailController.text.trim(),
           //   'createdAt': FieldValue.serverTimestamp(),
           // });
-
+          final userBox = await Hive.openBox('user');
+          userBox.put('didFirstLogin', true);
           Navigator.pushReplacementNamed(context, '/home');
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Email not verified yet.")),
-        );
+        SnackBarHandler.showWarning(context, "Email not verified yet.");
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -56,13 +56,9 @@ class ConfirmAccountState extends State<ConfirmAccount> {
   Future<void> resend() async {
     try {
       await user?.sendEmailVerification();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Verification email sent again.")),
-      );
+      SnackBarHandler.showMessage(context, "Verification email sent again.");
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to resend email: $e")),
-      );
+      SnackBarHandler.showError(context, "Failed to resend email: $e");
     }
   }
 

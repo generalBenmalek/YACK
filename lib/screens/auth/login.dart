@@ -1,11 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive/hive.dart';
 import 'package:yack/utils/platform.dart';
-import 'package:yack/widgets/primaryActionButton.dart';
+import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
+import 'package:yack/utils/validator.dart';
 import '../../widgets/inputFormWidget.dart';
+import '../../widgets/primaryActionButtonAutoLoading.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,8 +36,6 @@ class LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => isLoading = true);
-
     try {
       await _auth.signInWithEmailAndPassword(
         email: emailController.text.trim(),
@@ -42,17 +43,13 @@ class LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
+        final userBox = await Hive.openBox('user');
+        userBox.put('didFirstLogin', true);
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Login failed')),
-      );
-    } finally {
-      if (mounted) setState(() => isLoading = false);
+      SnackBarHandler.showError(context, 'Login Failed');
+
     }
   }
 
@@ -83,29 +80,13 @@ class LoginScreenState extends State<LoginScreen> {
                       CustomTextFormField(
                         hintText: 'Email',
                         controller: emailController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Email is required';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Enter a valid email';
-                          }
-                          return null;
-                        },
+                        validator: Validator.email,
                       ),
                       CustomTextFormField(
                         hintText: 'Password',
                         isPassword: true,
                         controller: passwordController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Password is required';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
+                        validator: (v) => Validator.length(v,min: 8),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -118,9 +99,9 @@ class LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      PrimaryActionButton(
-                        onClick: isLoading ? (){} : login,
-                        action: isLoading ? 'Logging in...' : 'Login',
+                      PrimaryActionButtonAutoReload(
+                        onClick: login,
+                        action: 'Login',
                       ),
                     ],
                   ),

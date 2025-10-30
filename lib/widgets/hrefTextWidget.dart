@@ -16,6 +16,7 @@ class HrefWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       child: GestureDetector(
           onTap: onClick ,
           child: Text(text,style: TextStyle(

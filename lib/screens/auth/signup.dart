@@ -1,11 +1,12 @@
 import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:yack/utils/platform.dart';
+import 'package:yack/utils/snackBarHandler.dart';
+import 'package:yack/utils/validator.dart';
 import 'package:yack/widgets/inputFormWidget.dart';
-import 'package:yack/widgets/primaryActionButton.dart';
+import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 
@@ -26,12 +27,8 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   final _auth = FirebaseAuth.instance;
 
-  bool isLoading = false;
-
   Future<void> signUp() async {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() => isLoading = true);
 
     try {
       // Step 1: Create user in Firebase Auth
@@ -40,31 +37,31 @@ class SignUpScreenState extends State<SignUpScreen> {
         password: passwordController.text.trim(),
       );
 
+      // Step 2: Save minimal info locally with Hive
       final userBox = await Hive.openBox('user');
-      userBox.put('firstName', firstNameController.text.trim());
-      userBox.put('lastName', lastNameController.text.trim());
-      userBox.close();
+      await userBox.putAll({
+        'firstName': firstNameController.text.trim(),
+        'lastName': lastNameController.text.trim(),
+      });
+      await userBox.close();
 
+      // Step 3: Send verification email
       await userCred.user?.sendEmailVerification();
 
-      Navigator.pushNamed(context, '/confirm');
-
+      // Step 4: Go to confirmation screen
+      if (mounted) Navigator.pushNamed(context, '/confirm');
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Error creating account")),
-      );
-    } finally {
-      if (mounted) setState(() => isLoading = false);
+      SnackBarHandler.showError(context, "Error creating account");
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
     emailController.dispose();
     passwordController.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -76,110 +73,92 @@ class SignUpScreenState extends State<SignUpScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Yack', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: PlatformInfo.isDesktop
-                        ? min(400, screenWidth * 0.9)
-                        : screenWidth,
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                      children: [
-                        TitleWidget(text: 'Welcome'),
-                        const SizedBox(height: 30),
-
-                        // Email
-                        CustomTextFormField(
-                          hintText: 'Email',
-                          controller: emailController,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                            if (!emailRegex.hasMatch(value.trim())) {
-                              return 'Enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        // First & Last Name
-                        Row(
-                          children: [
-                            Expanded(
-                              child: CustomTextFormField(
-                                hintText: 'First Name',
-                                controller: firstNameController,
-                                validator: (v) => v == null || v.trim().isEmpty
-                                    ? 'First name required'
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: CustomTextFormField(
-                                hintText: 'Last Name',
-                                controller: lastNameController,
-                                validator: (v) => v == null || v.trim().isEmpty
-                                    ? 'Last name required'
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        // Password
-                        CustomTextFormField(
-                          hintText: 'Password',
-                          isPassword: true,
-                          controller: passwordController,
-                          validator: (v) {
-                            if (v == null || v.isEmpty) {
-                              return 'Please enter a password';
-                            }
-                            if (v.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 30),
-
-                        PrimaryActionButton(
-                          action: isLoading ? 'Creating...' : 'Sign up',
-                          onClick: isLoading ? (){} : signUp,
-                        ),
-                      ],
-                    ),
-                  ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Yack', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 30),
+              SizedBox(
+                width: PlatformInfo.isDesktop
+                    ? min(400, screenWidth * 0.9)
+                    : screenWidth,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    spacing: 10,
                     children: [
-                      const Text("Already have an account?"),
-                      const SizedBox(width: 5),
-                      HrefWidget(
-                        text: 'Login',
-                        onClick: () =>
-                            Navigator.pushNamed(context, '/login'),
+                      const TitleWidget(text: 'Welcome'),
+                      const SizedBox(height: 30),
+
+                      // Email
+                      CustomTextFormField(
+                        hintText: 'Email',
+                        controller: emailController,
+                        validator: Validator.email,
+                      ),
+
+                      // First & Last Name
+                      Row(
+                        spacing: 10,
+                        children: [
+                          Expanded(
+                            child: CustomTextFormField(
+                              hintText: 'First Name',
+                              controller: firstNameController,
+                              validator: (v) => Validator.name(v, fieldName: 'First name'),
+                            ),
+                          ),
+                          Expanded(
+                            child: CustomTextFormField(
+                              hintText: 'Last Name',
+                              controller: lastNameController,
+                              validator: (v) => Validator.name(v, fieldName: 'Last name'),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Password
+                      CustomTextFormField(
+                        hintText: 'Password',
+                        isPassword: true,
+                        controller: passwordController,
+                        validator: (v) => Validator.password(v, minLength: 8),
+                      ),
+
+                      // Password Confirm
+                      CustomTextFormField(
+                        hintText: 'Confirm password',
+                        isPassword: true,
+                        validator: (v) => Validator.confirmPassword(v, passwordController.value.text),
+                      ),
+
+
+                      // Signup button with auto-loading
+                      PrimaryActionButtonAutoReload(
+                        action: 'Sign Up',
+                        onClick: signUp,
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Already have an account?"),
+                  const SizedBox(width: 5),
+                  HrefWidget(
+                    text: 'Login',
+                    onClick: () => Navigator.pushNamed(context, '/login'),
+                  ),
                 ],
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 }
