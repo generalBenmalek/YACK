@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
 import 'package:yack/screens/auth/login.dart';
 import 'package:yack/screens/auth/signup.dart';
 import '../theme/theme.dart';
+import 'screens/home.dart';
+import 'screens/sign_contract.dart';
 import 'screens/settings.dart';
 import 'screens/create_contract.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'screens/scan_contract.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,13 +56,16 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routes: {
+        '/home': (context) => const ContractsScreen(),
+        '/contract/scan_contract': (context) => const ScanContractScreen(),
+        '/contract/sign_contract': (context) => const SignContractScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/reset_password': (context) => const ForgetPassword(),
-        '/contract/create': (context) => const CreateContractScreen(),
+        '/contract/create_contract': (context) => const CreateContractScreen(),
       },
-      initialRoute: initialRoute, // dynamic\
+      initialRoute: initialRoute,
     );
   }
 }

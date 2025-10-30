@@ -7,22 +7,16 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        title: Text(
-          'Settings',
-          style: theme.textTheme.titleLarge,
-        ),
+        title: Text('Settings', style: theme.textTheme.titleLarge),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.iconTheme.color,
-          ),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -32,17 +26,15 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SectionHeader(
-                title: 'ACCOUNT',
-                color: theme.colorScheme.primary,
-              ),
+              SectionHeader(title: 'ACCOUNT', color: theme.colorScheme.primary),
               const SizedBox(height: 8),
               SettingsCard(
                 children: [
                   SettingsItem(
                     icon: CircleAvatar(
                       radius: 30,
-                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
                       child: Icon(
                         Icons.person,
                         size: 28,
@@ -54,10 +46,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: 'Manage your profile information',
                     onTap: () {},
                   ),
-                  Divider(
-                    height: 1,
-                    color: theme.dividerTheme.color,
-                  ),
+                  Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
                     icon: Container(
                       width: 60,
@@ -104,10 +93,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: 'Customize notification settings',
                     onTap: () {},
                   ),
-                  Divider(
-                    height: 1,
-                    color: theme.dividerTheme.color,
-                  ),
+                  Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
                     icon: Container(
                       width: 60,
@@ -126,10 +112,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: 'Adjust privacy settings',
                     onTap: () {},
                   ),
-                  Divider(
-                    height: 1,
-                    color: theme.dividerTheme.color,
-                  ),
+                  Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
                     icon: Container(
                       width: 60,
@@ -151,10 +134,7 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              SectionHeader(
-                title: 'SUPPORT',
-                color: theme.colorScheme.primary,
-              ),
+              SectionHeader(title: 'SUPPORT', color: theme.colorScheme.primary),
               const SizedBox(height: 8),
               SettingsCard(
                 children: [
@@ -176,10 +156,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: 'Get help and support',
                     onTap: () {},
                   ),
-                  Divider(
-                    height: 1,
-                    color: theme.dividerTheme.color,
-                  ),
+                  Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
                     icon: Container(
                       width: 60,
@@ -213,11 +190,7 @@ class SectionHeader extends StatelessWidget {
   final String title;
   final Color color;
 
-  const SectionHeader({
-    super.key,
-    required this.title,
-    required this.color,
-  });
+  const SectionHeader({super.key, required this.title, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +242,7 @@ class SettingsItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -283,22 +256,13 @@ class SettingsItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium,
-                  ),
+                  Text(title, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                  Text(subtitle, style: theme.textTheme.bodyMedium),
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: theme.textTheme.bodyMedium?.color,
-            ),
+            Icon(Icons.chevron_right, color: theme.textTheme.bodyMedium?.color),
           ],
         ),
       ),
