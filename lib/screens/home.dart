@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/theme.dart';
 import 'create_contract.dart';
+import "settings.dart";
 
 class ContractsScreen extends StatelessWidget {
   const ContractsScreen({Key? key}) : super(key: key);
@@ -18,6 +19,13 @@ class ContractsScreen extends StatelessWidget {
             },
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(Icons.settings),
+          onPressed: () {
+            Navigator.push(context,
+            MaterialPageRoute(builder:  (context) => const SettingsScreen()));
+          }
+        )
       ),
       body: Column(
         children: [
