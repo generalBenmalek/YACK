@@ -15,27 +15,27 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final brightness = WidgetsBinding.instance.window.platformBrightness;
-  final isDarkMode = brightness == Brightness.dark;
+  // Make the UI edge-to-edge
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+  // Initial system overlay style
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness:
-    isDarkMode ? Brightness.light : Brightness.dark,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarContrastEnforced: false,
+    systemNavigationBarDividerColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarIconBrightness: Brightness.light,
   ));
 
-
-  // Initialize Hive first
+  // Initialize Hive
   await Hive.initFlutter();
-
-  // Open user box
   final userBox = await Hive.openBox('user');
 
   late final String initialRoute;
 
-  // Determine first-time or returning user
   if (userBox.get('didFirstTime') == null || userBox.get('didFirstTime') == false) {
-    initialRoute = '/welcome'; // later replaced with welcome screen
+    initialRoute = '/welcome';
     await userBox.put('didFirstTime', true);
   } else if (userBox.get('didFirstLogin') == true) {
     initialRoute = '/login';
@@ -55,25 +55,44 @@ class MyApp extends StatelessWidget {
   final String initialRoute;
   const MyApp({super.key, required this.initialRoute});
 
+  /// Wraps each screen with a theme-aware system UI style
+  Widget themedRoute(BuildContext context, Widget child) {
+    final brightness = WidgetsBinding.instance.window.platformBrightness;
+    final isDarkMode = brightness == Brightness.dark;
+
+    final overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+      statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDarkMode ? Brightness.dark : Brightness.light,
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routes: {
-        '/welcome': (context) => const OnboardingScreen(),
-        '/signup': (context) => const SignUpScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/confirm': (context) => const ConfirmAccount(),
-        '/settings': (context) => const SettingsScreen(),
-        '/forgot-password': (context) => const ForgetPassword(),
-        '/contract/create': (context) => const CreateContractScreen(),
-
+        '/welcome': (context) => themedRoute(context, const OnboardingScreen()),
+        '/signup': (context) => themedRoute(context, const SignUpScreen()),
+        '/login': (context) => themedRoute(context, const LoginScreen()),
+        '/confirm': (context) => themedRoute(context, const ConfirmAccount()),
+        '/settings': (context) => themedRoute(context, const SettingsScreen()),
+        '/forgot-password': (context) => themedRoute(context, const ForgetPassword()),
+        '/contract/create': (context) => themedRoute(context, const CreateContractScreen()),
       },
-      initialRoute: initialRoute, // dynamic\
+      initialRoute: initialRoute,
     );
   }
 }
