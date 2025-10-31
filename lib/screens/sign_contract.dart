@@ -28,7 +28,10 @@ class SignContractScreen extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+              margin: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 20.0,
+              ),
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
@@ -65,7 +68,10 @@ class SignContractScreen extends StatelessWidget {
                   const SizedBox(height: 36.0),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Contract Description', style: textTheme.titleLarge),
+                    child: Text(
+                      'Contract Description',
+                      style: textTheme.titleLarge,
+                    ),
                   ),
                   const SizedBox(height: 8.0),
                   Text(

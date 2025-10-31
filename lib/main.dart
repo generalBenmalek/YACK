@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:yack/screens/auth/confirm.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
 import 'package:yack/screens/auth/login.dart';
 import 'package:yack/screens/auth/signup.dart';
 import 'package:yack/screens/welcome.dart';
 import '../theme/theme.dart';
+import 'screens/home.dart';
+import 'screens/sign_contract.dart';
 import 'screens/settings.dart';
 import 'screens/create_contract.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'screens/scan_contract.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,7 +94,9 @@ class MyApp extends StatelessWidget {
         '/confirm': (context) => themedRoute(context, const ConfirmAccount()),
         '/settings': (context) => themedRoute(context, const SettingsScreen()),
         '/forgot-password': (context) => themedRoute(context, const ForgetPassword()),
-        '/contract/create': (context) => themedRoute(context, const CreateContractScreen()),
+        '/contract/scan_contract': (context) => themedRoute(context, const ScanContractScreen()),
+        '/contract/sign_contract': (context) => themedRoute(context, const SignContractScreen()),
+        '/contract/create_contract': (context) => themedRoute(context, const CreateContractScreen()),
       },
       initialRoute: initialRoute,
     );
