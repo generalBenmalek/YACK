@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 
 class HrefWidget extends StatelessWidget {
   final String text;
-
+  final VoidCallback onClick;
 
   const HrefWidget({
     super.key,
     required this.text,
+    required this.onClick,
   });
 
   @override
@@ -15,8 +16,9 @@ class HrefWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       child: GestureDetector(
-          onTap: (){} ,
+          onTap: onClick ,
           child: Text(text,style: TextStyle(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.bold

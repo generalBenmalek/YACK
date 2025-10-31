@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
 import 'package:yack/screens/auth/login.dart';
 import 'package:yack/screens/auth/signup.dart';
+import 'package:yack/screens/welcome.dart';
 import '../theme/theme.dart';
 import 'screens/home.dart';
 import 'screens/sign_contract.dart';
@@ -18,18 +19,28 @@ import 'screens/scan_contract.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive first
-  await Hive.initFlutter();
+  // Make the UI edge-to-edge
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Open user box
+  // Initial system overlay style
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarContrastEnforced: false,
+    systemNavigationBarDividerColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
+
+  // Initialize Hive
+  await Hive.initFlutter();
   final userBox = await Hive.openBox('user');
 
   late final String initialRoute;
 
-  // Determine first-time or returning user
-  if (userBox.get('firstTime') == null || userBox.get('firstTime') == false) {
-    initialRoute = '/signup'; // later replaced with welcome screen
-    await userBox.put('firstTime', true);
+  if (userBox.get('didFirstTime') == null || userBox.get('didFirstTime') == false) {
+    initialRoute = '/welcome';
+    await userBox.put('didFirstTime', true);
   } else if (userBox.get('didFirstLogin') == true) {
     initialRoute = '/login';
   } else {
@@ -48,6 +59,27 @@ class MyApp extends StatelessWidget {
   final String initialRoute;
   const MyApp({super.key, required this.initialRoute});
 
+  /// Wraps each screen with a theme-aware system UI style
+  Widget themedRoute(BuildContext context, Widget child) {
+    final brightness = WidgetsBinding.instance.window.platformBrightness;
+    final isDarkMode = brightness == Brightness.dark;
+
+    final overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+      statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDarkMode ? Brightness.dark : Brightness.light,
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -56,14 +88,15 @@ class MyApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routes: {
-        '/home': (context) => const ContractsScreen(),
-        '/contract/scan_contract': (context) => const ScanContractScreen(),
-        '/contract/sign_contract': (context) => const SignContractScreen(),
-        '/signup': (context) => const SignUpScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/reset_password': (context) => const ForgetPassword(),
-        '/contract/create_contract': (context) => const CreateContractScreen(),
+        '/welcome': (context) => themedRoute(context, const OnboardingScreen()),
+        '/signup': (context) => themedRoute(context, const SignUpScreen()),
+        '/login': (context) => themedRoute(context, const LoginScreen()),
+        '/confirm': (context) => themedRoute(context, const ConfirmAccount()),
+        '/settings': (context) => themedRoute(context, const SettingsScreen()),
+        '/forgot-password': (context) => themedRoute(context, const ForgetPassword()),
+        '/contract/scan_contract': (context) => themedRoute(context, const ScanContractScreen()),
+        '/contract/sign_contract': (context) => themedRoute(context, const SignContractScreen()),
+        '/contract/create_contract': (context) => themedRoute(context, const CreateContractScreen()),
       },
       initialRoute: initialRoute,
     );

@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 
-
-class CustomTextField extends StatelessWidget {
+class CustomTextFormField extends StatelessWidget {
   final String hintText;
   final bool isPassword;
   final Color? fillColor;
   final IconData? icon;
   final TextEditingController? controller;
+  final String? Function(String?)? validator;
 
-  const CustomTextField({
+  const CustomTextFormField({
     super.key,
     required this.hintText,
     this.isPassword = false,
     this.fillColor,
     this.icon,
     this.controller,
+    this.validator,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    final theme = Theme.of(context);
+
+    return TextFormField( // use TextFormField instead of TextField
         controller: controller ?? TextEditingController(),
         obscureText: isPassword,
         textAlign: TextAlign.left,
@@ -56,6 +59,7 @@ class CustomTextField extends StatelessWidget {
             ),
           ),
         ),
+      validator: validator,
     );
   }
 }
