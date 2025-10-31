@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yack/screens/scan_contract.dart';
 
 class CreateContractScreen extends StatefulWidget {
   const CreateContractScreen({super.key});
@@ -137,7 +138,14 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ScanContractScreen(),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.grid_view_rounded, size: 22),
                   label: const Text("Scan Contract QR"),
                   style: OutlinedButton.styleFrom(
