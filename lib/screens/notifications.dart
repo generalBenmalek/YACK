@@ -21,7 +21,7 @@ class NotificationsPage extends StatelessWidget {
         // elevation: 1,
       ),
       body: notifications.isEmpty
-          ? _buildEmptyState()
+          ? _buildEmptyState(context)
           : ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: notifications.length,
@@ -38,20 +38,20 @@ class NotificationsPage extends StatelessWidget {
               leading: Icon(n.icon, color: color.primary),
               title: Text(
                 n.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: color.onSurface,
                 ),
               ),
               subtitle: Text(
                 n.body,
-                style: const TextStyle(color: Colors.white70),
+                // style: const TextStyle(color: Colors.white70),
               ),
               trailing: Text(
                 _formatDate(n.date),
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.white60,
+                  // color: Colors.white60,
                 ),
               ),
             ),
@@ -61,18 +61,21 @@ class NotificationsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.notifications_off_rounded,
-              size: 80, color: Colors.white.withOpacity(0.3)),
+              size: 80, color: color.onSurface.withOpacity(0.8)),
           const SizedBox(height: 20),
           Text(
             "No notifications yet",
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: color.onSurface.withOpacity(0.8),
               fontSize: 18,
               fontWeight: FontWeight.w500,
             ),

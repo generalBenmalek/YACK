@@ -30,18 +30,18 @@ class _BottomNavBarState extends State<BottomNavBar> {
     const ScanContractScreen(),
     NotificationsPage(
         notifications: [
-      //   NotificationModel(
-      //   title: "Contract Approved",
-      //   body: "Your agreement with Ahmed was approved successfully.",
-      //   date: DateTime.now().subtract(const Duration(hours: 3)),
-      //   icon: Icons.check_circle_outline,
-      // ),
-      //   NotificationModel(
-      //     title: "New Message",
-      //     body: "Youssef sent you a new message regarding your contract.",
-      //     date: DateTime.now().subtract(const Duration(days: 1)),
-      //     icon: Icons.chat_bubble_outline,
-      //   ),
+        NotificationModel(
+        title: "Contract Approved",
+        body: "Your agreement with Ahmed was approved successfully.",
+        date: DateTime.now().subtract(const Duration(hours: 3)),
+        icon: Icons.check_circle_outline,
+      ),
+        NotificationModel(
+          title: "New Message",
+          body: "Youssef sent you a new message regarding your contract.",
+          date: DateTime.now().subtract(const Duration(days: 1)),
+          icon: Icons.chat_bubble_outline,
+        ),
 
 
     ]),

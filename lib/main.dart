@@ -12,7 +12,6 @@ import 'package:yack/screens/auth/login.dart';
 import 'package:yack/screens/auth/signup.dart';
 import 'package:yack/screens/welcome.dart';
 import '../theme/theme.dart';
-import 'screens/home.dart';
 import 'screens/sign_contract.dart';
 import 'screens/settings.dart';
 import 'screens/create_contract.dart';
