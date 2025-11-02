@@ -11,14 +11,14 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        title: Text('Settings', style: theme.textTheme.titleLarge),
+        backgroundColor: Colors.transparent,
+        // elevation: 0,
+        title: Text('Settings', style: theme.textTheme.titleMedium),
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        // leading: IconButton(
+        //   icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+        //   onPressed: () => Navigator.of(context).pop(),
+        // ),
       ),
       body: SingleChildScrollView(
         child: Padding(

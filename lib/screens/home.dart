@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:yack/screens/root.dart';
 import '../theme/theme.dart';
 import 'create_contract.dart';
-import "settings.dart";
 
 class ContractsScreen extends StatelessWidget {
-  const ContractsScreen({Key? key}) : super(key: key);
+  const ContractsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,18 +12,17 @@ class ContractsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Contracts'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.dark_mode),
-            onPressed: () {
-              // Toggle theme (to be implemented and added to all pages)
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.dark_mode),
+          //   onPressed: () {
+          //     // Toggle theme (to be implemented and added to all pages)
+          //   },
+          // ),
         ],
         leading: IconButton(
           icon: const Icon(Icons.settings),
           onPressed: () {
-            Navigator.push(context,
-            MaterialPageRoute(builder:  (context) => const SettingsScreen()));
+            Navigator.pushNamed(context, '/settings');
           }
         )
       ),
@@ -123,50 +122,56 @@ class ContractsScreen extends StatelessWidget {
     required String status,
     required bool isActive,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.yackDivider, width: 1),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppTheme.yackGreenLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(
-            Icons.description,
-            color: AppTheme.yackGreen,
-            size: 24,
-          ),
+    return GestureDetector(
+      onTap: () {
+        // todo: implement correctly later
+        Navigator.pushNamed(context, '/contract/view');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.yackDivider, width: 1),
         ),
-        title: Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(amount, style: Theme.of(context).textTheme.bodyMedium),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isActive ? AppTheme.yackGreenLight : AppTheme.yackGrayLight,
-            borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppTheme.yackGreenLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.description,
+              color: AppTheme.yackGreen,
+              size: 24,
+            ),
           ),
-          child: Text(
-            status,
-            style: TextStyle(
-              color: isActive ? AppTheme.yackGreen : AppTheme.yackGray,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          title: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(amount, style: Theme.of(context).textTheme.bodyMedium),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isActive ? AppTheme.yackGreenLight : AppTheme.yackGrayLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                color: isActive ? AppTheme.yackGreen : AppTheme.yackGray,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
       ),
-    );
+    ) ;
   }
 }

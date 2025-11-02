@@ -5,6 +5,7 @@ import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:yack/screens/contract_agr/contract_agreement.dart';
 import 'package:yack/screens/contract_agr/nomore_contracts.dart';
+import 'package:yack/screens/root.dart';
 import 'firebase_options.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
 import 'package:yack/screens/auth/login.dart';
@@ -91,20 +92,27 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       routes: {
         '/welcome': (context) => themedRoute(context, const OnboardingScreen()),
+
+
+        // AUTH ROUTES
         '/signup': (context) => themedRoute(context, const SignUpScreen()),
         '/login': (context) => themedRoute(context, const LoginScreen()),
         '/confirm': (context) => themedRoute(context, const ConfirmAccount()),
-        '/settings': (context) => themedRoute(context, const SettingsScreen()),
         '/forgot-password': (context) => themedRoute(context, const ForgetPassword()),
+
+        // CONTRACT ROUTES
         '/contract/scan_contract': (context) => themedRoute(context, const ScanContractScreen()),
         '/contract/sign_contract': (context) => themedRoute(context, const SignContractScreen()),
         '/contract/create_contract': (context) => themedRoute(context, const CreateContractScreen()),
         '/contract/view': (context) => themedRoute(context, const ContractAgreement()),
+
+
+        '/settings': (context) => themedRoute(context, const SettingsScreen()),
         '/upgrade': (context) => themedRoute(context, const NoMoreContractsAvailable()),
-        '/home': (context) => themedRoute(context, const ContractsScreen())
+        '/home': (context) => themedRoute(context, const BottomNavBar()),
 
       },
-      initialRoute: '/contract/view',
+      initialRoute: initialRoute,
     );
   }
 }
