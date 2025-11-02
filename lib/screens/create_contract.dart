@@ -32,6 +32,40 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
           children: [
             const SizedBox(height: 20),
             Text(
+              'Title',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w300,
+                color: theme.textTheme.titleMedium?.color,
+              ),
+            ),
+            const SizedBox(height: 8.0),
+
+            TextField(
+              maxLines: 1,
+              textAlign: TextAlign.start,
+              decoration: InputDecoration(
+                hintText: 'What is this agreement title?',
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                border: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+                  borderSide: BorderSide(
+                    color: theme.dividerTheme.color ?? Colors.grey,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            Text(
               'Description',
               style: TextStyle(
                 fontSize: 16,

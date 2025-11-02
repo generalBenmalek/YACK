@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:yack/screens/root.dart';
 import '../theme/theme.dart';
 import 'create_contract.dart';
 
@@ -10,7 +9,8 @@ class ContractsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contracts'),
+        backgroundColor: Colors.transparent,
+        title: Text('Contracts', style: Theme.of(context).textTheme.titleLarge),
         actions: [
           // IconButton(
           //   icon: const Icon(Icons.dark_mode),
@@ -19,12 +19,12 @@ class ContractsScreen extends StatelessWidget {
           //   },
           // ),
         ],
-        leading: IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: () {
-            Navigator.pushNamed(context, '/settings');
-          }
-        )
+        // leading: IconButton(
+        //   icon: const Icon(Icons.settings),
+        //   onPressed: () {
+        //     Navigator.pushNamed(context, '/settings');
+        //   }
+        // )
       ),
       body: Column(
         children: [

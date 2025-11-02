@@ -47,11 +47,13 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan Contract'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        backgroundColor: Colors.transparent,
+        title: Text('Scan', style: Theme.of(context).textTheme.titleLarge),
+          // leading: _isScanning ? IconButton(
+          //   icon: const Icon(Icons.arrow_back),
+          //   onPressed: () => Navigator.of(context).pop(),
+          // ): null,
+
       ),
       body: _isScanning
           ? Stack(

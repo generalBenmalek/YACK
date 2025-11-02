@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
-import 'package:yack/screens/create_contract.dart';
 import 'package:yack/screens/home.dart';
+import 'package:yack/screens/notifications.dart';
 import 'package:yack/screens/scan_contract.dart';
 import 'package:yack/screens/settings.dart';
+
+import '../models/notification.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int initialIndex;
@@ -23,11 +25,27 @@ class _BottomNavBarState extends State<BottomNavBar> {
     _controller = PersistentTabController(initialIndex: widget.initialIndex);
   }
 
-  List<Widget> _buildScreens() => const [
-    ContractsScreen(),
-    ScanContractScreen(),
-    CreateContractScreen(),
-    SettingsScreen(),
+  List<Widget> _buildScreens() => [
+    const ContractsScreen(),
+    const ScanContractScreen(),
+    NotificationsPage(
+        notifications: [
+      //   NotificationModel(
+      //   title: "Contract Approved",
+      //   body: "Your agreement with Ahmed was approved successfully.",
+      //   date: DateTime.now().subtract(const Duration(hours: 3)),
+      //   icon: Icons.check_circle_outline,
+      // ),
+      //   NotificationModel(
+      //     title: "New Message",
+      //     body: "Youssef sent you a new message regarding your contract.",
+      //     date: DateTime.now().subtract(const Duration(days: 1)),
+      //     icon: Icons.chat_bubble_outline,
+      //   ),
+
+
+    ]),
+    const SettingsScreen(),
   ];
 
   List<PersistentBottomNavBarItem> _navBarsItems(BuildContext context) {
@@ -65,7 +83,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
   Widget build(BuildContext context) {
     return Scaffold(
 
-      backgroundColor: Colors.red,
       body: PersistentTabView(
         context,
         neumorphicProperties: NeumorphicProperties(showSubtitleText: false),

@@ -12,8 +12,8 @@ class SettingsScreen extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        // elevation: 0,
-        title: Text('Settings', style: theme.textTheme.titleMedium),
+        // elevation: 1,
+        title: Text('Settings', style: theme.textTheme.titleLarge),
         centerTitle: true,
         // leading: IconButton(
         //   icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
