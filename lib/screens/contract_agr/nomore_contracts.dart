@@ -6,62 +6,60 @@ class NoMoreContractsAvailable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define custom colors
-    const Color primaryColor = Color(0xFF2ECC71);
-    const Color primaryDarkColor = Color(0xFF27AE60);
-    const Color textPrimaryColor = Color(0xFF2C3E50);
-    const Color textSecondaryColor = Color(0xFF7F8C8D);
-    const Color backgroundLightColor = Color(0xFFFFFFFF);
-    const Color backgroundDarkColor = Color(0xFF101C22);
-    const Color containerLightColor = Color(0xFFF4F6F6);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    // System UI overlay for light theme
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    // System UI overlay adjusts automatically for dark/light
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness:
+      isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness:
+      isDark ? Brightness.dark : Brightness.light,
     ));
 
     return Scaffold(
-      backgroundColor: backgroundLightColor,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
             // Header with close icon and title
-            Container(
+            Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(), // Assuming close navigates back
-                    child: const SizedBox(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: SizedBox(
                       width: 48,
                       height: 48,
                       child: Icon(
                         Icons.close,
                         size: 24,
-                        color: textPrimaryColor,
+                        color: colorScheme.onBackground,
                       ),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Center(
                       child: Text(
                         'No More Contracts Available',
-                        style: TextStyle(
-                          fontSize: 18,
+                        style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          letterSpacing: -0.015 * 18,
-                          color: textPrimaryColor,
+                          color: colorScheme.onBackground,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // Spacer for symmetry
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
+
             // Main content
             Expanded(
               child: SingleChildScrollView(
@@ -79,31 +77,30 @@ class NoMoreContractsAvailable extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 32),
+
                     // Title and subtitle
-                    const Column(
+                    Column(
                       children: [
                         Text(
                           'No More Contracts Left',
-                          style: TextStyle(
-                            fontSize: 20,
+                          style: textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            letterSpacing: -0.015 * 20,
-                            color: textPrimaryColor,
+                            color: colorScheme.onBackground,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           "Sorry, you've used all the contracts available on your current plan.",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: textSecondaryColor,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                     const SizedBox(height: 32),
+
                     // Upgrade card
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
@@ -111,7 +108,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
                         decoration: BoxDecoration(
-                          color: primaryColor,
+                          color: colorScheme.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -122,21 +119,18 @@ class NoMoreContractsAvailable extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Go Unlimited',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                                    style: textTheme.labelSmall?.copyWith(
                                       letterSpacing: 1.25,
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: colorScheme.onPrimary
+                                          .withOpacity(0.7),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     'Upgrade Your Plan',
-                                    style: TextStyle(
-                                      fontSize: 18,
+                                    style: textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      letterSpacing: -0.015 * 18,
-                                      color: Colors.white,
+                                      color: colorScheme.onPrimary,
                                     ),
                                   ),
                                 ],
@@ -145,22 +139,24 @@ class NoMoreContractsAvailable extends StatelessWidget {
                             Icon(
                               Icons.trending_up,
                               size: 32,
-                              color: Colors.white,
+                              color: colorScheme.onPrimary,
                             ),
                           ],
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
+
                     // Maybe Later
                     GestureDetector(
-                      onTap: () {}, // Handle later action
-                      child: const Text(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
                         'Maybe Later',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: textSecondaryColor,
+                          color: colorScheme.onSurfaceVariant,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -175,4 +171,3 @@ class NoMoreContractsAvailable extends StatelessWidget {
     );
   }
 }
-

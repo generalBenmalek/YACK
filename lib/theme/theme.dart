@@ -29,6 +29,8 @@ class AppTheme {
       onSurface: yackBlack,
       surfaceContainerHighest: yackGrayLight,
       outline: yackDivider,
+      // error: Colors.red,
+      // onErrorContainer: Colors.black
     ),
     scaffoldBackgroundColor: yackBackground,
     appBarTheme: const AppBarTheme(

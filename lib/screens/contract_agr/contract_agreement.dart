@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:yack/theme/theme.dart';
 
-class Contract_agreement extends StatefulWidget {
-  const Contract_agreement({super.key});
+import '../../models/contract/message.dart';
+
+class ContractAgreement extends StatefulWidget {
+  const ContractAgreement({super.key});
   @override
-  State<Contract_agreement> createState() => _Contract_agreementState();
+  State<ContractAgreement> createState() => _ContractAgreementState();
 }
 
-String contract_name = 'coursa';
-int price = 700;
-String dets = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
-String user = 'me';
+String contract_name = 'E-Commerce Mobile App';
+int price = 5000;
+String dets = 'Development of a cross-platform e-commerce mobile application with user authentication, payment integration, product catalog, and order tracking features. Includes 60 days of maintenance support.';
+String user = 'Tech Solutions Inc.';
 
-class _Contract_agreementState extends State<Contract_agreement> {
+class _ContractAgreementState extends State<ContractAgreement> {
+
   final TextEditingController _controllerinp = TextEditingController();
   final List<Message> _messages = [
     Message('Hi there!', 'yacine', true, false, null),
@@ -25,29 +27,34 @@ class _Contract_agreementState extends State<Contract_agreement> {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppTheme.yackBackground,
+      backgroundColor: colors.surface,
       appBar: AppBar(
         title: Text(
           'Contract Agreement',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
+            color: colors.onSurface,
           ),
         ),
         centerTitle: true,
-        backgroundColor: AppTheme.yackBackground,
+        backgroundColor: colors.surface,
         elevation: 0,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(Icons.arrow_back, color: AppTheme.yackBlack),
+          icon: Icon(Icons.arrow_back, color: colors.onSurface),
         ),
         actions: [
           IconButton(
             onPressed: _showContractDetails,
-            icon: Icon(Icons.info_outline, size: 25, color: AppTheme.yackGreen),
+            icon: Icon(Icons.info_outline, size: 25, color: colors.primary),
           )
         ],
       ),
@@ -55,14 +62,14 @@ class _Contract_agreementState extends State<Contract_agreement> {
         children: [
           // Buttons Container
           Container(
-            color: AppTheme.yackWhite,
+            color: colors.surface,
             padding: EdgeInsets.all(20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildActionButton('Dispute', Icons.gavel, Theme.of(context).colorScheme.error, Theme.of(context).colorScheme.errorContainer),
+                _buildActionButton('Dispute', Icons.gavel, colors.onError, colors.errorContainer),
                 SizedBox(width: 20),
-                _buildActionButton('Accept', Icons.check_circle, AppTheme.yackGreen, AppTheme.yackGreenLight),
+                _buildActionButton('Accept', Icons.check_circle, colors.onPrimary, colors.primaryContainer),
               ],
             ),
           ),
@@ -75,12 +82,12 @@ class _Contract_agreementState extends State<Contract_agreement> {
                   final index = entry.key;
                   final message = entry.value;
                   return messageWidget(
-                    message.text, 
-                    message.sender, 
-                    message.me, 
-                    message.isFile,
-                    message.file,
-                    index
+                      message.text,
+                      message.sender,
+                      message.me,
+                      message.isFile,
+                      message.file,
+                      index
                   );
                 }).toList(),
               ),
@@ -126,9 +133,12 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   Widget _buildChatInputBar() {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.yackWhite,
+        color: colors.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -140,7 +150,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
-        bottom: MediaQuery.of(context).padding.bottom + 8,
+        bottom:12, // MediaQuery.of(context).padding.bottom + 8,
         top: 12,
       ),
       child: Row(
@@ -149,11 +159,11 @@ class _Contract_agreementState extends State<Contract_agreement> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey[50],
+              color: colors.surface,
             ),
             child: IconButton(
               onPressed: _showAttachmentOptions,
-              icon: Icon(Icons.attach_file, color: Colors.grey[600], size: 22),
+              icon: Icon(Icons.attach_file, color: colors.onSurface, size: 22),
               padding: EdgeInsets.all(8),
               constraints: BoxConstraints(),
             ),
@@ -164,7 +174,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Row(
@@ -176,11 +186,12 @@ class _Contract_agreementState extends State<Contract_agreement> {
                         hintText: 'Type your message...',
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        hintStyle: TextStyle(color: colors.onSurface.withOpacity(0.5)),
                       ),
                       maxLines: null,
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _sendMessage(),
+                      style: TextStyle(color: colors.onSurface),
                     ),
                   ),
                 ],
@@ -193,15 +204,11 @@ class _Contract_agreementState extends State<Contract_agreement> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [AppTheme.yackGreen, Color(0xFF2bc76d)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: colors.primary,
             ),
             child: IconButton(
               onPressed: _sendMessage,
-              icon: Icon(Icons.send, color: AppTheme.yackWhite, size: 20),
+              icon: Icon(Icons.send, color: colors.onPrimary, size: 20),
               padding: EdgeInsets.all(10),
               constraints: BoxConstraints(),
             ),
@@ -215,11 +222,11 @@ class _Contract_agreementState extends State<Contract_agreement> {
     if (_controllerinp.text.trim().isNotEmpty) {
       setState(() {
         _messages.add(Message(
-          _controllerinp.text.trim(),
-          'yacine',
-          true,
-          false,
-          null
+            _controllerinp.text.trim(),
+            'yacine',
+            true,
+            false,
+            null
         ));
       });
       _controllerinp.clear();
@@ -227,13 +234,16 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   void _showAttachmentOptions() {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
           decoration: BoxDecoration(
-            color: AppTheme.yackWhite,
+            color: colors.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -248,7 +258,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: colors.onSurface,
                 ),
               ),
               SizedBox(height: 20),
@@ -270,16 +280,19 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   Widget _buildAttachmentOption(IconData icon, String label, Function() onTap) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.yackGreenLight,
+            color: colors.primaryContainer,
             shape: BoxShape.circle,
           ),
           child: IconButton(
             onPressed: onTap,
-            icon: Icon(icon, color: AppTheme.yackGreen, size: 24),
+            icon: Icon(icon, color: colors.onPrimary, size: 24),
             padding: EdgeInsets.all(12),
           ),
         ),
@@ -288,7 +301,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: colors.onSurface,
           ),
         ),
       ],
@@ -321,20 +334,20 @@ class _Contract_agreementState extends State<Contract_agreement> {
 
   Future<void> _pickDocument() async {
     Navigator.pop(context);
-   
+
     _addFileMessage(null, FileType.document);
   }
 
   void _addFileMessage(File? file, FileType fileType) {
     String fileName = _generateFileName(fileType);
-    
+
     setState(() {
       _messages.add(Message(
-        fileName,
-        'yacine',
-        true,
-        true,
-        FileData(fileName, fileType, file: file)
+          fileName,
+          'yacine',
+          true,
+          true,
+          FileData(fileName, fileType, file: file)
       ));
     });
   }
@@ -352,11 +365,15 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   void _showContractDetails() {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: colors.surface,
           child: Container(
             padding: EdgeInsets.all(24),
             child: Column(
@@ -368,10 +385,10 @@ class _Contract_agreementState extends State<Contract_agreement> {
                     Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.yackGreenLight,
+                        color: colors.primaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.assignment, color: AppTheme.yackGreen, size: 28),
+                      child: Icon(Icons.assignment, color: colors.onPrimary, size: 28),
                     ),
                     SizedBox(width: 16),
                     Expanded(
@@ -383,14 +400,14 @@ class _Contract_agreementState extends State<Contract_agreement> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: colors.onSurface,
                             ),
                           ),
                           SizedBox(height: 4),
                           Text(
                             'Active • ${DateTime.now().toString().split(' ')[0]}',
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: colors.onSurface.withOpacity(0.6),
                               fontSize: 12,
                             ),
                           ),
@@ -408,7 +425,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                   'Description',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: colors.onSurface,
                     fontSize: 16,
                   ),
                 ),
@@ -416,7 +433,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                 Text(
                   dets,
                   style: TextStyle(
-                    color: Colors.grey[700],
+                    color: colors.onSurface.withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -426,8 +443,8 @@ class _Contract_agreementState extends State<Contract_agreement> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.yackGreen,
-                      foregroundColor: AppTheme.yackWhite,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       padding: EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -445,16 +462,19 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   Widget _buildDetailRow(String title, String value, IconData icon) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: colors.surface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.yackGreen, size: 18),
+          Icon(icon, color: colors.primary, size: 18),
           SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -464,7 +484,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                   title,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: colors.onSurface.withOpacity(0.6),
                   ),
                 ),
                 SizedBox(height: 2),
@@ -473,7 +493,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: colors.onSurface,
                   ),
                 ),
               ],
@@ -485,6 +505,9 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   void _showMediaPreview(String fileName, FileType fileType, File? file, int index) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -494,7 +517,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
             width: MediaQuery.of(context).size.width * 0.9,
             height: MediaQuery.of(context).size.height * 0.7,
             decoration: BoxDecoration(
-              color: AppTheme.yackWhite,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -510,13 +533,14 @@ class _Contract_agreementState extends State<Contract_agreement> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: colors.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close, color: Colors.grey[600]),
+                        icon: Icon(Icons.close, color: colors.onSurface.withOpacity(0.6)),
                       ),
                     ],
                   ),
@@ -525,7 +549,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                   child: Container(
                     margin: EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: colors.surfaceVariant,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -537,7 +561,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                   padding: EdgeInsets.all(16),
                   child: Text(
                     'File Type: ${_getFileTypeText(fileType)}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: colors.onSurface.withOpacity(0.6)),
                   ),
                 ),
               ],
@@ -549,38 +573,41 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   Widget _buildMediaPreview(FileType fileType, String fileName, File? file) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     switch (fileType) {
       case FileType.image:
-        return file != null 
+        return file != null
             ? Image.file(file, fit: BoxFit.cover)
             : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.image, size: 80, color: AppTheme.yackGreen),
-                  SizedBox(height: 16),
-                  Text('Image: $fileName', style: TextStyle(fontSize: 16)),
-                ],
-              );
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image, size: 80, color: colors.primary),
+            SizedBox(height: 16),
+            Text('Image: $fileName', style: TextStyle(fontSize: 16, color: colors.onSurface)),
+          ],
+        );
       case FileType.video:
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.videocam, size: 80, color: AppTheme.yackGreen),
+            Icon(Icons.videocam, size: 80, color: colors.primary),
             SizedBox(height: 16),
-            Text('Video: $fileName', style: TextStyle(fontSize: 16)),
+            Text('Video: $fileName', style: TextStyle(fontSize: 16, color: colors.onSurface)),
             SizedBox(height: 8),
-            Icon(Icons.play_circle_fill, size: 40, color: AppTheme.yackGreen),
+            Icon(Icons.play_circle_fill, size: 40, color: colors.primary),
           ],
         );
       case FileType.document:
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.insert_drive_file, size: 80, color: AppTheme.yackGreen),
+            Icon(Icons.insert_drive_file, size: 80, color: colors.primary),
             SizedBox(height: 16),
-            Text('Document: $fileName', style: TextStyle(fontSize: 16)),
+            Text('Document: $fileName', style: TextStyle(fontSize: 16, color: colors.onSurface)),
             SizedBox(height: 8),
-            Text('PDF File', style: TextStyle(color: Colors.grey)),
+            Text('PDF File', style: TextStyle(color: colors.onSurface.withOpacity(0.6))),
           ],
         );
     }
@@ -598,6 +625,9 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 
   Widget messageWidget(String text, String sender, bool me, bool isFile, FileData? file, int index) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     return GestureDetector(
       onTap: isFile && file != null ? () => _showMediaPreview(file.name, file.type, file.file, index) : null,
       child: Container(
@@ -609,10 +639,10 @@ class _Contract_agreementState extends State<Contract_agreement> {
             if (!me) ...[
               CircleAvatar(
                 radius: 14,
-                backgroundColor: Colors.grey[300],
+                backgroundColor: colors.surface,
                 child: Text(
                   sender.substring(0, 1).toUpperCase(),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  style: TextStyle(fontSize: 12, color: colors.onSurface),
                 ),
               ),
               SizedBox(width: 8),
@@ -627,7 +657,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                     bottomLeft: me ? Radius.circular(16) : Radius.circular(4),
                     bottomRight: me ? Radius.circular(4) : Radius.circular(16),
                   ),
-                  color: me ? AppTheme.yackGreen : AppTheme.yackWhite,
+                  color: me ? colors.primary : colors.surface,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black12,
@@ -645,7 +675,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                         child: Text(
                           sender,
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: colors.onSurface.withOpacity(0.6),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -656,7 +686,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                         children: [
                           Icon(
                             _getFileIcon(file.type),
-                            color: me ? AppTheme.yackWhite : AppTheme.yackGreen,
+                            color: me ? colors.onPrimary : colors.primary,
                             size: 18,
                           ),
                           SizedBox(width: 8),
@@ -664,7 +694,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                             child: Text(
                               file.name,
                               style: TextStyle(
-                                color: me ? AppTheme.yackWhite : Colors.black87,
+                                color: me ? colors.onPrimary : colors.onSurface,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -686,7 +716,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                             child: Icon(
                               file.type == FileType.image ? Icons.image : Icons.videocam,
                               size: 40,
-                              color: me ? AppTheme.yackWhite : AppTheme.yackGreen,
+                              color: me ? colors.onPrimary : colors.primary,
                             ),
                           ),
                         ),
@@ -694,7 +724,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                       Text(
                         text,
                         style: TextStyle(
-                          color: me ? AppTheme.yackWhite : Colors.black87,
+                          color: me ? colors.onPrimary : colors.onSurface,
                           fontSize: 14,
                         ),
                       ),
@@ -702,7 +732,7 @@ class _Contract_agreementState extends State<Contract_agreement> {
                     Text(
                       '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
                       style: TextStyle(
-                        color: me ? AppTheme.yackWhite.withOpacity(0.7) : Colors.grey[500],
+                        color: me ? colors.onPrimary.withOpacity(0.7) : colors.onSurface.withOpacity(0.5),
                         fontSize: 10,
                       ),
                     ),
@@ -714,10 +744,10 @@ class _Contract_agreementState extends State<Contract_agreement> {
               SizedBox(width: 8),
               CircleAvatar(
                 radius: 14,
-                backgroundColor: AppTheme.yackGreen.withOpacity(0.3),
+                backgroundColor: colors.primary,
                 child: Text(
                   'Me',
-                  style: TextStyle(fontSize: 10, color: AppTheme.yackWhite, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 10, color: colors.onPrimary, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -739,26 +769,4 @@ class _Contract_agreementState extends State<Contract_agreement> {
   }
 }
 
-class Message {
-  final String text;
-  final String sender;
-  final bool me;
-  final bool isFile;
-  final FileData? file;
 
-  Message(this.text, this.sender, this.me, this.isFile, this.file);
-}
-
-class FileData {
-  final String name;
-  final FileType type;
-  final File? file;
-
-  FileData(this.name, this.type, {this.file});
-}
-
-enum FileType {
-  image,
-  video,
-  document,
-}

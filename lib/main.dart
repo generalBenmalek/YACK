@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:yack/screens/contract_agr/contract_agreement.dart';
+import 'package:yack/screens/contract_agr/nomore_contracts.dart';
 import 'firebase_options.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
 import 'package:yack/screens/auth/login.dart';
@@ -97,8 +99,12 @@ class MyApp extends StatelessWidget {
         '/contract/scan_contract': (context) => themedRoute(context, const ScanContractScreen()),
         '/contract/sign_contract': (context) => themedRoute(context, const SignContractScreen()),
         '/contract/create_contract': (context) => themedRoute(context, const CreateContractScreen()),
+        '/contract/view': (context) => themedRoute(context, const ContractAgreement()),
+        '/upgrade': (context) => themedRoute(context, const NoMoreContractsAvailable()),
+        '/home': (context) => themedRoute(context, const ContractsScreen())
+
       },
-      initialRoute: initialRoute,
+      initialRoute: '/contract/view',
     );
   }
 }
