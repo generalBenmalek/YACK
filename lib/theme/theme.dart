@@ -29,6 +29,8 @@ class AppTheme {
       onSurface: yackBlack,
       surfaceContainerHighest: yackGrayLight,
       outline: yackDivider,
+      error: Colors.red,
+      // onError: Colors.red
       // error: Colors.red,
       // onErrorContainer: Colors.black
     ),

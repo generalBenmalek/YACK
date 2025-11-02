@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yack/utils/passwordPopUp.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -62,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'Password',
                     subtitle: 'Change your password',
-                    onTap: () {},
+                    onTap: (){showChangePasswordDialog(context);},
                   ),
                 ],
               ),

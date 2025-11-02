@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yack/screens/scan_contract.dart';
+import 'package:yack/screens/shareContract.dart';
 
 class CreateContractScreen extends StatefulWidget {
   const CreateContractScreen({super.key});
@@ -156,7 +157,18 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) =>  ShareContractScreen(
+                        title: "Web Design Agreement",
+                        price: 250.00,
+                        userFirstName: "Alex",
+                        userLastName: "Turner",
+                        contractLink: "https://yack.app/contracts/WD12345",
+                      )
+                    )
+                    );
+                  },
                   icon: const Icon(Icons.add, size: 20),
                   label: const Text('Add Contract'),
                   style: ElevatedButton.styleFrom(

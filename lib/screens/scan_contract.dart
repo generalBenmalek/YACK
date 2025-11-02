@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:yack/utils/snackBarHandler.dart';
 import '../theme/theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
+import 'acceptDeclineContract.dart';
 
 class ScanContractScreen extends StatefulWidget {
   const ScanContractScreen({super.key});
@@ -29,17 +32,34 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
   void _onQRScanned(String code) {
     scannerController?.stop();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Contract scanned: $code'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppTheme.yackGreen,
-      ),
-    );
+    SnackBarHandler.showSuccess(context, 'Contract scanned: $code');
+    
+    // simulation
 
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) Navigator.of(context).pop();
+
+      // temporary
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AcceptDeclineContractScreen(
+              title: "Web Design Agreement",
+              price: 250.00,
+              userFirstName: "Alex",
+              userLastName: "Turner",
+              description: """
+This agreement outlines the terms between the client and the designer for the creation of a responsive, user-friendly website.
+
+The designer agrees to deliver a complete website featuring up to 5 pages, including a homepage, about section, contact form, and portfolio. The website will be optimized for both desktop and mobile devices.
+
+The client agrees to provide all necessary materials (text, images, and branding assets) before the project begins. Two rounds of revisions are included in the project scope. Additional changes beyond these revisions may incur extra fees.
+
+Payment will be processed upon acceptance of this contract. Final deliverables will be transferred once the project is fully completed and approved by the client.
+"""
+          ),
+        ),
+      );
     });
   }
 
