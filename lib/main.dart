@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -21,10 +22,15 @@ import 'screens/scan_contract.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   // Make the UI edge-to-edge
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Initial system overlay style
+  // System overlay style
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: Colors.transparent,
@@ -40,22 +46,26 @@ void main() async {
 
   late final String initialRoute;
 
+  final user = FirebaseAuth.instance.currentUser;
+
   if (userBox.get('didFirstTime') == null || userBox.get('didFirstTime') == false) {
+    // First time opening the app → show welcome
     initialRoute = '/welcome';
     await userBox.put('didFirstTime', true);
+  } else if (user != null) {
+    // User already logged in → go directly to home
+    initialRoute = '/home';
   } else if (userBox.get('didFirstLogin') == true) {
+    // User has seen login before → go to login
     initialRoute = '/login';
   } else {
+    // Otherwise → signup
     initialRoute = '/signup';
   }
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
   runApp(MyApp(initialRoute: initialRoute));
 }
+
 
 class MyApp extends StatelessWidget {
   final String initialRoute;

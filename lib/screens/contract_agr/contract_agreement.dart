@@ -58,7 +58,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
           )
         ],
       ),
-      body: Column(
+      body: SafeArea(child: Column(
         children: [
           // Buttons Container
           Container(
@@ -97,7 +97,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
           // Improved Chat Input Bar
           _buildChatInputBar(),
         ],
-      ),
+      )),
     );
   }
 

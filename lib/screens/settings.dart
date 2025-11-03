@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:yack/screens/contract_agr/nomore_contracts.dart';
 import 'package:yack/utils/passwordPopUp.dart';
+import 'package:yack/widgets/secondaryActionButtonAutoLoading.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -185,6 +187,11 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
+              SecondaryActionButtonAutoReload(action: 'Logout', onClick: () async {
+                FirebaseAuth.instance.signOut();
+                Navigator.of(context, rootNavigator: true)
+                    .pushNamedAndRemoveUntil('/login', (route) => false);
+              })
             ],
           ),
         ),
