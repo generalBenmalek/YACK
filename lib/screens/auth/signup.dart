@@ -44,7 +44,6 @@ class SignUpScreenState extends State<SignUpScreen> {
         'firstName': firstNameController.text.trim(),
         'lastName': lastNameController.text.trim(),
       });
-      await userBox.close();
 
       // Step 3: Send verification email
       await userCred.user?.sendEmailVerification();
