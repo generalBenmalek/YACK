@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:yack/screens/acceptDeclineContract.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:yack/screens/contract_agr/contract_agreement.dart';
@@ -112,7 +111,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => themedRoute(context, const BottomNavBar()),
 
       },
-      initialRoute: '/home',
+      initialRoute: initialRoute,
     );
   }
 }

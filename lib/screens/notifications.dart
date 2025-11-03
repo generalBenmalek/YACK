@@ -13,7 +13,7 @@ class NotificationsPage extends StatelessWidget {
     final color = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: color.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Notifications"),
         backgroundColor: Colors.transparent,
