@@ -125,7 +125,7 @@ class ContractsScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // todo: implement correctly later
-        Navigator.pushNamed(context, '/contract/view');
+        Navigator.of(context, rootNavigator: true).pushNamed('/contract/view');
       },
       child: Container(
         decoration: BoxDecoration(
