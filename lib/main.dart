@@ -75,13 +75,11 @@ class MyApp extends StatelessWidget {
   Widget themedRoute(BuildContext context, Widget child) {
     final brightness = WidgetsBinding.instance.window.platformBrightness;
     final isDarkMode = brightness == Brightness.dark;
-    final theme = Theme.of(context);
-
 
     final overlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      systemNavigationBarColor: theme.colorScheme.surface,
-      systemNavigationBarDividerColor: theme.colorScheme.surface,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarContrastEnforced: false,
       statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
       systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
@@ -115,7 +113,7 @@ class MyApp extends StatelessWidget {
         '/contract/scan_contract': (context) => themedRoute(context, const ScanContractScreen()),
         '/contract/sign_contract': (context) => themedRoute(context, const SignContractScreen()),
         '/contract/create_contract': (context) => themedRoute(context, const CreateContractScreen()),
-        '/contract/view': (context) => themedRoute(context, const ContractAgreement()),
+        '/contract/view': (context) =>  const ContractAgreement(),
 
 
         '/settings': (context) => themedRoute(context, const SettingsScreen()),
