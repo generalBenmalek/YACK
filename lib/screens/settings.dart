@@ -3,25 +3,89 @@ import 'package:flutter/material.dart';
 import 'package:yack/screens/contract_agr/nomore_contracts.dart';
 import 'package:yack/utils/passwordPopUp.dart';
 import 'package:yack/widgets/secondaryActionButtonAutoLoading.dart';
+import '../widgets/settingWidgets/appearanceSheet.dart';
+import '../widgets/settingWidgets/notificationSheet.dart';
+import '../widgets/settingWidgets/privacySheet.dart';
+import '../widgets/settingWidgets/sectionHeader.dart';
+import '../widgets/settingWidgets/settingsCard.dart';
+import '../widgets/settingWidgets/settingsItem.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  void _showNotificationSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const NotificationSettingsSheet(),
+    );
+  }
+
+  void _showPrivacySettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const PrivacySettingsSheet(),
+    );
+  }
+
+  void _showAppearanceSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const AppearanceSettingsSheet(),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('About YACK'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('YACK - Contract Management App'),
+            SizedBox(height: 16),
+            Text('Version: 1.0.0'),
+            SizedBox(height: 8),
+            Text('© 2025 YACK. All rights reserved.'),
+            SizedBox(height: 16),
+            Text(
+              'YACK helps you manage contracts efficiently with features like QR code scanning, digital signatures, and secure storage.',
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        // elevation: 1,
-        title: Text('Settings', style: theme.textTheme.titleLarge),
+        title: Text('Settings', style: theme.textTheme.titleMedium),
         centerTitle: true,
-        // leading: IconButton(
-        //   icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-        //   onPressed: () => Navigator.of(context).pop(),
-        // ),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -37,17 +101,16 @@ class SettingsScreen extends StatelessWidget {
                     icon: CircleAvatar(
                       radius: 30,
                       backgroundColor:
-                          theme.colorScheme.surfaceContainerHighest,
+                      theme.colorScheme.surfaceContainerHighest,
                       child: Icon(
                         Icons.person,
                         size: 28,
                         color: theme.iconTheme.color,
                       ),
-                      // backgroundImage: AssetImage('images/profile.jpg'),
                     ),
                     title: 'Profile',
                     subtitle: 'Manage your profile information',
-                    onTap: () {},
+                    onTap: null,
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
@@ -66,7 +129,30 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'Password',
                     subtitle: 'Change your password',
-                    onTap: (){showChangePasswordDialog(context);},
+                    onTap: () {
+                      showChangePasswordDialog(context);
+                    },
+                  ),
+                  Divider(height: 1, color: theme.dividerTheme.color),
+                  SettingsItem(
+                    icon: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.rocket_launch,
+                        size: 28,
+                        color: theme.iconTheme.color,
+                      ),
+                    ),
+                    title: 'Upgrade',
+                    subtitle: 'get premium features',
+                    onTap: () {
+                      Navigator.of(context, rootNavigator: true).pushNamed('/upgrade');
+                    },
                   ),
                 ],
               ),
@@ -94,13 +180,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'Notifications',
                     subtitle: 'Customize notification settings',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NoMoreContractsAvailable(),
-                        ),
-                      );                    },
+                    onTap: () => _showNotificationSettings(context),
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
@@ -119,7 +199,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'Privacy',
                     subtitle: 'Adjust privacy settings',
-                    onTap: () {},
+                    onTap: () => _showPrivacySettings(context),
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
@@ -138,7 +218,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'Appearance',
                     subtitle: 'Manage app appearance',
-                    onTap: () {},
+                    onTap: () => _showAppearanceSettings(context),
                   ),
                 ],
               ),
@@ -163,7 +243,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'Help & Support',
                     subtitle: 'Get help and support',
-                    onTap: () {},
+                    onTap: null,
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
@@ -182,16 +262,19 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'About YACK',
                     subtitle: 'Learn more about YACK',
-                    onTap: () {},
+                    onTap: () => _showAboutDialog(context),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              SecondaryActionButtonAutoReload(action: 'Logout', onClick: () async {
-                FirebaseAuth.instance.signOut();
-                Navigator.of(context, rootNavigator: true)
-                    .pushNamedAndRemoveUntil('/login', (route) => false);
-              })
+              SecondaryActionButtonAutoReload(
+                action: 'Logout',
+                onClick: () async {
+                  FirebaseAuth.instance.signOut();
+                  Navigator.of(context, rootNavigator: true)
+                      .pushNamedAndRemoveUntil('/login', (route) => false);
+                },
+              ),
             ],
           ),
         ),
@@ -200,86 +283,5 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-class SectionHeader extends StatelessWidget {
-  final String title;
-  final Color color;
 
-  const SectionHeader({super.key, required this.title, required this.color});
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class SettingsCard extends StatelessWidget {
-  final List<Widget> children;
-
-  const SettingsCard({super.key, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(children: children),
-    );
-  }
-}
-
-class SettingsItem extends StatelessWidget {
-  final Widget icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const SettingsItem({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Row(
-          children: [
-            icon,
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: theme.textTheme.bodyMedium),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: theme.textTheme.bodyMedium?.color),
-          ],
-        ),
-      ),
-    );
-  }
-}

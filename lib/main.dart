@@ -66,23 +66,53 @@ void main() async {
   runApp(MyApp(initialRoute: initialRoute));
 }
 
-
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final String initialRoute;
   const MyApp({super.key, required this.initialRoute});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late Box userBox;
+
+  @override
+  void initState() {
+    super.initState();
+    userBox = Hive.box('user');
+  }
+
+  ThemeMode get _themeMode {
+    final themeValue = userBox.get('theme');
+    switch (themeValue) {
+      case 1:
+        return ThemeMode.light;
+      case 2:
+        return ThemeMode.dark;
+      case 3:
+      case null:
+      default:
+        return ThemeMode.system;
+    }
+  }
+
   /// Wraps each screen with a theme-aware system UI style
-  Widget themedRoute(BuildContext context, Widget child) {
-    final brightness = WidgetsBinding.instance.window.platformBrightness;
-    final isDarkMode = brightness == Brightness.dark;
+  Widget themedRoute(BuildContext context, Widget child, {
+   bool transparent = false
+  }) {
+    final brightness = MediaQuery.of(context).platformBrightness;
+    final isDarkMode = _themeMode == ThemeMode.dark ||
+        (_themeMode == ThemeMode.system && brightness == Brightness.dark);
 
     final overlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarColor: !transparent? Theme.of(context).colorScheme.surface: Colors.transparent,
+      systemNavigationBarDividerColor: !transparent?Theme.of(context).colorScheme.surface: Colors.transparent,
       systemNavigationBarContrastEnforced: false,
       statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
-      systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      systemNavigationBarIconBrightness:
+      isDarkMode ? Brightness.light : Brightness.dark,
       statusBarBrightness: isDarkMode ? Brightness.dark : Brightness.light,
     );
 
@@ -94,34 +124,49 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      routes: {
-        '/welcome': (context) => themedRoute(context, const OnboardingScreen()),
+    // ValueListenableBuilder updates MaterialApp when the Hive value changes
+    return ValueListenableBuilder(
+      valueListenable: userBox.listenable(keys: ['theme']),
+      builder: (context, box, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: _themeMode,
+          routes: {
+            '/welcome': (context) =>
+                themedRoute(context, const OnboardingScreen(),transparent: true),
 
+            // AUTH ROUTES
+            '/signup': (context) =>
+                themedRoute(context, const SignUpScreen(),transparent: true),
+            '/login': (context) =>
+                themedRoute(context, const LoginScreen(),transparent: true),
+            '/confirm': (context) =>
+                themedRoute(context, const ConfirmAccount(),transparent: true),
+            '/forgot-password': (context) =>
+                themedRoute(context, const ForgetPassword(),transparent: true),
 
-        // AUTH ROUTES
-        '/signup': (context) => themedRoute(context, const SignUpScreen()),
-        '/login': (context) => themedRoute(context, const LoginScreen()),
-        '/confirm': (context) => themedRoute(context, const ConfirmAccount()),
-        '/forgot-password': (context) => themedRoute(context, const ForgetPassword()),
+            // CONTRACT ROUTES
+            '/contract/scan_contract': (context) =>
+                themedRoute(context, const ScanContractScreen()),
+            '/contract/sign_contract': (context) =>
+                themedRoute(context, const SignContractScreen()),
+            '/contract/create_contract': (context) =>
+                themedRoute(context, const CreateContractScreen()),
+            '/contract/view': (context) => const ContractAgreement(),
 
-        // CONTRACT ROUTES
-        '/contract/scan_contract': (context) => themedRoute(context, const ScanContractScreen()),
-        '/contract/sign_contract': (context) => themedRoute(context, const SignContractScreen()),
-        '/contract/create_contract': (context) => themedRoute(context, const CreateContractScreen()),
-        '/contract/view': (context) =>  const ContractAgreement(),
-
-
-        '/settings': (context) => themedRoute(context, const SettingsScreen()),
-        '/upgrade': (context) => themedRoute(context, const NoMoreContractsAvailable()),
-        '/home': (context) => themedRoute(context, const BottomNavBar()),
-
+            '/settings': (context) =>
+                themedRoute(context, const SettingsScreen()),
+            '/upgrade': (context) =>
+                themedRoute(context, const NoMoreContractsAvailable(),transparent: true),
+            '/home': (context) =>
+                themedRoute(context, const BottomNavBar()),
+          },
+          initialRoute: widget.initialRoute,
+        );
       },
-      initialRoute: initialRoute,
     );
   }
 }
+

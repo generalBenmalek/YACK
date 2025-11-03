@@ -22,6 +22,7 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
 
@@ -130,6 +131,7 @@ class SignUpScreenState extends State<SignUpScreen> {
                       CustomTextFormField(
                         hintText: 'Confirm password',
                         isPassword: true,
+                        controller: confirmPasswordController,
                         validator: (v) => Validator.confirmPassword(v, passwordController.value.text),
                       ),
 

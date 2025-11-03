@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CustomTextFormField extends StatelessWidget {
+class CustomTextFormField extends StatefulWidget {
   final String hintText;
   final bool isPassword;
   final Color? fillColor;
@@ -19,47 +19,58 @@ class CustomTextFormField extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  State<CustomTextFormField> createState() => _CustomTextFormFieldState();
+}
 
-    return TextFormField( // use TextFormField instead of TextField
-        controller: controller ?? TextEditingController(),
-        obscureText: isPassword,
-        textAlign: TextAlign.left,
-        maxLines: 1,
-        style: const TextStyle(
+class _CustomTextFormFieldState extends State<CustomTextFormField> {
+  bool _obscureText = true; // controls visibility
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: widget.controller ?? TextEditingController(),
+      obscureText: widget.isPassword ? _obscureText : false,
+      textAlign: TextAlign.left,
+      maxLines: 1,
+      style: const TextStyle(
+        fontWeight: FontWeight.w400,
+        fontStyle: FontStyle.normal,
+        fontSize: 14,
+      ),
+      decoration: InputDecoration(
+        hintText: widget.hintText,
+        hintStyle: const TextStyle(
           fontWeight: FontWeight.w400,
           fontStyle: FontStyle.normal,
           fontSize: 14,
+          color: Colors.grey,
         ),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(
-            fontWeight: FontWeight.w400,
-            fontStyle: FontStyle.normal,
-            fontSize: 14,
+        filled: true,
+        fillColor: widget.fillColor,
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+
+        // ✅ Show either icon or visibility toggle
+        suffixIcon: widget.isPassword
+            ? IconButton(
+          icon: Icon(
+            _obscureText ? Icons.visibility_off : Icons.visibility,
             color: Colors.grey,
           ),
-          filled: true,
-          fillColor: fillColor,
-          isDense: false,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 20,
-          ),
-          suffixIcon: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 10,
-            ),
-            child: Icon(
-              icon,
-              // color: primaryColor,
-              size: 24,
-            ),
-          ),
-        ),
-      validator: validator,
+          onPressed: () {
+            setState(() {
+              _obscureText = !_obscureText;
+            });
+          },
+        )
+            : (widget.icon != null
+            ? Padding(
+          padding:
+          const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+          child: Icon(widget.icon, size: 24),
+        )
+            : null),
+      ),
+      validator: widget.validator,
     );
   }
 }

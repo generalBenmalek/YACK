@@ -35,7 +35,7 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
             content: Form(
               key: formKey,
               child: SizedBox(
-                width: min(380, MediaQuery.of(context).size.width * 0.95),
+                width: min(480, MediaQuery.of(context).size.width * 1),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

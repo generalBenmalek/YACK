@@ -19,17 +19,15 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        title: Text('New Contract', style: theme.textTheme.titleLarge),
+        title: Text('New Contract', style: theme.textTheme.titleMedium),
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: ListView(
+          padding: const EdgeInsets.all(16.0),
           children: [
             const SizedBox(height: 20),
             Text(
@@ -145,20 +143,16 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(
+
+            // Add spacing to push buttons down
+            SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+
+            // Buttons at the bottom of ListView
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(
                       builder: (_) =>  ShareContractScreen(
                         title: "Web Design Agreement",
                         price: 250.00,
@@ -166,50 +160,49 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
                         userLastName: "Turner",
                         contractLink: "https://yack.app/contracts/WD12345",
                       )
-                    )
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Add Contract'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  )
+                  );
+                },
+                icon: const Icon(Icons.add, size: 20),
+                label: const Text('Add Contract'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              const SizedBox(height: 12.0),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ScanContractScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.grid_view_rounded, size: 22),
-                  label: const Text("Scan Contract QR"),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+            ),
+            const SizedBox(height: 12.0),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ScanContractScreen(),
                     ),
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  );
+                },
+                icon: const Icon(Icons.grid_view_rounded, size: 22),
+                label: const Text("Scan Contract QR"),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
-      ),
     );
   }
 }

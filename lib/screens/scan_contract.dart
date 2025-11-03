@@ -3,6 +3,7 @@ import 'package:yack/utils/snackBarHandler.dart';
 import '../theme/theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../widgets/secondaryActionButtonAutoLoading.dart';
 import 'acceptDeclineContract.dart';
 
 class ScanContractScreen extends StatefulWidget {
@@ -29,13 +30,21 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
     });
   }
 
+  void _stopScanning() {
+    scannerController?.stop();
+    scannerController?.dispose();
+    setState(() {
+      _isScanning = false;
+      scannerController = null;
+    });
+  }
+
   void _onQRScanned(String code) {
     scannerController?.stop();
 
     SnackBarHandler.showSuccess(context, 'Contract scanned: $code');
-    
-    // simulation
 
+    // simulation
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) Navigator.of(context).pop();
 
@@ -68,264 +77,252 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('Scan', style: Theme.of(context).textTheme.titleLarge),
-          // leading: _isScanning ? IconButton(
-          //   icon: const Icon(Icons.arrow_back),
-          //   onPressed: () => Navigator.of(context).pop(),
-          // ): null,
-
+        title: Text('Scan', style: Theme.of(context).textTheme.titleMedium),
       ),
       body: _isScanning
           ? Stack(
-              children: [
-                MobileScanner(
-                  controller: scannerController,
-                  onDetect: (capture) {
-                    final List<Barcode> barcodes = capture.barcodes;
-                    if (barcodes.isNotEmpty) {
-                      final String? code = barcodes.first.rawValue;
-                      if (code != null) _onQRScanned(code);
-                    }
-                  },
-                ),
+        children: [
+          MobileScanner(
+            controller: scannerController,
+            onDetect: (capture) {
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final String? code = barcodes.first.rawValue;
+                if (code != null) _onQRScanned(code);
+              }
+            },
+          ),
 
-                Center(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    height: MediaQuery.of(context).size.width * 0.8,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.yackGreen, width: 4),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          top: -2,
-                          left: -2,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              border: Border(
-                                top: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                                left: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                              ),
-                            ),
+          Center(
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: MediaQuery.of(context).size.width * 0.8,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.yackGreen, width: 4),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -2,
+                    left: -2,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
+                          ),
+                          left: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
                           ),
                         ),
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              border: Border(
-                                top: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                                right: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -2,
-                          left: -2,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                                left: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -2,
-                          right: -2,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                                right: BorderSide(
-                                  color: AppTheme.yackGreen,
-                                  width: 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-
-                Positioned(
-                  bottom: 40,
-                  left: 20,
-                  right: 20,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Place the QR code inside the frame',
-                      style: TextStyle(
-                        color: AppTheme.yackWhite,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
+                          ),
+                          right: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
-                ),
-              ],
-            )
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 200,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              color: AppTheme.yackGreenLight,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.yackGreen.withOpacity(0.2),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.qr_code_scanner,
-                              size: 120,
-                              color: AppTheme.yackGreen,
-                            ),
+                  Positioned(
+                    bottom: -2,
+                    left: -2,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
                           ),
-                          const SizedBox(height: 40),
-
-                          Text(
-                            'Scan Contract QR Code',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
+                          left: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
                           ),
-                          const SizedBox(height: 16),
-
-                          Text(
-                            'Point your camera at the QR code to open the contract.',
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: AppTheme.yackGray,
-                                  height: 1.5,
-                                ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 32),
-
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardTheme.color,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: AppTheme.yackDivider,
-                                width: 1,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                _buildInstructionRow(
-                                  icon: Icons.camera_alt,
-                                  text: 'Use good lighting',
-                                ),
-                                const SizedBox(height: 16),
-                                _buildInstructionRow(
-                                  icon: Icons.center_focus_strong,
-                                  text: 'Keep the QR code centered and steady',
-                                ),
-                                const SizedBox(height: 16),
-                                _buildInstructionRow(
-                                  icon: Icons.check_circle_outline,
-                                  text: 'Scanning happens automatically',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _startScanning,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.yackGreen,
-                          foregroundColor: AppTheme.yackWhite,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.qr_code_scanner,
-                              color: AppTheme.yackWhite,
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Start Scanning',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Positioned(
+                    bottom: -2,
+                    right: -2,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
+                          ),
+                          right: BorderSide(
+                            color: AppTheme.yackGreen,
+                            width: 8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+
+          Positioned(
+            bottom: 120,
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Place the QR code inside the frame',
+                style: TextStyle(
+                  color: AppTheme.yackWhite,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+
+          // Stop Scanning Button
+          Positioned(
+              bottom: 40,
+              left: 20,
+              right: 20,
+              child: SecondaryActionButtonAutoReload(action: 'Stop Scanning', onClick: _stopScanning)
+
+          ),        ],
+      )
+          : Center(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: AppTheme.yackGreenLight,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.yackGreen.withOpacity(0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.qr_code_scanner,
+                    size: 120,
+                    color: AppTheme.yackGreen,
+                  ),
+                ),
+                const SizedBox(height: 40),
+
+                Text(
+                  'Scan Contract QR Code',
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+
+                Text(
+                  'Point your camera at the QR code to open the contract.',
+                  style: Theme.of(context).textTheme.bodyLarge
+                      ?.copyWith(
+                    color: AppTheme.yackGray,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.yackDivider,
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildInstructionRow(
+                        icon: Icons.camera_alt,
+                        text: 'Use good lighting',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInstructionRow(
+                        icon: Icons.center_focus_strong,
+                        text: 'Keep the QR code centered and steady',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInstructionRow(
+                        icon: Icons.check_circle_outline,
+                        text: 'Scanning happens automatically',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Floating Action Button in ListView
+                FloatingActionButton.extended(
+                  onPressed: _startScanning,
+                  backgroundColor: AppTheme.yackGreen,
+                  foregroundColor: AppTheme.yackWhite,
+                  elevation: 4,
+                  icon: Icon(
+                    Icons.qr_code_scanner,
+                    color: AppTheme.yackWhite,
+                  ),
+                  label: const Text(
+                    'Start Scanning',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 

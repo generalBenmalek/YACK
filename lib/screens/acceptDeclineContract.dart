@@ -29,10 +29,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Contract Review',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: color.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
+          style: theme.textTheme.titleMedium,
         ),
         backgroundColor: Colors.transparent,
         centerTitle: true,
@@ -85,7 +82,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                       child: Text(
                         title,
                         textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineSmall?.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith(
                           color: color.onSurface,
                           fontWeight: FontWeight.bold,
                         ),
@@ -99,7 +96,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                         child: Text(
                           description,
                           textAlign: TextAlign.justify,
-                          style: theme.textTheme.bodyMedium?.copyWith(
+                          style: theme.textTheme.bodySmall?.copyWith(
                             color: color.onSurface.withOpacity(0.85),
                             height: 1.5,
                           ),

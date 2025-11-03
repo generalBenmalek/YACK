@@ -36,11 +36,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
       appBar: AppBar(
         title: Text(
           'Contract Agreement',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: colors.onSurface,
-          ),
+          style: theme.textTheme.titleMedium,
         ),
         centerTitle: true,
         backgroundColor: colors.surface,
@@ -283,7 +279,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Column(
+    return SafeArea(child: Column(
       children: [
         Container(
           decoration: BoxDecoration(
@@ -305,7 +301,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
           ),
         ),
       ],
-    );
+    ));
   }
 
   Future<void> _pickImageFromCamera() async {
@@ -383,12 +379,12 @@ class _ContractAgreementState extends State<ContractAgreement> {
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(12),
+                      padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: colors.primaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.assignment, color: colors.onPrimary, size: 28),
+                      child: Icon(Icons.assignment, color: colors.onPrimary, size: 20),
                     ),
                     SizedBox(width: 16),
                     Expanded(
@@ -397,37 +393,26 @@ class _ContractAgreementState extends State<ContractAgreement> {
                         children: [
                           Text(
                             'Contract Details',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: colors.onSurface,
-                            ),
+                            style: theme.textTheme.titleMedium,
                           ),
                           SizedBox(height: 4),
                           Text(
                             'Active • ${DateTime.now().toString().split(' ')[0]}',
-                            style: TextStyle(
-                              color: colors.onSurface.withOpacity(0.6),
-                              fontSize: 12,
-                            ),
+                            style: theme.textTheme.bodyMedium
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 24),
+                SizedBox(height: 12),
                 _buildDetailRow('Contract Name', contract_name, Icons.badge),
                 _buildDetailRow('Price', '\$$price', Icons.attach_money),
                 _buildDetailRow('Client', 'Yacine', Icons.person),
-                SizedBox(height: 20),
+                SizedBox(height: 10),
                 Text(
                   'Description',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: colors.onSurface,
-                    fontSize: 16,
-                  ),
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 8),
                 Text(
@@ -466,8 +451,8 @@ class _ContractAgreementState extends State<ContractAgreement> {
     final colors = theme.colorScheme;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(8),

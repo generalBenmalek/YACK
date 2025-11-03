@@ -94,11 +94,8 @@ class ForgetPasswordState extends State<ForgetPassword> {
                         },
                       ),
                       const SizedBox(height: 25),
-                      SizedBox(
-                        width: double.infinity,
-                        height: min(screenHeight * 0.08, 55),
-                        child: PrimaryActionButtonAutoReload(action: 'Reset', onClick: _resetPassword)
-                      ),
+                      PrimaryActionButtonAutoReload(action: 'Reset', onClick: _resetPassword)
+
                     ],
                   ),
                 ),

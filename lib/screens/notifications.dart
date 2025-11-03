@@ -15,7 +15,7 @@ class NotificationsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Notifications"),
+        title: Text("Notifications",style: theme.textTheme.titleMedium),
         backgroundColor: Colors.transparent,
         // foregroundColor: Colors.white,
         // elevation: 1,
@@ -38,13 +38,12 @@ class NotificationsPage extends StatelessWidget {
               leading: Icon(n.icon, color: color.primary),
               title: Text(
                 n.title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: color.onSurface,
-                ),
+                style: theme.textTheme.titleSmall,
               ),
               subtitle: Text(
                 n.body,
+                style: theme.textTheme.bodySmall,
+
                 // style: const TextStyle(color: Colors.white70),
               ),
               trailing: Text(

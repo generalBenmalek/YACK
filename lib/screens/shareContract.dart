@@ -31,10 +31,7 @@ class ShareContractScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           "Share Contract",
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: color.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
+          style: theme.textTheme.titleMedium,
         ),
         backgroundColor: Colors.transparent,
         centerTitle: true,
