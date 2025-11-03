@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yack/screens/contract_agr/nomore_contracts.dart';
 import 'package:yack/utils/passwordPopUp.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -91,7 +92,13 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: 'Notifications',
                     subtitle: 'Customize notification settings',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NoMoreContractsAvailable(),
+                        ),
+                      );                    },
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(

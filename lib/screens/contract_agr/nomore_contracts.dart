@@ -21,7 +21,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
     ));
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -39,7 +39,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                       child: Icon(
                         Icons.close,
                         size: 24,
-                        color: colorScheme.onBackground,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),

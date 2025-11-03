@@ -32,7 +32,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
     final colors = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Contract Agreement',
