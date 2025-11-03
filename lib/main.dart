@@ -75,11 +75,13 @@ class MyApp extends StatelessWidget {
   Widget themedRoute(BuildContext context, Widget child) {
     final brightness = WidgetsBinding.instance.window.platformBrightness;
     final isDarkMode = brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
 
     final overlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarColor: theme.colorScheme.surface,
+      systemNavigationBarDividerColor: theme.colorScheme.surface,
       systemNavigationBarContrastEnforced: false,
       statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
       systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
