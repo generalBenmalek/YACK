@@ -7,6 +7,7 @@ import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 import '../../utils/snackBarHandler.dart';
 import '../../widgets/primaryActionButton.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class ConfirmAccount extends StatefulWidget {
   const ConfirmAccount({super.key});
@@ -27,7 +28,8 @@ class ConfirmAccountState extends State<ConfirmAccount> {
 
       if (refreshedUser != null && refreshedUser.emailVerified) {
         if (mounted) {
-          SnackBarHandler.showSuccess(context, "Account Confirmed!");
+          SnackBarHandler.showSuccess(
+              context, TranslationHandler.get('account_confirmed'));
 
 
           // // Step 2: Save additional info in Firestore
@@ -42,12 +44,12 @@ class ConfirmAccountState extends State<ConfirmAccount> {
           Navigator.pushReplacementNamed(context, '/home');
         }
       } else {
-        SnackBarHandler.showWarning(context, "Email not verified yet.");
+        SnackBarHandler.showWarning(
+            context, TranslationHandler.get('email_not_verified'));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error verifying: $e")),
-      );
+      SnackBarHandler.showError(
+          context, TranslationHandler.get('verification_error'));
     } finally {
       setState(() => isLoading = false);
     }
@@ -56,9 +58,11 @@ class ConfirmAccountState extends State<ConfirmAccount> {
   Future<void> resend() async {
     try {
       await user?.sendEmailVerification();
-      SnackBarHandler.showMessage(context, "Verification email sent again.");
+      SnackBarHandler.showMessage(
+          context, TranslationHandler.get('verification_email_sent'));
     } catch (e) {
-      SnackBarHandler.showError(context, "Failed to resend email: $e");
+      SnackBarHandler.showError(
+          context, TranslationHandler.get('resend_failed'));
     }
   }
 
@@ -74,7 +78,8 @@ class ConfirmAccountState extends State<ConfirmAccount> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Yack', style: theme.textTheme.titleMedium),
+              Text(TranslationHandler.get('app_name'),
+                  style: theme.textTheme.titleMedium),
               SizedBox(
                 width: PlatformInfo.isDesktop
                     ? min(400, screenWidth * 0.9)
@@ -83,24 +88,26 @@ class ConfirmAccountState extends State<ConfirmAccount> {
                   spacing: 10,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const TitleWidget(text: 'Confirm Account'),
-                    const Text(
-                      "We have sent a verification email. Please check your inbox (and spam folder) before continuing.",
+                    TitleWidget(text: TranslationHandler.get('confirm_account')),
+                    Text(
+                      TranslationHandler.get('confirm_account_message'),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 30),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Text("Did not receive the email? "),
+                        Text(TranslationHandler.get('did_not_receive_email')),
                         HrefWidget(
-                          text: 'Resend',
+                          text: TranslationHandler.get('resend'),
                           onClick: resend,
                         ),
                       ],
                     ),
                     PrimaryActionButton(
-                      action: isLoading ? 'Checking...' : 'Check',
+                      action: isLoading
+                          ? TranslationHandler.get('checking')
+                          : TranslationHandler.get('check'),
                       onClick: isLoading ? () {} : verify,
                     ),
                   ],
@@ -109,9 +116,9 @@ class ConfirmAccountState extends State<ConfirmAccount> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account? "),
+                  Text(TranslationHandler.get('dont_have_account')),
                   HrefWidget(
-                    text: 'Sign Up',
+                    text: TranslationHandler.get('sign_up'),
                     onClick: () {
                       Navigator.pushNamed(context, '/signup');
                     },

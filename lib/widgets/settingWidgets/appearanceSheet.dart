@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:hive/hive.dart';
+import 'package:yack/utils/translation_handler.dart';
 import 'package:yack/widgets/settingWidgets/settingsSheet.dart';
 
 import '../../utils/snackBarHandler.dart';
@@ -37,32 +38,32 @@ class _AppearanceSettingsSheetState extends State<AppearanceSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     return SettingsSheet<String>(
-      title: 'Appearance Settings',
+      title: TranslationHandler.get('appearance_settings'),
       options: [
         SettingOption(
-          title: 'Light',
+          title: TranslationHandler.get('light'),
           type: SettingType.radioTile,
           value: 'Light',
           groupValue: selectedTheme,
           onChanged: (v) => setState(() => selectedTheme = v),
         ),
         SettingOption(
-          title: 'Dark',
+          title: TranslationHandler.get('dark'),
           type: SettingType.radioTile,
           value: 'Dark',
           groupValue: selectedTheme,
           onChanged: (v) => setState(() => selectedTheme = v),
         ),
         SettingOption(
-          title: 'System Default',
-          subtitle: 'Follow system settings',
+          title: TranslationHandler.get('system_default'),
+          subtitle: TranslationHandler.get('system_default_description'),
           type: SettingType.radioTile,
           value: 'System',
           groupValue: selectedTheme,
           onChanged: (v) => setState(() => selectedTheme = v),
         ),
       ],
-      applyLabel: 'Apply',
+      applyLabel: TranslationHandler.get('apply'),
       onApply: () {
         final box = Hive.box('user');
         final value = selectedTheme == 'Light'
@@ -74,7 +75,7 @@ class _AppearanceSettingsSheetState extends State<AppearanceSettingsSheet> {
 
         SnackBarHandler.showSuccess(
           context,
-          'Theme updated!',
+          TranslationHandler.get('theme_updated'),
         );
         Navigator.pop(context);
       },

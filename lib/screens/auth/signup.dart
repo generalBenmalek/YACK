@@ -9,6 +9,7 @@ import 'package:yack/widgets/inputFormWidget.dart';
 import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -51,7 +52,8 @@ class SignUpScreenState extends State<SignUpScreen> {
       // Step 4: Go to confirmation screen
       if (mounted) Navigator.pushNamed(context, '/confirm');
     } on FirebaseAuthException catch (e) {
-      SnackBarHandler.showError(context, "Error creating account");
+      SnackBarHandler.showError(
+          context, TranslationHandler.get('signup_failed'));
     }
   }
 
@@ -76,7 +78,8 @@ class SignUpScreenState extends State<SignUpScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Yack', style: theme.textTheme.titleMedium),
+              Text(TranslationHandler.get('app_name'),
+                  style: theme.textTheme.titleMedium),
               const SizedBox(height: 30),
               SizedBox(
                 width: PlatformInfo.isDesktop
@@ -87,12 +90,12 @@ class SignUpScreenState extends State<SignUpScreen> {
                   child: Column(
                     spacing: 10,
                     children: [
-                      const TitleWidget(text: 'Welcome'),
+                      TitleWidget(text: TranslationHandler.get('welcome')),
                       const SizedBox(height: 30),
 
                       // Email
                       CustomTextFormField(
-                        hintText: 'Email',
+                        hintText: TranslationHandler.get('email'),
                         controller: emailController,
                         validator: Validator.email,
                       ),
@@ -103,16 +106,18 @@ class SignUpScreenState extends State<SignUpScreen> {
                         children: [
                           Expanded(
                             child: CustomTextFormField(
-                              hintText: 'First Name',
+                              hintText: TranslationHandler.get('first_name'),
                               controller: firstNameController,
-                              validator: (v) => Validator.name(v, fieldName: 'First name'),
+                              validator: (v) =>
+                                  Validator.name(v, fieldName: 'first_name'),
                             ),
                           ),
                           Expanded(
                             child: CustomTextFormField(
-                              hintText: 'Last Name',
+                              hintText: TranslationHandler.get('last_name'),
                               controller: lastNameController,
-                              validator: (v) => Validator.name(v, fieldName: 'Last name'),
+                              validator: (v) =>
+                                  Validator.name(v, fieldName: 'last_name'),
                             ),
                           ),
                         ],
@@ -120,7 +125,7 @@ class SignUpScreenState extends State<SignUpScreen> {
 
                       // Password
                       CustomTextFormField(
-                        hintText: 'Password',
+                        hintText: TranslationHandler.get('password'),
                         isPassword: true,
                         controller: passwordController,
                         validator: (v) => Validator.password(v, minLength: 8),
@@ -128,7 +133,7 @@ class SignUpScreenState extends State<SignUpScreen> {
 
                       // Password Confirm
                       CustomTextFormField(
-                        hintText: 'Confirm password',
+                        hintText: TranslationHandler.get('confirm_password'),
                         isPassword: true,
                         controller: confirmPasswordController,
                         validator: (v) => Validator.confirmPassword(v, passwordController.value.text),
@@ -137,7 +142,7 @@ class SignUpScreenState extends State<SignUpScreen> {
 
                       // Signup button with auto-loading
                       PrimaryActionButtonAutoReload(
-                        action: 'Sign Up',
+                        action: TranslationHandler.get('sign_up'),
                         onClick: signUp,
                       ),
                     ],
@@ -148,10 +153,10 @@ class SignUpScreenState extends State<SignUpScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Already have an account?"),
+                  Text(TranslationHandler.get('already_have_account')),
                   const SizedBox(width: 5),
                   HrefWidget(
-                    text: 'Login',
+                    text: TranslationHandler.get('login'),
                     onClick: () => Navigator.pushNamed(context, '/login'),
                   ),
                 ],

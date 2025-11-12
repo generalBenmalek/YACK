@@ -1,5 +1,6 @@
 import '../../utils/snackBarHandler.dart';
 import 'package:flutter/material.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 
 class SettingsItem extends StatelessWidget {
@@ -22,7 +23,7 @@ class SettingsItem extends StatelessWidget {
 
     void futureFeature() {
       SnackBarHandler.showMessage(
-          context, 'This feature is under construction');
+          context, TranslationHandler.get('under_construction'));
     }
 
     return Material(
