@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import 'package:yack/utils/platform.dart';
 import 'package:yack/utils/snackBarHandler.dart';
+import 'package:yack/utils/translation_handler.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 import 'package:yack/utils/validator.dart';
@@ -48,7 +49,8 @@ class LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
-      SnackBarHandler.showError(context, 'Login Failed');
+      SnackBarHandler.showError(
+          context, TranslationHandler.get('login_failed'));
 
     }
   }
@@ -65,7 +67,8 @@ class LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Yack', style: theme.textTheme.titleMedium),
+              Text(TranslationHandler.get('app_name'),
+                  style: theme.textTheme.titleMedium),
               SizedBox(
                 width: PlatformInfo.isDesktop
                     ? min(400, screenWidth * 0.9)
@@ -75,15 +78,16 @@ class LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     spacing: 10,
                     children: [
-                      TitleWidget(text: 'Welcome Back'),
+                      TitleWidget(
+                          text: TranslationHandler.get('welcome_back')),
                       const SizedBox(height: 30),
                       CustomTextFormField(
-                        hintText: 'Email',
+                        hintText: TranslationHandler.get('email'),
                         controller: emailController,
                         validator: Validator.email,
                       ),
                       CustomTextFormField(
-                        hintText: 'Password',
+                        hintText: TranslationHandler.get('password'),
                         isPassword: true,
                         controller: passwordController,
                         validator: (v) => Validator.length(v,min: 8),
@@ -92,7 +96,7 @@ class LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           HrefWidget(
-                            text: 'Forget Password',
+                            text: TranslationHandler.get('forget_password'),
                             onClick: () {
                               Navigator.pushNamed(context, '/forgot-password');
                             },
@@ -101,7 +105,7 @@ class LoginScreenState extends State<LoginScreen> {
                       ),
                       PrimaryActionButtonAutoReload(
                         onClick: login,
-                        action: 'Login',
+                        action: TranslationHandler.get('login'),
                       ),
                     ],
                   ),
@@ -111,9 +115,9 @@ class LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 spacing: 5,
                 children: [
-                  const Text("Don't have an account?"),
+                  Text(TranslationHandler.get('dont_have_account')),
                   HrefWidget(
-                    text: 'Sign Up',
+                    text: TranslationHandler.get('sign_up'),
                     onClick: () {
                       Navigator.pushNamed(context, '/signup');
                     },

@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 import 'acceptDeclineContract.dart';
 
@@ -30,7 +31,7 @@ class ShareContractScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Share Contract",
+          TranslationHandler.get('share_contract'),
           style: theme.textTheme.titleMedium,
         ),
         backgroundColor: Colors.transparent,
@@ -72,7 +73,7 @@ class ShareContractScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      "Scan this QR to access the contract",
+                      TranslationHandler.get('scan_contract_prompt'),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: color.onSurface.withOpacity(0.7),
                       ),
@@ -83,7 +84,7 @@ class ShareContractScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     // Alternative link field
                     Text(
-                      "Alternative Access Link",
+                      TranslationHandler.get('alternative_link'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: color.primary,
                         fontWeight: FontWeight.bold,
@@ -104,7 +105,7 @@ class ShareContractScreen extends StatelessWidget {
                             );
                             SnackBarHandler.showSuccess(
                               context,
-                              "Link copied to clipboard!",
+                              TranslationHandler.get('link_copied'),
                             );
                           },
                         ),
@@ -124,7 +125,7 @@ class ShareContractScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      "Only share this link or QR with the person you intend to sign with.",
+                      TranslationHandler.get('share_warning'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: color.error,
                         fontWeight: FontWeight.w500,
@@ -139,7 +140,7 @@ class ShareContractScreen extends StatelessWidget {
             const SizedBox(height: 30),
             // Proceed Button
             PrimaryActionButtonAutoReload(
-              action: "Proceed to Sign",
+              action: TranslationHandler.get('proceed_to_sign'),
               onClick: () async {
                 // Navigate to Accept/Decline screen for confirmation
                 await Navigator.push(

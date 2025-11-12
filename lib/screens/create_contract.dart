@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yack/screens/scan_contract.dart';
 import 'package:yack/screens/shareContract.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class CreateContractScreen extends StatefulWidget {
   const CreateContractScreen({super.key});
@@ -19,7 +20,8 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        title: Text('New Contract', style: theme.textTheme.titleMedium),
+        title: Text(TranslationHandler.get('new_contract'),
+            style: theme.textTheme.titleMedium),
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
@@ -31,7 +33,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
           children: [
             const SizedBox(height: 20),
             Text(
-              'Title',
+              TranslationHandler.get('title'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w300,
@@ -44,7 +46,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
               maxLines: 1,
               textAlign: TextAlign.start,
               decoration: InputDecoration(
-                hintText: 'What is this agreement title?',
+                hintText: TranslationHandler.get('title_hint'),
                 filled: true,
                 fillColor: theme.colorScheme.surface,
                 border: OutlineInputBorder(
@@ -65,7 +67,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
             const SizedBox(height: 24),
 
             Text(
-              'Description',
+              TranslationHandler.get('description'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w300,
@@ -77,7 +79,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
               maxLines: 5,
               textAlign: TextAlign.start,
               decoration: InputDecoration(
-                hintText: 'What is this agreement about?',
+                hintText: TranslationHandler.get('description_hint'),
                 filled: true,
                 fillColor: theme.colorScheme.surface,
                 border: OutlineInputBorder(
@@ -97,7 +99,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Price',
+              TranslationHandler.get('price'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w300,
@@ -110,7 +112,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
                 decimal: true,
               ),
               decoration: InputDecoration(
-                hintText: 'Contract Amount',
+                hintText: TranslationHandler.get('price_hint'),
                 filled: true,
                 fillColor: theme.colorScheme.surface,
                 prefixIcon: Padding(
@@ -164,7 +166,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
                   );
                 },
                 icon: const Icon(Icons.add, size: 20),
-                label: const Text('Add Contract'),
+                label: Text(TranslationHandler.get('add_contract')),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   textStyle: const TextStyle(
@@ -187,7 +189,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
                   );
                 },
                 icon: const Icon(Icons.grid_view_rounded, size: 22),
-                label: const Text("Scan Contract QR"),
+                label: Text(TranslationHandler.get('scan_contract_qr')),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   textStyle: const TextStyle(

@@ -1,5 +1,6 @@
 import 'package:yack/widgets/settingWidgets/settingsSheet.dart';
 import 'package:flutter/material.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class NotificationSettingsSheet extends StatefulWidget {
   const NotificationSettingsSheet({super.key});
@@ -18,32 +19,32 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     return SettingsSheet<bool>(
-      title: 'Notification Settings',
+      title: TranslationHandler.get('notification_settings'),
       options: [
         SettingOption(
-          title: 'Push Notifications',
-          subtitle: 'Receive notifications on your device',
+          title: TranslationHandler.get('push_notifications'),
+          subtitle: TranslationHandler.get('push_notifications_desc'),
           type: SettingType.switchTile,
           value: pushNotifications,
           onChanged: (v) => setState(() => pushNotifications = v),
         ),
         SettingOption(
-          title: 'Email Notifications',
-          subtitle: 'Receive notifications via email',
+          title: TranslationHandler.get('email_notifications'),
+          subtitle: TranslationHandler.get('email_notifications_desc'),
           type: SettingType.switchTile,
           value: emailNotifications,
           onChanged: (v) => setState(() => emailNotifications = v),
         ),
         SettingOption(
-          title: 'Contract Updates',
-          subtitle: 'Notify when contracts are updated',
+          title: TranslationHandler.get('contract_updates'),
+          subtitle: TranslationHandler.get('contract_updates_desc'),
           type: SettingType.switchTile,
           value: contractUpdates,
           onChanged: (v) => setState(() => contractUpdates = v),
         ),
         SettingOption(
-          title: 'Payment Reminders',
-          subtitle: 'Remind about upcoming payments',
+          title: TranslationHandler.get('payment_reminders'),
+          subtitle: TranslationHandler.get('payment_reminders_desc'),
           type: SettingType.switchTile,
           value: paymentReminders,
           onChanged: (v) => setState(() => paymentReminders = v),

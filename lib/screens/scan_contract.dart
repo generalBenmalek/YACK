@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import '../theme/theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 import '../widgets/secondaryActionButtonAutoLoading.dart';
 import 'acceptDeclineContract.dart';
@@ -42,7 +43,8 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
   void _onQRScanned(String code) {
     scannerController?.stop();
 
-    SnackBarHandler.showSuccess(context, 'Contract scanned: $code');
+    SnackBarHandler.showSuccess(
+        context, TranslationHandler.resolve('contract_scanned', params: {'code': code}));
 
     // simulation
     Future.delayed(const Duration(seconds: 2), () {
@@ -77,7 +79,8 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('Scan', style: Theme.of(context).textTheme.titleMedium),
+        title: Text(TranslationHandler.get('scan'),
+            style: Theme.of(context).textTheme.titleMedium),
       ),
       body: _isScanning
           ? Stack(
@@ -199,7 +202,7 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Place the QR code inside the frame',
+                TranslationHandler.get('place_code_in_frame'),
                 style: TextStyle(
                   color: AppTheme.yackWhite,
                   fontSize: 16,
@@ -215,7 +218,9 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
               bottom: 40,
               left: 20,
               right: 20,
-              child: SecondaryActionButtonAutoReload(action: 'Stop Scanning', onClick: _stopScanning)
+              child: SecondaryActionButtonAutoReload(
+                  action: TranslationHandler.get('stop_scanning'),
+                  onClick: _stopScanning)
 
           ),        ],
       )
@@ -250,7 +255,7 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
                 const SizedBox(height: 40),
 
                 Text(
-                  'Scan Contract QR Code',
+                  TranslationHandler.get('scan_contract_qr_code'),
                   style: Theme.of(context).textTheme.titleLarge
                       ?.copyWith(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
@@ -258,7 +263,7 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
                 const SizedBox(height: 16),
 
                 Text(
-                  'Point your camera at the QR code to open the contract.',
+                  TranslationHandler.get('scan_instructions'),
                   style: Theme.of(context).textTheme.bodyLarge
                       ?.copyWith(
                     color: AppTheme.yackGray,
@@ -282,17 +287,17 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
                     children: [
                       _buildInstructionRow(
                         icon: Icons.camera_alt,
-                        text: 'Use good lighting',
+                        text: TranslationHandler.get('instruction_good_lighting'),
                       ),
                       const SizedBox(height: 16),
                       _buildInstructionRow(
                         icon: Icons.center_focus_strong,
-                        text: 'Keep the QR code centered and steady',
+                        text: TranslationHandler.get('instruction_center_code'),
                       ),
                       const SizedBox(height: 16),
                       _buildInstructionRow(
                         icon: Icons.check_circle_outline,
-                        text: 'Scanning happens automatically',
+                        text: TranslationHandler.get('instruction_auto_scan'),
                       ),
                     ],
                   ),
@@ -309,9 +314,9 @@ Payment will be processed upon acceptance of this contract. Final deliverables w
                     Icons.qr_code_scanner,
                     color: AppTheme.yackWhite,
                   ),
-                  label: const Text(
-                    'Start Scanning',
-                    style: TextStyle(
+                  label: Text(
+                    TranslationHandler.get('start_scanning'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),

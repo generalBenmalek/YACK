@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/widgets/secondaryActionButtonAutoLoading.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class AcceptDeclineContractScreen extends StatelessWidget {
   final String title;
   final double price;
-  final String description;
+  final String? description;
   final String userFirstName;
   final String userLastName;
 
@@ -16,8 +17,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
     required this.price,
     required this.userFirstName,
     required this.userLastName,
-    this.description =
-    "Please review the contract details carefully before making a decision.",
+    this.description,
   });
 
   @override
@@ -25,10 +25,13 @@ class AcceptDeclineContractScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final color = theme.colorScheme;
 
-    return Scaffold(
+    return ValueListenableBuilder<String>(
+      valueListenable: TranslationHandler.languageNotifier,
+      builder: (context, language, _) {
+        return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Contract Review',
+          TranslationHandler.get('contract_review'),
           style: theme.textTheme.titleMedium,
         ),
         backgroundColor: Colors.transparent,
@@ -67,7 +70,8 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                         const Icon(Icons.person, size: 22),
                         const SizedBox(width: 8),
                         Text(
-                          "From: $userFirstName $userLastName",
+                          TranslationHandler.resolve('from_user',
+                              params: {'name': '$userFirstName $userLastName'}),
                           style: theme.textTheme.titleSmall?.copyWith(
                             color: color.onSurface.withOpacity(0.8),
                             fontWeight: FontWeight.w600,
@@ -94,7 +98,8 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                     Expanded(
                       child: SingleChildScrollView(
                         child: Text(
-                          description,
+                          description ??
+                              TranslationHandler.get('accept_decline_description'),
                           textAlign: TextAlign.justify,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: color.onSurface.withOpacity(0.85),
@@ -109,7 +114,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
-                        "Price: \$${price.toStringAsFixed(2)}",
+                      "${TranslationHandler.get('price_label')}: \$${price.toStringAsFixed(2)}",
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: color.primary,
                           fontWeight: FontWeight.bold,
@@ -141,7 +146,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      "Once accepted, this contract becomes legally binding. Please ensure all terms are correct.",
+                      TranslationHandler.get('binding_warning'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: color.error,
                         fontWeight: FontWeight.w500,
@@ -155,12 +160,12 @@ class AcceptDeclineContractScreen extends StatelessWidget {
 
             // Accept / Decline buttons
             PrimaryActionButtonAutoReload(
-              action: "Accept Contract",
+              action: TranslationHandler.get('accept_contract'),
               onClick: () async {
                 await Future.delayed(const Duration(seconds: 1));
                 SnackBarHandler.showSuccess(
                   context,
-                  "You have accepted the contract!",
+                  TranslationHandler.get('contract_accepted'),
                 );
                 Navigator.pop(context, true);
               },
@@ -168,11 +173,11 @@ class AcceptDeclineContractScreen extends StatelessWidget {
             const SizedBox(height: 5),
 
             SecondaryActionButtonAutoReload(
-              action: 'Decline Contract',
+              action: TranslationHandler.get('decline_contract'),
               onClick: () {
                 SnackBarHandler.showError(
                   context,
-                  "You declined the contract.",
+                  TranslationHandler.get('contract_declined'),
                 );
                 Navigator.pop(context, false);
               },
@@ -180,6 +185,8 @@ class AcceptDeclineContractScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }
