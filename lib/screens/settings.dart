@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:yack/screens/contract_agr/nomore_contracts.dart';
 import 'package:yack/utils/passwordPopUp.dart';
 import 'package:yack/utils/translation_handler.dart';
 import 'package:yack/widgets/secondaryActionButtonAutoLoading.dart';
@@ -234,10 +233,10 @@ class SettingsScreen extends StatelessWidget {
                         color: theme.colorScheme.surfaceContainerHighest,
                         shape: BoxShape.circle,
                       ),
-                      child: const Text(
-                        '🌐',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 26),
+                      child: Icon(
+                        Icons.language,
+                        size: 28,
+                        color: theme.iconTheme.color,
                       ),
                     ),
                     title: TranslationHandler.get('language'),

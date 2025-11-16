@@ -27,7 +27,11 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: TextFormField(
+      // make it always LTR
+      textDirection: TextDirection.ltr,
       controller: widget.controller ?? TextEditingController(),
       obscureText: widget.isPassword ? _obscureText : false,
       textAlign: TextAlign.left,
@@ -49,7 +53,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
         fillColor: widget.fillColor,
         contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
 
-        // ✅ Show either icon or visibility toggle
+        //  Show either icon or visibility toggle
         suffixIcon: widget.isPassword
             ? IconButton(
           icon: Icon(
@@ -71,6 +75,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
             : null),
       ),
       validator: widget.validator,
+    )
     );
   }
 }

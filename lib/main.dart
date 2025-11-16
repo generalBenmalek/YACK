@@ -132,11 +132,7 @@ class _MyAppState extends State<MyApp> {
     return ValueListenableBuilder(
       valueListenable: userBox.listenable(keys: ['theme', 'language']),
       builder: (context, box, _) {
-        return ValueListenableBuilder<String>(
-          valueListenable: TranslationHandler.languageNotifier,
-          builder: (context, languageCode, __) {
             return MaterialApp(
-              key: ValueKey(languageCode),
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
@@ -181,8 +177,6 @@ class _MyAppState extends State<MyApp> {
           initialRoute: widget.initialRoute,
             );
           },
-        );
-      },
     );
   }
 }

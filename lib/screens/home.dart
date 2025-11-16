@@ -88,7 +88,7 @@ class ContractsScreen extends StatelessWidget {
           ],),
         Container(
           margin: EdgeInsetsGeometry.all(10),
-          alignment: Alignment.bottomRight,
+          alignment: TranslationHandler.isRTL ? Alignment.bottomLeft: Alignment.bottomRight,
           child:FloatingActionButton(
             onPressed: () {
               Navigator.push(

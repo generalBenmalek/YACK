@@ -47,7 +47,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
       const SettingsScreen(),
     ];
 
-    return TranslationHandler.isRTL ? screens.reversed.toList() : screens;
+    return screens;
   }
 
   List<PersistentBottomNavBarItem> _navBarsItems(BuildContext context) {
@@ -56,31 +56,27 @@ class _BottomNavBarState extends State<BottomNavBar> {
     final items = [
       PersistentBottomNavBarItem(
         icon: Icon(Icons.home, size: iconSize),
-        title: TranslationHandler.get('contracts'),
         activeColorPrimary: colorScheme.primary,
         inactiveColorPrimary: colorScheme.onSurfaceVariant,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(Icons.qr_code_scanner, size: iconSize),
-        title: TranslationHandler.get('scan_contract_qr'),
         activeColorPrimary: Colors.tealAccent,
         inactiveColorPrimary: colorScheme.onSurfaceVariant,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(Icons.notifications, size: iconSize + 2),
-        title: TranslationHandler.get('notifications_title'),
         activeColorPrimary: Colors.orangeAccent,
         inactiveColorPrimary: colorScheme.onSurfaceVariant,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(Icons.settings, size: iconSize),
-        title: TranslationHandler.get('settings_label'),
         activeColorPrimary: Colors.indigoAccent,
         inactiveColorPrimary: colorScheme.onSurfaceVariant,
       ),
     ];
 
-    return TranslationHandler.isRTL ? items.reversed.toList() : items;
+    return items;
   }
 
   @override
