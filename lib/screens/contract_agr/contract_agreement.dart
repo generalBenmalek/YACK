@@ -64,9 +64,19 @@ class _ContractAgreementState extends State<ContractAgreement> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildActionButton('Dispute', Icons.gavel, colors.onError, colors.errorContainer),
+                _buildActionButton(
+                  TranslationHandler.get('dispute'),
+                  Icons.gavel,
+                  colors.onError,
+                  colors.errorContainer,
+                ),
                 SizedBox(width: 20),
-                _buildActionButton('Accept', Icons.check_circle, colors.onPrimary, colors.primaryContainer),
+                _buildActionButton(
+                  TranslationHandler.get('accept'),
+                  Icons.check_circle,
+                  colors.onPrimary,
+                  colors.primaryContainer,
+                ),
               ],
             ),
           ),
@@ -180,7 +190,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
                     child: TextField(
                       controller: _controllerinp,
                       decoration: InputDecoration(
-                        hintText: 'Type your message...',
+                        hintText: TranslationHandler.get('type_your_message'),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         hintStyle: TextStyle(color: colors.onSurface.withOpacity(0.5)),
@@ -251,7 +261,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Choose File Type',
+                TranslationHandler.get('choose_file_type'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -262,10 +272,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildAttachmentOption(Icons.photo_camera, 'Camera', _pickImageFromCamera),
-                  _buildAttachmentOption(Icons.photo, 'Gallery', _pickImageFromGallery),
-                  _buildAttachmentOption(Icons.videocam, 'Video', _pickVideo),
-                  _buildAttachmentOption(Icons.insert_drive_file, 'Document', _pickDocument),
+                  _buildAttachmentOption(Icons.photo_camera, TranslationHandler.get('camera'), _pickImageFromCamera),
+                  _buildAttachmentOption(Icons.photo, TranslationHandler.get('gallery'), _pickImageFromGallery),
+                  _buildAttachmentOption(Icons.videocam, TranslationHandler.get('video'), _pickVideo),
+                  _buildAttachmentOption(Icons.insert_drive_file, TranslationHandler.get('document'), _pickDocument),
                 ],
               ),
               SizedBox(height: 20),
@@ -393,7 +403,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Contract Details',
+                            TranslationHandler.get('contract_details'),
                             style: theme.textTheme.titleMedium,
                           ),
                           SizedBox(height: 4),
@@ -407,12 +417,24 @@ class _ContractAgreementState extends State<ContractAgreement> {
                   ],
                 ),
                 SizedBox(height: 12),
-                _buildDetailRow('Contract Name', contract_name, Icons.badge),
-                _buildDetailRow('Price', '\$$price', Icons.attach_money),
-                _buildDetailRow('Client', 'Yacine', Icons.person),
+                _buildDetailRow(
+                  TranslationHandler.get('contract_name'),
+                  contract_name,
+                  Icons.badge,
+                ),
+                _buildDetailRow(
+                  TranslationHandler.get('price'),
+                  '\$$price',
+                  Icons.attach_money,
+                ),
+                _buildDetailRow(
+                  TranslationHandler.get('client'),
+                  TranslationHandler.get('yacine'),
+                  Icons.person,
+                ),
                 SizedBox(height: 10),
                 Text(
-                  'Description',
+                  TranslationHandler.get('description'),
                   style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 8),
@@ -766,5 +788,3 @@ class _ContractAgreementState extends State<ContractAgreement> {
     }
   }
 }
-
-
