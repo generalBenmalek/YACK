@@ -71,9 +71,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: TranslationHandler.languageNotifier,
-      builder: (context, language, _) {
         final theme = Theme.of(context);
         return Scaffold(
           body: SafeArea(
@@ -158,8 +155,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
           ),
         );
-      },
-    );
   }
 
   Widget _buildPage(OnboardingPage page) {

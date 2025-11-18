@@ -4,636 +4,52 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-class TranslationHandler {
-  static const String defaultLanguageCode = 'en';
+// load only needed one
+import 'languages/ar.dart' deferred as ar;
+import 'languages/fr.dart' deferred as fr;
+import 'languages/en.dart' deferred as en;
 
-  static final Map<String, Map<String, String>> _translations = {
-    'en': {
-      'app_name': 'YACK',
-      'login': 'Login',
-      'sign_up': 'Sign Up',
-      'email': 'Email',
-      'password': 'Password',
-      'confirm_password': 'Confirm password',
-      'first_name': 'First Name',
-      'last_name': 'Last Name',
-      'welcome_back': 'Welcome Back',
-      'welcome': 'Welcome',
-      'forget_password': 'Forget Password',
-      'dont_have_account': "Don't have an account?",
-      'already_have_account': 'Already have an account?',
-      'remember_app': 'Already Know About The App?',
-      'skip': 'Skip',
-      'next': 'Next',
-      'get_started': 'Get Started',
-      'onboarding_create_contracts_title': 'Create Contracts Easily',
-      'onboarding_create_contracts_subtitle':
-          'Draft and sign agreements in minutes with our intuitive interface',
-      'onboarding_secure_verified_title': 'Secure & Verified',
-      'onboarding_secure_verified_subtitle':
-          'Every contract is tamper-proof and cryptographically protected',
-      'onboarding_track_agreements_title': 'Track Agreements',
-      'onboarding_track_agreements_subtitle':
-          'Access and manage all your contracts in one secure place',
-      'onboarding_start_trust_title': 'Start Building Trust',
-      'onboarding_start_trust_subtitle':
-          'Begin your journey with YACK and secure your agreements today',
-      'forget_password_message':
-          'Send a request to reset your account password.',
-      'reset': 'Reset',
-      'password_reset_sent': 'Password reset email sent! Check your inbox.',
-      'generic_error': 'An error occurred',
-      'no_account_found': 'No account found with that email.',
-      'confirm_account': 'Confirm Account',
-      'confirm_account_message':
-          'We have sent a verification email. Please check your inbox (and spam folder) before continuing.',
-      'did_not_receive_email': 'Did not receive the email?',
-      'resend': 'Resend',
-      'checking': 'Checking...',
-      'check': 'Check',
-      'account_confirmed': 'Account Confirmed!',
-      'email_not_verified': 'Email not verified yet.',
-      'verification_email_sent': 'Verification email sent again.',
-      'resend_failed': 'Failed to resend email.',
-      'verification_error': 'Verification failed.',
-      'settings': 'Settings',
-      'account_section': 'ACCOUNT',
-      'profile': 'Profile',
-      'profile_subtitle': 'Manage your profile information',
-      'password_subtitle': 'Change your password',
-      'upgrade': 'Upgrade',
-      'upgrade_subtitle': 'Get premium features',
-      'preferences_section': 'PREFERENCES',
-      'notifications': 'Notifications',
-      'notifications_subtitle': 'Customize notification settings',
-      'privacy': 'Privacy',
-      'privacy_subtitle': 'Adjust privacy settings',
-      'appearance': 'Appearance',
-      'appearance_subtitle': 'Manage app appearance',
-      'language': 'Language',
-      'language_subtitle': 'Select your preferred language',
-      'support_section': 'SUPPORT',
-      'help_support': 'Help & Support',
-      'help_support_subtitle': 'Get help and support',
-      'about_yack': 'About YACK',
-      'about_subtitle': 'Learn more about YACK',
-      'logout': 'Logout',
-      'close': 'Close',
-      'about_title': 'YACK - Contract Management App',
-      'app_version': 'Version: 1.0.0',
-      'app_copyright': '© 2025 YACK. All rights reserved.',
-      'about_description':
-          'YACK helps you manage contracts efficiently with features like QR code scanning, digital signatures, and secure storage.',
-      'under_construction': 'This feature is under construction',
-      'appearance_settings': 'Appearance Settings',
-      'light': 'Light',
-      'dark': 'Dark',
-      'system_default': 'System Default',
-      'system_default_description': 'Follow system settings',
-      'apply': 'Apply',
-      'done': 'Done',
-      'theme_updated': 'Theme updated!',
-      'language_settings': 'Language Settings',
-      'language_updated': 'Language updated!',
-      'english': 'English',
-      'french': 'French',
-      'arabic': 'Arabic',
-      'new_contract': 'New Contract',
-      'title': 'Title',
-      'title_hint': 'What is this agreement title?',
-      'description': 'Description',
-      'description_hint': 'What is this agreement about?',
-      'price': 'Price',
-      'price_hint': 'Contract Amount',
-      'add_contract': 'Add Contract',
-      'scan_contract_qr': 'Scan Contract QR',
-      'share_contract': 'Share Contract',
-      'scan_contract_prompt': 'Scan this QR to access the contract',
-      'alternative_link': 'Alternative Access Link',
-      'link_copied': 'Link copied to clipboard!',
-      'share_warning':
-          'Only share this link or QR with the person you intend to sign with.',
-      'proceed_to_sign': 'Proceed to Sign',
-      'contract_review': 'Contract Review',
-      'from_user': 'From: {name}',
-      'binding_warning':
-          'Once accepted, this contract becomes legally binding. Please ensure all terms are correct.',
-      'accept_contract': 'Accept Contract',
-      'decline_contract': 'Decline Contract',
-      'contract_accepted': 'You have accepted the contract!',
-      'contract_declined': 'You declined the contract.',
-      'scan': 'Scan',
-      'stop_scanning': 'Stop Scanning',
-      'scan_contract_qr_code': 'Scan Contract QR Code',
-      'scan_instructions': 'Point your camera at the QR code to open the contract.',
-      'instruction_good_lighting': 'Use good lighting',
-      'instruction_center_code': 'Keep the QR code centered and steady',
-      'instruction_auto_scan': 'Scanning happens automatically',
-      'start_scanning': 'Start Scanning',
-      'place_code_in_frame': 'Place the QR code inside the frame',
-      'contract_scanned': 'Contract scanned: {code}',
-      'review_contract': 'Review Contract',
-      'decline': 'Decline Contract',
-      'sign_contract': 'Sign Contract',
-      'price_label': 'Price',
-      'notifications_title': 'Notifications',
-      'no_notifications': 'No notifications yet',
-      'contracts': 'Contracts',
-      'add_contract_short': 'Add Contract',
-      'settings_label': 'Settings',
-      'error_message': 'error',
-      'checking_status': 'Checking...',
-      'contract_approved_notification': 'Contract Approved',
-      'contract_approved_message':
-          'Your agreement was approved successfully.',
-      'new_message_notification': 'New Message',
-      'new_message_body':
-          'You received a new message regarding your contract.',
-      'login_failed': 'Login Failed',
-      'signup_failed': 'Error creating account',
-      'contract_qr_label': 'Contract QR code',
-      'scan_contract_securely':
-          'Scan the QR code to review and sign the contract securely.',
-      'contract_description_title': 'Contract Description',
-      'contract_description_body':
-          'This contract outlines the terms for a freelance web development project. The scope includes designing, developing, and deploying a responsive website for a small business. The project will be completed within 6 weeks, with regular updates and feedback sessions.',
-      'active_section': 'ACTIVE',
-      'past_section': 'PAST',
-      'status_active': 'Active',
-      'status_completed': 'Completed',
-      'consulting_agreement': 'Consulting Agreement',
-      'freelance_contract': 'Freelance Contract',
-      'service_agreement': 'Service Agreement',
-      'past_contract': 'Past Contract',
-      'field_required': '{field} is required',
-      'field_required_generic': 'This field is required',
-      'email_required': 'Email is required',
-      'invalid_email': 'Enter a valid email address',
-      'password_required': 'Password is required',
-      'password_min_length': 'Password must be at least {count} characters',
-      'password_requirements':
-          'Password must include upper, lower case letters and a number',
-      'confirm_password_required': 'Please confirm your password',
-      'passwords_do_not_match': 'Passwords do not match',
-      'length_min': 'Must be at least {count} characters',
-      'length_max': 'Must be less than {count} characters',
-      'name': 'Name',
-      'invalid_name': 'Enter a valid {field}',
-      'phone_required': 'Phone number is required',
-      'invalid_phone': 'Enter a valid phone number',
-      'invalid_number': 'Enter a valid number',
-      'notification_settings': 'Notification Settings',
-      'push_notifications': 'Push Notifications',
-      'push_notifications_desc': 'Receive notifications on your device',
-      'email_notifications': 'Email Notifications',
-      'email_notifications_desc': 'Receive notifications via email',
-      'contract_updates': 'Contract Updates',
-      'contract_updates_desc': 'Notify when contracts are updated',
-      'payment_reminders': 'Payment Reminders',
-      'payment_reminders_desc': 'Remind about upcoming payments',
-      'privacy_settings': 'Privacy Settings',
-      'share_analytics': 'Share Analytics Data',
-      'share_analytics_desc': 'Help improve the app',
-      'accept_decline_description':
-          'Please review the contract details carefully before making a decision.',
-      'no_more_contracts_available': 'No More Contracts Available',
-      'no_more_contracts_left': 'No More Contracts Left',
-      'no_more_contracts_description':
-          "Sorry, you've used all the contracts available on your current plan.",
-      'go_unlimited': 'Go Unlimited',
-      'upgrade_plan': 'Upgrade Your Plan',
-      'maybe_later': 'Maybe Later',
-      'contract_agreement_title': 'Contract Agreement',
-      'image_file': 'Image: {name}',
-      'video_file': 'Video: {name}',
-      'document_file': 'Document: {name}',
-      'pdf_file': 'PDF File',
-    },
-    'fr': {
-      'app_name': 'YACK',
-      'login': 'Connexion',
-      'sign_up': 'Inscription',
-      'email': 'E-mail',
-      'password': 'Mot de passe',
-      'confirm_password': 'Confirmer le mot de passe',
-      'first_name': 'Prénom',
-      'last_name': 'Nom',
-      'welcome_back': 'Bon retour',
-      'welcome': 'Bienvenue',
-      'forget_password': 'Mot de passe oublié',
-      'dont_have_account': "Vous n'avez pas de compte ?",
-      'already_have_account': 'Vous avez déjà un compte ?',
-      'remember_app': 'Vous connaissez déjà l’application ?',
-      'skip': 'Passer',
-      'next': 'Suivant',
-      'get_started': 'Commencer',
-      'onboarding_create_contracts_title': 'Créez des contrats facilement',
-      'onboarding_create_contracts_subtitle':
-          'Rédigez et signez des accords en quelques minutes grâce à notre interface intuitive',
-      'onboarding_secure_verified_title': 'Sécurisé et vérifié',
-      'onboarding_secure_verified_subtitle':
-          'Chaque contrat est infalsifiable et protégé cryptographiquement',
-      'onboarding_track_agreements_title': 'Suivez vos accords',
-      'onboarding_track_agreements_subtitle':
-          'Accédez à tous vos contrats et gérez-les en un seul endroit sécurisé',
-      'onboarding_start_trust_title': 'Commencez à bâtir la confiance',
-      'onboarding_start_trust_subtitle':
-          'Commencez votre aventure avec YACK et sécurisez vos accords dès aujourd’hui',
-      'forget_password_message':
-          'Envoyez une demande pour réinitialiser le mot de passe de votre compte.',
-      'reset': 'Réinitialiser',
-      'password_reset_sent':
-          'E-mail de réinitialisation envoyé ! Consultez votre boîte de réception.',
-      'generic_error': 'Une erreur est survenue',
-      'no_account_found': 'Aucun compte trouvé avec cet e-mail.',
-      'confirm_account': 'Confirmer le compte',
-      'confirm_account_message':
-          'Nous avons envoyé un e-mail de vérification. Veuillez vérifier votre boîte de réception (et vos spams) avant de continuer.',
-      'did_not_receive_email': "Vous n'avez pas reçu l'e-mail ?",
-      'resend': 'Renvoyer',
-      'checking': 'Vérification...',
-      'check': 'Vérifier',
-      'account_confirmed': 'Compte confirmé !',
-      'email_not_verified': "L'e-mail n'est pas encore vérifié.",
-      'verification_email_sent': 'E-mail de vérification renvoyé.',
-      'resend_failed': "Échec de l'envoi de l'e-mail.",
-      'verification_error': 'Échec de la vérification.',
-      'settings': 'Paramètres',
-      'account_section': 'COMPTE',
-      'profile': 'Profil',
-      'profile_subtitle': 'Gérez les informations de votre profil',
-      'password_subtitle': 'Modifiez votre mot de passe',
-      'upgrade': 'Améliorer',
-      'upgrade_subtitle': 'Obtenez des fonctionnalités premium',
-      'preferences_section': 'PRÉFÉRENCES',
-      'notifications': 'Notifications',
-      'notifications_subtitle': 'Personnalisez les notifications',
-      'privacy': 'Confidentialité',
-      'privacy_subtitle': 'Ajustez les paramètres de confidentialité',
-      'appearance': 'Apparence',
-      'appearance_subtitle': "Gérez l'apparence de l'application",
-      'language': 'Langue',
-      'language_subtitle': 'Sélectionnez votre langue préférée',
-      'support_section': 'SUPPORT',
-      'help_support': 'Aide et assistance',
-      'help_support_subtitle': 'Obtenez de l’aide et du support',
-      'about_yack': 'À propos de YACK',
-      'about_subtitle': 'En savoir plus sur YACK',
-      'logout': 'Déconnexion',
-      'close': 'Fermer',
-      'about_title': 'YACK - Application de gestion de contrats',
-      'app_version': 'Version : 1.0.0',
-      'app_copyright': '© 2025 YACK. Tous droits réservés.',
-      'about_description':
-          'YACK vous aide à gérer vos contrats efficacement avec des fonctions comme le scan de QR, les signatures numériques et un stockage sécurisé.',
-      'under_construction': 'Cette fonctionnalité est en cours de construction',
-      'appearance_settings': "Paramètres d'apparence",
-      'light': 'Clair',
-      'dark': 'Sombre',
-      'system_default': 'Paramètre système',
-      'system_default_description': 'Suivre les paramètres système',
-      'apply': 'Appliquer',
-      'done': 'Terminé',
-      'theme_updated': 'Thème mis à jour !',
-      'language_settings': 'Paramètres de langue',
-      'language_updated': 'Langue mise à jour !',
-      'english': 'Anglais',
-      'french': 'Français',
-      'arabic': 'Arabe',
-      'new_contract': 'Nouveau contrat',
-      'title': 'Titre',
-      'title_hint': 'Quel est le titre de cet accord ?',
-      'description': 'Description',
-      'description_hint': 'De quoi parle cet accord ?',
-      'price': 'Prix',
-      'price_hint': 'Montant du contrat',
-      'add_contract': 'Ajouter un contrat',
-      'scan_contract_qr': 'Scanner le QR du contrat',
-      'share_contract': 'Partager le contrat',
-      'scan_contract_prompt': 'Scannez ce QR pour accéder au contrat',
-      'alternative_link': 'Lien d’accès alternatif',
-      'link_copied': 'Lien copié dans le presse-papiers !',
-      'share_warning':
-          'Partagez ce lien ou QR uniquement avec la personne avec qui vous souhaitez signer.',
-      'proceed_to_sign': 'Continuer pour signer',
-      'contract_review': 'Revue du contrat',
-      'from_user': 'De : {name}',
-      'binding_warning':
-          'Une fois accepté, ce contrat devient juridiquement contraignant. Assurez-vous que toutes les conditions sont correctes.',
-      'accept_contract': 'Accepter le contrat',
-      'decline_contract': 'Refuser le contrat',
-      'contract_accepted': 'Vous avez accepté le contrat !',
-      'contract_declined': 'Vous avez refusé le contrat.',
-      'scan': 'Scanner',
-      'stop_scanning': 'Arrêter le scan',
-      'scan_contract_qr_code': 'Scanner le QR du contrat',
-      'scan_instructions':
-          'Pointez votre caméra vers le QR code pour ouvrir le contrat.',
-      'instruction_good_lighting': 'Utilisez un bon éclairage',
-      'instruction_center_code': 'Gardez le QR code centré et stable',
-      'instruction_auto_scan': 'Le scan se lance automatiquement',
-      'start_scanning': 'Commencer le scan',
-      'place_code_in_frame': 'Placez le QR code dans le cadre',
-      'contract_scanned': 'Contrat scanné : {code}',
-      'review_contract': 'Examiner le contrat',
-      'decline': 'Refuser le contrat',
-      'sign_contract': 'Signer le contrat',
-      'price_label': 'Prix',
-      'notifications_title': 'Notifications',
-      'no_notifications': 'Aucune notification pour le moment',
-      'contracts': 'Contrats',
-      'add_contract_short': 'Ajouter',
-      'settings_label': 'Paramètres',
-      'error_message': 'erreur',
-      'checking_status': 'Vérification...',
-      'contract_approved_notification': 'Contrat approuvé',
-      'contract_approved_message':
-          'Votre accord a été approuvé avec succès.',
-      'new_message_notification': 'Nouveau message',
-      'new_message_body':
-          'Vous avez reçu un nouveau message concernant votre contrat.',
-      'login_failed': 'Échec de la connexion',
-      'signup_failed': 'Erreur lors de la création du compte',
-      'contract_qr_label': 'Code QR du contrat',
-      'scan_contract_securely':
-          'Scannez le QR pour consulter et signer le contrat en toute sécurité.',
-      'contract_description_title': 'Description du contrat',
-      'contract_description_body':
-          'Ce contrat décrit les termes d’un projet de développement web freelance comprenant la conception, le développement et le déploiement d’un site web responsive pour une petite entreprise. Le projet sera achevé en 6 semaines avec des mises à jour et retours réguliers.',
-      'active_section': 'ACTIFS',
-      'past_section': 'ARCHIVÉS',
-      'status_active': 'Actif',
-      'status_completed': 'Terminé',
-      'consulting_agreement': 'Contrat de conseil',
-      'freelance_contract': 'Contrat freelance',
-      'service_agreement': 'Contrat de service',
-      'past_contract': 'Contrat archivé',
-      'field_required': '{field} est obligatoire',
-      'field_required_generic': 'Ce champ est obligatoire',
-      'email_required': 'Le courriel est obligatoire',
-      'invalid_email': 'Entrez une adresse e-mail valide',
-      'password_required': 'Le mot de passe est obligatoire',
-      'password_min_length': 'Le mot de passe doit contenir au moins {count} caractères',
-      'password_requirements':
-          'Le mot de passe doit inclure des lettres majuscules, minuscules et un chiffre',
-      'confirm_password_required': 'Veuillez confirmer votre mot de passe',
-      'passwords_do_not_match': 'Les mots de passe ne correspondent pas',
-      'length_min': 'Doit contenir au moins {count} caractères',
-      'length_max': 'Doit contenir moins de {count} caractères',
-      'name': 'Nom',
-      'invalid_name': 'Entrez un {field} valide',
-      'phone_required': 'Le numéro de téléphone est obligatoire',
-      'invalid_phone': 'Entrez un numéro de téléphone valide',
-      'invalid_number': 'Entrez un nombre valide',
-      'notification_settings': 'Paramètres de notification',
-      'push_notifications': 'Notifications push',
-      'push_notifications_desc': 'Recevez des notifications sur votre appareil',
-      'email_notifications': 'Notifications e-mail',
-      'email_notifications_desc': 'Recevez des notifications par e-mail',
-      'contract_updates': 'Mises à jour de contrat',
-      'contract_updates_desc': 'Être averti lorsque les contrats sont mis à jour',
-      'payment_reminders': 'Rappels de paiement',
-      'payment_reminders_desc': 'Rappel des paiements à venir',
-      'privacy_settings': 'Paramètres de confidentialité',
-      'share_analytics': 'Partager les données analytiques',
-      'share_analytics_desc': "Aidez à améliorer l'application",
-      'accept_decline_description':
-          'Veuillez examiner attentivement les détails du contrat avant de prendre une décision.',
-      'no_more_contracts_available': 'Plus de contrats disponibles',
-      'no_more_contracts_left': 'Plus de contrats restants',
-      'no_more_contracts_description':
-          'Désolé, vous avez utilisé tous les contrats disponibles dans votre plan.',
-      'go_unlimited': 'Passez en illimité',
-      'upgrade_plan': 'Améliorez votre forfait',
-      'maybe_later': 'Plus tard',
-      'contract_agreement_title': 'Accord contractuel',
-      'image_file': 'Image : {name}',
-      'video_file': 'Vidéo : {name}',
-      'document_file': 'Document : {name}',
-      'pdf_file': 'Fichier PDF',
-    },
-    'ar': {
-      'app_name': 'Yack',
-      'login': 'تسجيل الدخول',
-      'sign_up': 'إنشاء حساب',
-      'email': 'البريد الإلكتروني',
-      'password': 'كلمة المرور',
-      'confirm_password': 'تأكيد كلمة المرور',
-      'first_name': 'الاسم الأول',
-      'last_name': 'اسم العائلة',
-      'welcome_back': 'مرحبًا بعودتك',
-      'welcome': 'مرحبًا',
-      'forget_password': 'نسيت كلمة المرور',
-      'dont_have_account': 'ليس لديك حساب؟',
-      'already_have_account': 'لديك حساب بالفعل؟',
-      'remember_app': 'هل تعرف التطبيق مسبقًا؟',
-      'skip': 'تخطي',
-      'next': 'التالي',
-      'get_started': 'ابدأ الآن',
-      'onboarding_create_contracts_title': 'أنشئ العقود بسهولة',
-      'onboarding_create_contracts_subtitle':
-          'أنشئ الاتفاقيات ووقّعها في دقائق عبر واجهتنا السهلة',
-      'onboarding_secure_verified_title': 'آمن وموثّق',
-      'onboarding_secure_verified_subtitle':
-          'كل عقد غير قابل للتلاعب ومحمي بالتشفير',
-      'onboarding_track_agreements_title': 'تتبّع الاتفاقيات',
-      'onboarding_track_agreements_subtitle':
-          'يمكنك الوصول إلى جميع عقودك وإدارتها في مكان واحد آمن',
-      'onboarding_start_trust_title': 'ابدأ بناء الثقة',
-      'onboarding_start_trust_subtitle':
-          'ابدأ رحلتك مع ياك واحمِ اتفاقياتك اليوم',
-      'forget_password_message': 'أرسل طلبًا لإعادة تعيين كلمة مرور حسابك.',
-      'reset': 'إعادة التعيين',
-      'password_reset_sent': 'تم إرسال رسالة إعادة التعيين! تفقد بريدك.',
-      'generic_error': 'حدث خطأ ما',
-      'no_account_found': 'لم يتم العثور على حساب بهذا البريد.',
-      'confirm_account': 'تأكيد الحساب',
-      'confirm_account_message':
-          'قمنا بإرسال رسالة تحقق. يرجى فحص بريدك (ومجلد الرسائل غير المرغوب فيها) قبل المتابعة.',
-      'did_not_receive_email': 'لم يصلك البريد الإلكتروني؟',
-      'resend': 'إعادة الإرسال',
-      'checking': 'جارٍ التحقق...',
-      'check': 'تحقق',
-      'account_confirmed': 'تم تأكيد الحساب!',
-      'email_not_verified': 'لم يتم التحقق من البريد الإلكتروني بعد.',
-      'verification_email_sent': 'تم إرسال بريد التحقق مرة أخرى.',
-      'resend_failed': 'فشل في إعادة إرسال البريد.',
-      'verification_error': 'فشل التحقق.',
-      'settings': 'الإعدادات',
-      'account_section': 'الحساب',
-      'profile': 'الملف الشخصي',
-      'profile_subtitle': 'إدارة معلومات ملفك الشخصي',
-      'password_subtitle': 'تغيير كلمة المرور',
-      'upgrade': 'ترقية',
-      'upgrade_subtitle': 'احصل على مزايا إضافية',
-      'preferences_section': 'التفضيلات',
-      'notifications': 'الإشعارات',
-      'notifications_subtitle': 'خصص إعدادات الإشعارات',
-      'privacy': 'الخصوصية',
-      'privacy_subtitle': 'اضبط إعدادات الخصوصية',
-      'appearance': 'المظهر',
-      'appearance_subtitle': 'إدارة مظهر التطبيق',
-      'language': 'اللغة',
-      'language_subtitle': 'اختر لغتك المفضلة',
-      'support_section': 'الدعم',
-      'help_support': 'المساعدة والدعم',
-      'help_support_subtitle': 'احصل على المساعدة والدعم',
-      'about_yack': 'عن Yack',
-      'about_subtitle': 'اعرف المزيد عن Yack',
-      'logout': 'تسجيل الخروج',
-      'close': 'إغلاق',
-      'about_title': 'ياك - تطبيق إدارة العقود',
-      'app_version': 'الإصدار: 1.0.0',
-      'app_copyright': '© 2025 ياك. جميع الحقوق محفوظة.',
-      'about_description':
-          'يساعدك ياك على إدارة العقود بكفاءة مع ميزات مثل مسح رموز QR والتوقيعات الرقمية والتخزين الآمن.',
-      'under_construction': 'هذه الميزة قيد التطوير',
-      'appearance_settings': 'إعدادات المظهر',
-      'light': 'فاتح',
-      'dark': 'داكن',
-      'system_default': 'إعداد النظام',
-      'system_default_description': 'اتبع إعدادات النظام',
-      'apply': 'تطبيق',
-      'done': 'تم',
-      'theme_updated': 'تم تحديث السمة!',
-      'language_settings': 'إعدادات اللغة',
-      'language_updated': 'تم تحديث اللغة!',
-      'english': 'الإنجليزية',
-      'french': 'الفرنسية',
-      'arabic': 'العربية',
-      'new_contract': 'عقد جديد',
-      'title': 'العنوان',
-      'title_hint': 'ما عنوان هذا الاتفاق؟',
-      'description': 'الوصف',
-      'description_hint': 'عمّ يتحدث هذا الاتفاق؟',
-      'price': 'السعر',
-      'price_hint': 'قيمة العقد',
-      'add_contract': 'إضافة عقد',
-      'scan_contract_qr': 'مسح رمز العقد',
-      'share_contract': 'مشاركة العقد',
-      'scan_contract_prompt': 'امسح هذا الرمز للوصول إلى العقد',
-      'alternative_link': 'رابط وصول بديل',
-      'link_copied': 'تم نسخ الرابط!',
-      'share_warning':
-          'شارك هذا الرابط أو الرمز فقط مع الشخص الذي ترغب بالتوقيع معه.',
-      'proceed_to_sign': 'المتابعة للتوقيع',
-      'contract_review': 'مراجعة العقد',
-      'from_user': 'من: {name}',
-      'binding_warning':
-          'بعد القبول يصبح هذا العقد ملزمًا قانونيًا. يرجى التأكد من صحة جميع الشروط.',
-      'accept_contract': 'قبول العقد',
-      'decline_contract': 'رفض العقد',
-      'contract_accepted': 'لقد قبلت العقد!',
-      'contract_declined': 'لقد رفضت العقد.',
-      'scan': 'مسح',
-      'stop_scanning': 'إيقاف المسح',
-      'scan_contract_qr_code': 'مسح رمز العقد',
-      'scan_instructions': 'وجّه الكاميرا نحو رمز QR لفتح العقد.',
-      'instruction_good_lighting': 'استخدم إضاءة جيدة',
-      'instruction_center_code': 'حافظ على الرمز في المنتصف وبشكل ثابت',
-      'instruction_auto_scan': 'سيتم المسح تلقائيًا',
-      'start_scanning': 'ابدأ المسح',
-      'place_code_in_frame': 'ضع الرمز داخل الإطار',
-      'contract_scanned': 'تم مسح العقد: {code}',
-      'review_contract': 'مراجعة العقد',
-      'decline': 'رفض العقد',
-      'sign_contract': 'توقيع العقد',
-      'price_label': 'السعر',
-      'notifications_title': 'الإشعارات',
-      'no_notifications': 'لا توجد إشعارات بعد',
-      'contracts': 'العقود',
-      'add_contract_short': 'إضافة',
-      'settings_label': 'الإعدادات',
-      'error_message': 'خطأ',
-      'checking_status': 'جارٍ التحقق...',
-      'contract_approved_notification': 'تمت الموافقة على العقد',
-      'contract_approved_message': 'تمت الموافقة على اتفاقك بنجاح.',
-      'new_message_notification': 'رسالة جديدة',
-      'new_message_body': 'تلقيت رسالة جديدة بخصوص عقدك.',
-      'login_failed': 'فشل تسجيل الدخول',
-      'signup_failed': 'حدث خطأ أثناء إنشاء الحساب',
-      'contract_qr_label': 'رمز الاستجابة السريعة للعقد',
-      'scan_contract_securely':
-          'امسح رمز QR لمراجعة العقد والتوقيع عليه بأمان.',
-      'contract_description_title': 'وصف العقد',
-      'contract_description_body':
-          'يوضح هذا العقد شروط مشروع تطوير ويب حر يشمل تصميم وتطوير ونشر موقع إلكتروني متجاوب لنشاط تجاري صغير. سيتم إنجاز المشروع خلال 6 أسابيع مع تقديم تحديثات وجلسات ملاحظات منتظمة.',
-      'active_section': 'النشطة',
-      'past_section': 'السابقة',
-      'status_active': 'نشط',
-      'status_completed': 'مكتمل',
-      'consulting_agreement': 'عقد استشاري',
-      'freelance_contract': 'عقد عمل حر',
-      'service_agreement': 'اتفاقية خدمة',
-      'past_contract': 'عقد سابق',
-      'field_required': '{field} مطلوب',
-      'field_required_generic': 'هذا الحقل مطلوب',
-      'email_required': 'البريد الإلكتروني مطلوب',
-      'invalid_email': 'أدخل بريدًا إلكترونيًا صالحًا',
-      'password_required': 'كلمة المرور مطلوبة',
-      'password_min_length': 'يجب أن تكون كلمة المرور على الأقل {count} أحرف',
-      'password_requirements':
-          'يجب أن تحتوي كلمة المرور على أحرف كبيرة وصغيرة ورقم',
-      'confirm_password_required': 'يرجى تأكيد كلمة المرور',
-      'passwords_do_not_match': 'كلمات المرور غير متطابقة',
-      'length_min': 'يجب أن تكون على الأقل {count} أحرف',
-      'length_max': 'يجب أن تكون أقل من {count} أحرف',
-      'name': 'الاسم',
-      'invalid_name': 'أدخل {field} صالحًا',
-      'phone_required': 'رقم الهاتف مطلوب',
-      'invalid_phone': 'أدخل رقم هاتف صالحًا',
-      'invalid_number': 'أدخل رقمًا صالحًا',
-      'notification_settings': 'إعدادات الإشعارات',
-      'push_notifications': 'إشعارات فورية',
-      'push_notifications_desc': 'استقبل الإشعارات على جهازك',
-      'email_notifications': 'إشعارات البريد الإلكتروني',
-      'email_notifications_desc': 'استقبل الإشعارات عبر البريد الإلكتروني',
-      'contract_updates': 'تحديثات العقود',
-      'contract_updates_desc': 'تلقي إشعار عند تحديث العقود',
-      'payment_reminders': 'تذكيرات الدفع',
-      'payment_reminders_desc': 'تذكير بالمدفوعات القادمة',
-      'privacy_settings': 'إعدادات الخصوصية',
-      'share_analytics': 'مشاركة بيانات التحليلات',
-      'share_analytics_desc': 'ساعد في تحسين التطبيق',
-      'accept_decline_description':
-          'يرجى مراجعة تفاصيل العقد بعناية قبل اتخاذ قرار.',
-      'no_more_contracts_available': 'لا توجد عقود متبقية',
-      'no_more_contracts_left': 'لا مزيد من العقود المتاحة',
-      'no_more_contracts_description':
-          'عذرًا، لقد استخدمت جميع العقود المتاحة في خطتك الحالية.',
-      'go_unlimited': 'انتقل إلى غير محدود',
-      'upgrade_plan': 'قم بترقية خطتك',
-      'maybe_later': 'لاحقًا',
-      'contract_agreement_title': 'اتفاقية العقد',
-      'image_file': 'صورة: {name}',
-      'video_file': 'فيديو: {name}',
-      'document_file': 'مستند: {name}',
-      'pdf_file': 'ملف PDF',
-    },
-  };
+
+class TranslationHandler {
 
   static late Box _userBox;
-  static String _currentLanguage = defaultLanguageCode;
-  static final ValueNotifier<String> _languageNotifier =
-      ValueNotifier<String>(defaultLanguageCode);
 
-  static ValueNotifier<String> get languageNotifier => _languageNotifier;
+
+  static const String defaultLanguageCode = 'en';
+  static const List<String> hardCodedLanguages = ['en','ar','fr'];
+
+  static String _currentLanguage = defaultLanguageCode;
+  // static final ValueNotifier<String> _languageNotifier =
+  //     ValueNotifier<String>(defaultLanguageCode);
+
+  static Map<String, String> _currentMap = {};
+  static Map<String, String> _fallBackMap = {};
+
+
+  // static ValueNotifier<String> get languageNotifier => _languageNotifier;
 
   static Future<void> initialize(Box userBox) async {
+
     _userBox = userBox;
     final savedLanguage = userBox.get('language') as String?;
     final systemLanguage = PlatformDispatcher.instance.locale.languageCode;
     final fallbackLanguage =
-        _translations.containsKey(systemLanguage) ? systemLanguage : defaultLanguageCode;
+    hardCodedLanguages.contains(systemLanguage) ? systemLanguage : defaultLanguageCode;
+
 
     _currentLanguage =
-        savedLanguage != null && _translations.containsKey(savedLanguage)
+        savedLanguage != null && hardCodedLanguages.contains(savedLanguage)
             ? savedLanguage
             : fallbackLanguage;
 
-    _languageNotifier.value = _currentLanguage;
+    _currentMap = await resolveLanguage(_currentLanguage);
+    _fallBackMap = _cachedEnglish ?? await resolveLanguage('en');
+
     await _userBox.put('language', _currentLanguage);
   }
+
+  static Iterable<Locale> get supportedLocales =>
+      hardCodedLanguages.map(Locale.new);
 
   static String get currentLanguage => _currentLanguage;
 
@@ -641,22 +57,20 @@ class TranslationHandler {
 
   static bool get isRTL => _currentLanguage == 'ar';
 
-  static Iterable<Locale> get supportedLocales =>
-      _translations.keys.map((code) => Locale(code));
-
   static String get(String key) {
     final normalizedKey = key.trim().toLowerCase();
-    final currentMap = _translations[_currentLanguage];
-    if (currentMap != null && currentMap.containsKey(normalizedKey)) {
-      return currentMap[normalizedKey]!;
+
+    // Use the preloaded map
+    if (_currentMap.containsKey(normalizedKey)) {
+      return _currentMap[normalizedKey]!;
     }
 
-    final defaultMap = _translations[defaultLanguageCode];
-    if (defaultMap != null && defaultMap.containsKey(normalizedKey)) {
-      return defaultMap[normalizedKey]!;
+    // Fallback to English
+    if (_fallBackMap.containsKey(normalizedKey)) {
+      return _fallBackMap[normalizedKey]!;
     }
 
-    return _translations[defaultLanguageCode]?['error_message'] ?? 'error';
+    return _fallBackMap['error_message'] ?? 'error';
   }
 
   static String resolve(String key, {Map<String, String>? params}) {
@@ -670,9 +84,45 @@ class TranslationHandler {
   }
 
   static Future<void> changeLanguage(String languageCode) async {
-    if (!_translations.containsKey(languageCode)) return;
+    if (!hardCodedLanguages.contains(languageCode)) return;
+
     _currentLanguage = languageCode;
-    _languageNotifier.value = languageCode;
+
+    _currentMap = await resolveLanguage(languageCode);
+
     await _userBox.put('language', languageCode);
+
+    // Notify UI
+    // _languageNotifier.value = languageCode;
+
   }
+
+
+  static Map<String, String>? _cachedArabic;
+  static Map<String, String>? _cachedFrench;
+  static Map<String, String>? _cachedEnglish;
+
+
+  static Future<Map<String, String>> resolveLanguage(String languageCode) async {
+    switch (languageCode) {
+      case 'ar':
+        if (_cachedArabic != null) return _cachedArabic!;
+        await ar.loadLibrary();
+        _cachedArabic = ar.arabic;
+        return _cachedArabic!;
+
+      case 'fr':
+        if (_cachedFrench != null) return _cachedFrench!;
+        await fr.loadLibrary();
+        _cachedFrench = fr.french;
+        return _cachedFrench!;
+
+      default:
+        if (_cachedEnglish != null) return _cachedEnglish!;
+        await en.loadLibrary();
+        _cachedEnglish = en.english;
+        return _cachedEnglish!;
+    }
+  }
+
 }

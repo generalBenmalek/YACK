@@ -16,9 +16,9 @@ class _LanguageSettingsSheetState extends State<LanguageSettingsSheet> {
   late String _selectedLanguage;
 
   final Map<String, String> _languageFlags = const {
+    'ar': '🇩🇿',
     'en': '🇺🇸',
     'fr': '🇫🇷',
-    'ar': '🇸🇦',
   };
 
   @override

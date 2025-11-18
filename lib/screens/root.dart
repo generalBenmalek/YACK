@@ -30,20 +30,22 @@ class _BottomNavBarState extends State<BottomNavBar> {
     final screens = [
       const ContractsScreen(),
       const ScanContractScreen(),
-      NotificationsPage(notifications: [
-        NotificationModel(
-          title: TranslationHandler.get('contract_approved_notification'),
-          body: TranslationHandler.get('contract_approved_message'),
-          date: DateTime.now().subtract(const Duration(hours: 3)),
-          icon: Icons.check_circle_outline,
-        ),
-        NotificationModel(
-          title: TranslationHandler.get('new_message_notification'),
-          body: TranslationHandler.get('new_message_body'),
-          date: DateTime.now().subtract(const Duration(days: 1)),
-          icon: Icons.chat_bubble_outline,
-        ),
-      ]),
+      NotificationsPage(
+        notifications: [
+          NotificationModel(
+            title: TranslationHandler.get('contract_approved_notification'),
+            body: TranslationHandler.get('contract_approved_message'),
+            date: DateTime.now().subtract(const Duration(hours: 3)),
+            icon: Icons.check_circle_outline,
+          ),
+          NotificationModel(
+            title: TranslationHandler.get('new_message_notification'),
+            body: TranslationHandler.get('new_message_body'),
+            date: DateTime.now().subtract(const Duration(days: 1)),
+            icon: Icons.chat_bubble_outline,
+          ),
+        ],
+      ),
       const SettingsScreen(),
     ];
 
@@ -81,23 +83,27 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-
-      body: PersistentTabView(
-        context,
-        neumorphicProperties: NeumorphicProperties(showSubtitleText: false),
-        controller: _controller,
-        screens: _buildScreens(),
-        items: _navBarsItems(context),
-        navBarStyle: NavBarStyle.style3, // change style here
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        // decoration: const NavBarDecoration(
-        //   borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        // ),
-        resizeToAvoidBottomInset: true,
-        hideNavigationBarWhenKeyboardAppears: true,
-        popBehaviorOnSelectedNavBarItemPress: PopBehavior.once,
-      ),
-    );
+    // return ValueListenableBuilder(
+    //   valueListenable: TranslationHandler.languageNotifier,
+    //   builder: (context, language, _) {
+        return Scaffold(
+          body: PersistentTabView(
+            context,
+            neumorphicProperties: NeumorphicProperties(showSubtitleText: false),
+            controller: _controller,
+            screens: _buildScreens(),
+            items: _navBarsItems(context),
+            navBarStyle: NavBarStyle.style3, // change style here
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            // decoration: const NavBarDecoration(
+            //   borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            // ),
+            resizeToAvoidBottomInset: true,
+            hideNavigationBarWhenKeyboardAppears: true,
+            popBehaviorOnSelectedNavBarItemPress: PopBehavior.once,
+          ),
+        );
+      // },
+    // );
   }
 }

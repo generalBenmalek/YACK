@@ -130,7 +130,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     // ValueListenableBuilder updates MaterialApp when the Hive value changes
     return ValueListenableBuilder(
-      valueListenable: userBox.listenable(keys: ['theme', 'language']),
+      valueListenable: userBox.listenable(keys: ['theme','language']),
       builder: (context, box, _) {
             return MaterialApp(
               debugShowCheckedModeBanner: false,

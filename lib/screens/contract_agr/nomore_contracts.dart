@@ -20,11 +20,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
       statusBarBrightness:
       isDark ? Brightness.dark : Brightness.light,
     ));
-
-    return ValueListenableBuilder<String>(
-      valueListenable: TranslationHandler.languageNotifier,
-      builder: (context, language, _) {
-        return Scaffold(
+    return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
@@ -172,8 +168,6 @@ class NoMoreContractsAvailable extends StatelessWidget {
           ],
         ),
       ),
-    );
-      },
     );
   }
 }

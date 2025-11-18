@@ -24,11 +24,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = theme.colorScheme;
-
-    return ValueListenableBuilder<String>(
-      valueListenable: TranslationHandler.languageNotifier,
-      builder: (context, language, _) {
-        return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: Text(
           TranslationHandler.get('contract_review'),
@@ -185,8 +181,6 @@ class AcceptDeclineContractScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-      },
     );
   }
 }

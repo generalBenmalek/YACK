@@ -8,10 +8,7 @@ class ContractsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: TranslationHandler.languageNotifier,
-      builder: (context, language, _) {
-        return Scaffold(
+    return Scaffold(
 
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -106,8 +103,6 @@ class ContractsScreen extends StatelessWidget {
         )
 
       ])
-    );
-      },
     );
   }
 
