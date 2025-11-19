@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:yack/utils/snackBarHandler.dart';
+import 'package:yack/utils/translation_handler.dart';
 import 'package:yack/utils/validator.dart';
 import 'package:yack/widgets/inputFormWidget.dart';
 import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
@@ -17,7 +18,6 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
   final formKey = GlobalKey<FormState>();
 
   await showDialog(
-
     context: context,
     // barrierDismissible: false,
     builder: (BuildContext context) {
@@ -29,7 +29,7 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
-              "Change Password",
+              TranslationHandler.get('change_password'),
               textAlign: TextAlign.center,
             ),
             content: Form(
@@ -44,14 +44,14 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
                         isPassword: true,
                         controller: oldPasswordController,
                         validator: (value) => Validator.length(value, min: 8),
-                        hintText: 'Old Password',
+                        hintText: TranslationHandler.get('old_password'),
                       ),
                       const SizedBox(height: 12),
                       CustomTextFormField(
                         isPassword: true,
                         controller: newPasswordController,
                         validator: (value) => Validator.password(value),
-                        hintText: 'New Password',
+                        hintText: TranslationHandler.get('new_password'),
                       ),
                       const SizedBox(height: 12),
                       CustomTextFormField(
@@ -61,14 +61,13 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
                           value,
                           newPasswordController.value.text,
                         ),
-                        hintText: 'Confirm Password',
+                        hintText: TranslationHandler.get('confirm_password'),
                       ),
                       const SizedBox(height: 20),
                       PrimaryActionButtonAutoReload(
-                        action: 'Change',
+                        action: TranslationHandler.get('save'),
                         onClick: () async {
                           if (formKey.currentState!.validate()) {
-
                             // Simulate backend password update delay
                             await Future.delayed(const Duration(seconds: 2));
 
@@ -76,7 +75,7 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
 
                             SnackBarHandler.showSuccess(
                               context,
-                              "Password updated successfully!",
+                              TranslationHandler.get('password_updated_successfully'),
                             );
                           }
                         },
@@ -85,7 +84,7 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          "Cancel",
+                          TranslationHandler.get('cancel'),
                           style: TextStyle(color: color.onSurface),
                         ),
                       ),

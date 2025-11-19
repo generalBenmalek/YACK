@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 enum SettingType { switchTile, radioTile }
 
@@ -76,7 +77,7 @@ class SettingsSheet<T> extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onApply,
-                child: Text(applyLabel ?? 'Done'),
+                child: Text(applyLabel ?? TranslationHandler.get('done')),
               ),
             ),
         ],

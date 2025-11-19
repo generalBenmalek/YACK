@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/theme.dart';
 import 'create_contract.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class ContractsScreen extends StatelessWidget {
   const ContractsScreen({super.key});
@@ -11,7 +12,8 @@ class ContractsScreen extends StatelessWidget {
 
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('Contracts', style: Theme.of(context).textTheme.titleMedium),
+        title: Text(TranslationHandler.get('contracts'),
+            style: Theme.of(context).textTheme.titleMedium),
       ),
 
       body: Stack(children: [
@@ -23,7 +25,7 @@ class ContractsScreen extends StatelessWidget {
                 children: [
                   // Active Section
                   Text(
-                    'ACTIVE',
+                    TranslationHandler.get('active_section'),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -34,32 +36,32 @@ class ContractsScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildContractCard(
                     context,
-                    title: 'Consulting Agreement',
+                    title: TranslationHandler.get('consulting_agreement'),
                     amount: '12000 DA',
-                    status: 'Active',
+                    status: TranslationHandler.get('status_active'),
                     isActive: true,
                   ),
                   const SizedBox(height: 12),
                   _buildContractCard(
                     context,
-                    title: 'Freelance Contract',
+                    title: TranslationHandler.get('freelance_contract'),
                     amount: '5000 DA',
-                    status: 'Active',
+                    status: TranslationHandler.get('status_active'),
                     isActive: true,
                   ),
                   const SizedBox(height: 12),
                   _buildContractCard(
                     context,
-                    title: 'Service Agreement',
+                    title: TranslationHandler.get('service_agreement'),
                     amount: '8000 DA',
-                    status: 'Active',
+                    status: TranslationHandler.get('status_active'),
                     isActive: true,
                   ),
                   const SizedBox(height: 24),
 
                   // Past Section
                   Text(
-                    'PAST',
+                    TranslationHandler.get('past_section'),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -70,9 +72,9 @@ class ContractsScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildContractCard(
                     context,
-                    title: 'Past Contract',
+                    title: TranslationHandler.get('past_contract'),
                     amount: '3000 DA',
-                    status: 'Completed',
+                    status: TranslationHandler.get('status_completed'),
                     isActive: false,
                   ),
                   const SizedBox(height: 70),
@@ -83,7 +85,7 @@ class ContractsScreen extends StatelessWidget {
           ],),
         Container(
           margin: EdgeInsetsGeometry.all(10),
-          alignment: Alignment.bottomRight,
+          alignment: TranslationHandler.isRTL ? Alignment.bottomLeft: Alignment.bottomRight,
           child:FloatingActionButton(
             onPressed: () {
               Navigator.push(
@@ -94,6 +96,7 @@ class ContractsScreen extends StatelessWidget {
               );
             },
             backgroundColor: AppTheme.yackGreen,
+            tooltip: TranslationHandler.get('add_contract'),
             child: const Icon(Icons.add, color: AppTheme.yackWhite, size: 28),
           ),
 

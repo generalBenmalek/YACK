@@ -1,5 +1,6 @@
 import 'package:yack/widgets/settingWidgets/settingsSheet.dart';
 import 'package:flutter/material.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class PrivacySettingsSheet extends StatefulWidget {
   const PrivacySettingsSheet({super.key});
@@ -16,11 +17,11 @@ class _PrivacySettingsSheetState extends State<PrivacySettingsSheet> {
   @override
   Widget build(BuildContext context) {
     return SettingsSheet<bool>(
-      title: 'Privacy Settings',
+      title: TranslationHandler.get('privacy_settings'),
       options: [
         SettingOption(
-          title: 'Share Analytics Data',
-          subtitle: 'Help improve the app',
+          title: TranslationHandler.get('share_analytics'),
+          subtitle: TranslationHandler.get('share_analytics_desc'),
           type: SettingType.switchTile,
           value: shareData,
           onChanged: (v) => setState(() => shareData = v),

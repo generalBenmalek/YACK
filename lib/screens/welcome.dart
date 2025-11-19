@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:yack/utils/translation_handler.dart';
 import 'package:yack/widgets/primaryActionButton.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import '../models/OnboardingData.dart';
@@ -17,29 +18,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingPage> _pages = [
+  final List<OnboardingPage> _pages = const [
     OnboardingPage(
       icon: Icons.edit_document,
-      title: 'Create Contracts Easily',
-      subtitle: 'Draft and sign agreements in minutes with our intuitive interface',
+      titleKey: 'onboarding_create_contracts_title',
+      subtitleKey: 'onboarding_create_contracts_subtitle',
       color: Color(0xFF00D563),
     ),
     OnboardingPage(
       icon: Icons.verified_user,
-      title: 'Secure & Verified',
-      subtitle: 'Every contract is tamper-proof and cryptographically protected',
+      titleKey: 'onboarding_secure_verified_title',
+      subtitleKey: 'onboarding_secure_verified_subtitle',
       color: Color(0xFF00C2FF),
     ),
     OnboardingPage(
       icon: Icons.folder_open,
-      title: 'Track Agreements',
-      subtitle: 'Access and manage all your contracts in one secure place',
+      titleKey: 'onboarding_track_agreements_title',
+      subtitleKey: 'onboarding_track_agreements_subtitle',
       color: Color(0xFF7C4DFF),
     ),
     OnboardingPage(
       icon: Icons.handshake,
-      title: 'Start Building Trust',
-      subtitle: 'Begin your journey with YACK and secure your agreements today',
+      titleKey: 'onboarding_start_trust_title',
+      subtitleKey: 'onboarding_start_trust_subtitle',
       color: Color(0xFF00D563),
     ),
   ];
@@ -70,12 +71,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // final screenWidth = MediaQuery.of(context).size.width;
-
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
+        final theme = Theme.of(context);
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
           spacing: 10,
           children: [
             // Logo at top
@@ -85,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'YACK',
+                    TranslationHandler.get('app_name'),
                     style: theme.textTheme.titleMedium
                   ),
                 ],
@@ -132,30 +131,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
 
             if (_currentPage < _pages.length - 1)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Already Know About The App?"),
-                const SizedBox(width: 5),
-                HrefWidget(
-                  text: 'Skip',
-                  onClick: _skipToEnd,
-                ),
-              ],
-            ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(TranslationHandler.get('remember_app')),
+                  const SizedBox(width: 5),
+                  HrefWidget(
+                    text: TranslationHandler.get('skip'),
+                    onClick: _skipToEnd,
+                  ),
+                ],
+              ),
 
             // Bottom button
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: _currentPage < _pages.length - 1
                   ?
-                  PrimaryActionButton(action: 'Next', onClick: _nextPage)
-                  : PrimaryActionButton(action: 'Get Started', onClick: _getStarted)
+                  PrimaryActionButton(action: TranslationHandler.get('next'), onClick: _nextPage)
+                  : PrimaryActionButton(action: TranslationHandler.get('get_started'), onClick: _getStarted)
               ),
           ],
         ),
-      ),
-    );
+          ),
+        );
   }
 
   Widget _buildPage(OnboardingPage page) {
@@ -193,11 +192,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 48),
           // Title
-          TitleWidget(text: page.title),
+          TitleWidget(text: TranslationHandler.get(page.titleKey)),
           const SizedBox(height: 16),
           // Subtitle
           Text(
-            page.subtitle,
+            TranslationHandler.get(page.subtitleKey),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium,
           ),

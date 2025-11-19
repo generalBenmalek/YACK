@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 import '../models/notification.dart';
 
@@ -15,7 +16,8 @@ class NotificationsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text("Notifications",style: theme.textTheme.titleMedium),
+        title: Text(TranslationHandler.get('notifications_title'),
+            style: theme.textTheme.titleMedium),
         backgroundColor: Colors.transparent,
         // foregroundColor: Colors.white,
         // elevation: 1,
@@ -72,7 +74,7 @@ class NotificationsPage extends StatelessWidget {
               size: 80, color: color.onSurface.withOpacity(0.8)),
           const SizedBox(height: 20),
           Text(
-            "No notifications yet",
+            TranslationHandler.get('no_notifications'),
             style: TextStyle(
               color: color.onSurface.withOpacity(0.8),
               fontSize: 18,

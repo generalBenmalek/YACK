@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -17,6 +18,7 @@ import 'screens/sign_contract.dart';
 import 'screens/settings.dart';
 import 'screens/create_contract.dart';
 import 'screens/scan_contract.dart';
+import 'utils/translation_handler.dart';
 
 
 void main() async {
@@ -43,6 +45,8 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
   final userBox = await Hive.openBox('user');
+
+  await TranslationHandler.initialize(userBox);
 
   late final String initialRoute;
 
@@ -126,14 +130,21 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     // ValueListenableBuilder updates MaterialApp when the Hive value changes
     return ValueListenableBuilder(
-      valueListenable: userBox.listenable(keys: ['theme']),
+      valueListenable: userBox.listenable(keys: ['theme','language']),
       builder: (context, box, _) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: _themeMode,
-          routes: {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: _themeMode,
+              locale: TranslationHandler.locale,
+              supportedLocales: TranslationHandler.supportedLocales.toList(),
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+              ],
+              routes: {
             '/welcome': (context) =>
                 themedRoute(context, const OnboardingScreen(),transparent: true),
 
@@ -164,8 +175,8 @@ class _MyAppState extends State<MyApp> {
                 themedRoute(context, const BottomNavBar()),
           },
           initialRoute: widget.initialRoute,
-        );
-      },
+            );
+          },
     );
   }
 }

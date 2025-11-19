@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:yack/utils/translation_handler.dart';
 
 class NoMoreContractsAvailable extends StatelessWidget {
   const NoMoreContractsAvailable({super.key});
@@ -19,7 +20,6 @@ class NoMoreContractsAvailable extends StatelessWidget {
       statusBarBrightness:
       isDark ? Brightness.dark : Brightness.light,
     ));
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -46,7 +46,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                   Expanded(
                     child: Center(
                       child: Text(
-                        'No More Contracts Available',
+                        TranslationHandler.get('no_more_contracts_available'),
                         style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.onBackground,
@@ -82,7 +82,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                     Column(
                       children: [
                         Text(
-                          'No More Contracts Left',
+                          TranslationHandler.get('no_more_contracts_left'),
                           style: textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onBackground,
@@ -91,7 +91,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Sorry, you've used all the contracts available on your current plan.",
+                          TranslationHandler.get('no_more_contracts_description'),
                           style: textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -118,7 +118,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Go Unlimited',
+                                    TranslationHandler.get('go_unlimited'),
                                     style: textTheme.labelSmall?.copyWith(
                                       letterSpacing: 1.25,
                                       color: colorScheme.onPrimary
@@ -127,7 +127,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Upgrade Your Plan',
+                                    TranslationHandler.get('upgrade_plan'),
                                     style: textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: colorScheme.onPrimary,
@@ -153,7 +153,7 @@ class NoMoreContractsAvailable extends StatelessWidget {
                         Navigator.pop(context);
                       },
                       child: Text(
-                        'Maybe Later',
+                        TranslationHandler.get('maybe_later'),
                         style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                           color: colorScheme.onSurfaceVariant,
