@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:isar/isar.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:yack/screens/contract_agr/contract_agreement.dart';
@@ -19,10 +20,30 @@ import 'screens/settings.dart';
 import 'screens/create_contract.dart';
 import 'screens/scan_contract.dart';
 import 'utils/translation_handler.dart';
+import 'package:yack/db/models/contract.dart';
+import 'package:yack/db/models/mediaFile.dart';
+import 'package:yack/db/models/message.dart';
+import 'package:yack/db/models/notification.dart';
+import 'package:path_provider/path_provider.dart';
 
+late Isar isar;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Get the folder where Isar will store the database
+  final dir = await getApplicationDocumentsDirectory();
+
+  // Open the database with all your schemas
+  isar = await Isar.open(
+    [
+      ContractSchema,
+      MessageSchema,
+      MediaFileSchema,
+      AppNotificationSchema,
+    ],
+    directory: dir.path,
+  );
 
   // Initialize Firebase
   await Firebase.initializeApp(

@@ -1,0 +1,145 @@
+Example Usage of Updated Models (Contract, Notification, Message, MediaFile)
+
+CREATE
+
+Create Contract
+
+    final contract = Contract()
+      ..name = "Freelance App Design"
+      ..description = "Design UI/UX for full app"
+      ..price = 15000
+      ..userA = "userA_id"
+      ..userB = "userB_id"
+      ..status = ContractStatus.pending
+      ..createdAt = DateTime.now();
+    await isar.writeTxn(() async {
+      await isar.contracts.put(contract);
+    });
+
+Create Notification
+
+    final notif = AppNotification()
+      ..title = "New Contract"
+      ..description = "UserA sent you a contract"
+      ..createdAt = DateTime.now()
+      ..contractId = contract.id;
+    await isar.writeTxn(() async {
+      await isar.appNotifications.put(notif);
+    });
+
+Create Message
+
+    final msg = Message()
+      ..contractId = contract.id
+      ..senderId = "userA_id"
+      ..text = "Hello, please review the contract."
+      ..createdAt = DateTime.now();
+    await isar.writeTxn(() async {
+      await isar.messages.put(msg);
+    });
+
+Create Media File
+
+    final media = MediaFile()
+      ..contractId = contract.id
+      ..senderId = "userA_id"
+      ..filePath = "/storage/emulated/0/yack/uploads/file.png"
+      ..type = "image"
+      ..createdAt = DateTime.now();
+    await isar.writeTxn(() async {
+      await isar.mediaFiles.put(media);
+    });
+
+READ
+
+Get Contract
+
+    final c = await isar.contracts.get(contractId);
+
+Get Notifications for Contract
+
+    final list = await isar.appNotifications
+      .filter()
+      .contractIdEqualTo(contractId)
+      .findAll();
+
+Get Messages for Contract
+
+    final msgs = await isar.messages
+      .filter()
+      .contractIdEqualTo(contractId)
+      .sortByCreatedAt()
+      .findAll();
+
+Get Media Files for Contract
+
+    final files = await isar.mediaFiles
+      .filter()
+      .contractIdEqualTo(contractId)
+      .findAll();
+
+UPDATE
+
+Update Contract Status
+
+    await isar.writeTxn(() async {
+      final c = await isar.contracts.get(contractId);
+      if (c != null) {
+        c.status = ContractStatus.accepted;
+        c.updatedAt = DateTime.now();
+        await isar.contracts.put(c);
+      }
+    });
+
+Mark Notification as Read
+
+    await isar.writeTxn(() async {
+      final n = await isar.appNotifications.get(notifId);
+      if (n != null) {
+        n.isRead = true;
+        await isar.appNotifications.put(n);
+      }
+    });
+
+DELETE
+
+Delete Contract
+
+    await isar.writeTxn(() async {
+      await isar.contracts.delete(contractId);
+    });
+
+Delete Message
+
+    await isar.writeTxn(() async {
+      await isar.messages.delete(messageId);
+    });
+
+Delete Media File
+
+    await isar.writeTxn(() async {
+      await isar.mediaFiles.delete(fileId);
+    });
+
+
+/// real time listener
+
+Stream<List<User>> watchUsers() {
+  return isar.users.where().watch(fireImmediately: true);
+}
+
+StreamBuilder(
+  stream: watchUsers(),
+  builder: (_, snapshot) {
+    if (!snapshot.hasData) return CircularProgressIndicator();
+    final users = snapshot.data!;
+    return ListView(
+      children: users.map((u) => Text(u.name)).toList(),
+    );
+  },
+)
+
+// use it in notification and contract page ( and messages )
+
+
+https://pub.dev/documentation/isar/latest/ more info here
