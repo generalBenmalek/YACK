@@ -1,15 +1,16 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hive/hive.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yack/providers/auth/login_cubit.dart';
+import 'package:yack/providers/auth/login_state.dart';
 import 'package:yack/utils/platform.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/utils/translation_handler.dart';
+import 'package:yack/widgets/primaryActionButton.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 import 'package:yack/utils/validator.dart';
 import '../../widgets/inputFormWidget.dart';
-import '../../widgets/primaryActionButtonAutoLoading.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,39 +21,16 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _auth = FirebaseAuth.instance;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  bool isLoading = false;
 
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> login() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      if (mounted) {
-        final userBox = await Hive.openBox('user');
-        userBox.put('didFirstLogin', true);
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } on FirebaseAuthException catch (e) {
-      SnackBarHandler.showError(
-          context, TranslationHandler.get('login_failed'));
-
-    }
   }
 
   @override
@@ -103,10 +81,28 @@ class LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      PrimaryActionButtonAutoReload(
-                        onClick: login,
-                        action: TranslationHandler.get('login'),
-                      ),
+                      BlocConsumer<LoginCubit,LoginState>(
+                        listener: (context, state) {
+                          if (state is LoginSuccess) {
+                            Navigator.pushReplacementNamed(context, "/home");
+                          } else if (state is LoginError) {
+                            // SnackBarHandler.showError();
+                          }
+                        },
+                        builder: (context, state) {
+                          return PrimaryActionButton(
+                            isLoading: state is LoginLoading,
+                            onClick: (){
+                              context.read<LoginCubit>().login(
+                                  context,
+                                  _formKey,
+                                  emailController.value.text.trim(),
+                                  passwordController.value.text.trim());
+                            },
+                            action: TranslationHandler.get('login'),
+                          );
+                        },
+                      )
                     ],
                   ),
                 ),
