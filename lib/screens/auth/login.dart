@@ -12,26 +12,14 @@ import 'package:yack/widgets/hrefTextWidget.dart';
 import 'package:yack/utils/validator.dart';
 import '../../widgets/inputFormWidget.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
 
-  @override
-  State<StatefulWidget> createState() => LoginScreenState();
-}
-
-class LoginScreenState extends State<LoginScreen> {
+class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
+  LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

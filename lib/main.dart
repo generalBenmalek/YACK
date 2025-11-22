@@ -188,7 +188,7 @@ class _MyAppState extends State<MyApp> {
             '/signup': (context) =>
                 themedRoute(context, const SignUpScreen(),transparent: true),
             '/login': (context) =>
-                themedRoute(context, const LoginScreen(),transparent: true),
+                themedRoute(context,  LoginScreen(),transparent: true),
             '/confirm': (context) =>
                 themedRoute(context, const ConfirmAccount(),transparent: true),
             '/forgot-password': (context) =>
