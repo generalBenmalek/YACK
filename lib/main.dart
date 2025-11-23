@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:isar/isar.dart';
 import 'package:yack/providers/auth/login_cubit.dart';
+import 'package:yack/providers/auth/signup_cubit.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:yack/screens/contract_agr/contract_agreement.dart';
@@ -96,7 +97,7 @@ void main() async {
           providers: [
               // BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
               BlocProvider<LoginCubit>(create: (_) => LoginCubit()),
-              // BlocProvider<SignupCubit>(create: (_) => SignupCubit()),
+              BlocProvider<SignupCubit>(create: (_) => SignupCubit()),
               // BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
               // BlocProvider<ContractCubit>(create: (_) => ContractCubit()),
           // add others here...,
@@ -186,7 +187,7 @@ class _MyAppState extends State<MyApp> {
 
             // AUTH ROUTES
             '/signup': (context) =>
-                themedRoute(context, const SignUpScreen(),transparent: true),
+                themedRoute(context,  SignUpScreen(),transparent: true),
             '/login': (context) =>
                 themedRoute(context,  LoginScreen(),transparent: true),
             '/confirm': (context) =>

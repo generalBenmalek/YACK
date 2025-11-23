@@ -15,12 +15,13 @@ class LoginCubit extends Cubit<LoginState> {
 
     emit(LoginLoading());
 
-    final success = await AuthService.login(context, formKey, email, password);
-
-    if (success) {
+    try {
+      await AuthService.login(context, formKey, email, password);
       emit(LoginSuccess());
-    } else {
-      emit(LoginError());
+
+    }
+    catch (e){
+      emit(LoginError(e.toString()));
     }
   }
 }

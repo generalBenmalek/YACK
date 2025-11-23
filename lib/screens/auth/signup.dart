@@ -1,24 +1,18 @@
 import 'dart:math';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yack/providers/auth/signup_cubit.dart';
+import 'package:yack/providers/auth/signup_state.dart';
 import 'package:yack/utils/platform.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/utils/validator.dart';
 import 'package:yack/widgets/inputFormWidget.dart';
-import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
+import 'package:yack/widgets/primaryActionButton.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 import 'package:yack/utils/translation_handler.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
-
-  @override
-  State<StatefulWidget> createState() => SignUpScreenState();
-}
-
-class SignUpScreenState extends State<SignUpScreen> {
+class SignUpScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
 
   final emailController = TextEditingController();
@@ -27,44 +21,9 @@ class SignUpScreenState extends State<SignUpScreen> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
 
-  final _auth = FirebaseAuth.instance;
 
-  Future<void> signUp() async {
-    if (!_formKey.currentState!.validate()) return;
+  SignUpScreen({super.key});
 
-    try {
-      // Step 1: Create user in Firebase Auth
-      UserCredential userCred = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      // Step 2: Save minimal info locally with Hive
-      final userBox = await Hive.openBox('user');
-      await userBox.putAll({
-        'firstName': firstNameController.text.trim(),
-        'lastName': lastNameController.text.trim(),
-      });
-
-      // Step 3: Send verification email
-      await userCred.user?.sendEmailVerification();
-
-      // Step 4: Go to confirmation screen
-      if (mounted) Navigator.pushNamed(context, '/confirm');
-    } on FirebaseAuthException catch (e) {
-      SnackBarHandler.showError(
-          context, TranslationHandler.get('signup_failed'));
-    }
-  }
-
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    firstNameController.dispose();
-    lastNameController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,11 +99,33 @@ class SignUpScreenState extends State<SignUpScreen> {
                       ),
 
 
-                      // Signup button with auto-loading
-                      PrimaryActionButtonAutoReload(
-                        action: TranslationHandler.get('sign_up'),
-                        onClick: signUp,
-                      ),
+                      BlocConsumer<SignupCubit,SignupState>(
+
+                          builder: (context,state) {
+                            return PrimaryActionButton(
+                              isLoading: state is SignupLoading,
+                              action: TranslationHandler.get('sign_up'),
+                              onClick: (){
+                                // call context
+                                context.read<SignupCubit>().signup(context,
+                                    _formKey,
+                                    emailController.value.text.trim(),
+                                    passwordController.value.text.trim(),
+                                    firstNameController.value.text.trim(),
+                                    lastNameController.value.text.trim()
+                                );
+                              },
+                            );
+                          },
+                          listener: (context , state) {
+                            if (state is SignupSuccess) {
+                              Navigator.pushReplacementNamed(context, "/confirm");
+                            } else if (state is SignupError) { SnackBarHandler.showError(
+                                context, TranslationHandler.get('signup_failed')
+                            );
+                            }
+                          }
+                      )
                     ],
                   ),
                 ),

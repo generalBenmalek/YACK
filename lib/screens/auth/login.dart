@@ -74,7 +74,7 @@ class LoginScreen extends StatelessWidget {
                           if (state is LoginSuccess) {
                             Navigator.pushReplacementNamed(context, "/home");
                           } else if (state is LoginError) {
-                            // SnackBarHandler.showError();
+                            SnackBarHandler.showError(context,state.message!);
                           }
                         },
                         builder: (context, state) {
