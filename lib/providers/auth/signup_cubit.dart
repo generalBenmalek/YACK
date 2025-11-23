@@ -13,7 +13,8 @@ class SignupCubit extends Cubit<SignupState> {
       String email,
       String password,
       String firstName,
-      String lastName)
+      String lastName
+      )
   async {
 
     emit(SignupLoading());

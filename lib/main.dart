@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:isar/isar.dart';
+import 'package:yack/providers/auth/confirm_cubit.dart';
 import 'package:yack/providers/auth/login_cubit.dart';
 import 'package:yack/providers/auth/signup_cubit.dart';
 import 'package:yack/screens/auth/confirm.dart';
@@ -98,6 +99,7 @@ void main() async {
               // BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
               BlocProvider<LoginCubit>(create: (_) => LoginCubit()),
               BlocProvider<SignupCubit>(create: (_) => SignupCubit()),
+              BlocProvider<ConfirmCubit>(create: (_) => ConfirmCubit(),)
               // BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
               // BlocProvider<ContractCubit>(create: (_) => ContractCubit()),
           // add others here...,

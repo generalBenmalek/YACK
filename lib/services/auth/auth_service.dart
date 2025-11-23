@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:yack/utils/snackBarHandler.dart';
-import 'package:yack/utils/translation_handler.dart';
 
 class AuthService {
 
@@ -13,11 +11,11 @@ class AuthService {
       GlobalKey<FormState> formKey,
       String email,
       String password,
-      ) async {
+      ) async
+  {
 
-    // Throw message for invalid input
     if (!formKey.currentState!.validate()) {
-      throw "Invalid Input";
+      throw "auth_invalid_input"; // translation key
     }
 
     final auth = FirebaseAuth.instance;
@@ -32,17 +30,19 @@ class AuthService {
       box.put("didFirstLogin", true);
 
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'wrong-password') {
-        throw "Incorrect password.";
-      } else if (e.code == 'user-not-found') {
-        throw "No user found with this email.";
-      } else if (e.code == 'invalid-email') {
-        throw "Email format is invalid.";
-      } else if (e.code == 'too-many-requests') {
-        throw "Too many attempts. Please try later.";
+      if (e.code == "wrong-password") {
+        throw "auth_wrong_password";
+      } else if (e.code == "user-not-found") {
+        throw "auth_user_not_found";
+      } else if (e.code == "invalid-email") {
+        throw "auth_invalid_email";
+      } else if (e.code == "too-many-requests") {
+        throw "auth_too_many_requests";
       } else {
-        throw e.message ?? "Login failed.";
+        throw "auth_unknown_error";
       }
+    } catch (_) {
+      throw "auth_unexpected_error";
     }
   }
 
@@ -53,31 +53,96 @@ class AuthService {
       String email,
       String password,
       String firstName,
-      String lastName
-      ) async {
+      String lastName,
+      ) async
+  {
 
-    if (!formKey.currentState!.validate()) throw 'Invalid Input';
+    // Validate input fields
+    if (!formKey.currentState!.validate()) {
+      throw "auth_invalid_input";
+    }
 
     final auth = FirebaseAuth.instance;
 
     try {
-      // Step 1: Create user in Firebase Auth
+      // Create user in Firebase Auth
       await auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Step 2: Save minimal info locally with Hive
+      // Save local user information
       final userBox = await Hive.openBox('user');
       await userBox.putAll({
         'firstName': firstName,
         'lastName': lastName,
+        'didFirstLogin': true,
       });
 
-      // Step 3: Send verification email
-      // await userCred.user?.sendEmailVerification();
-    } on FirebaseAuthException {
-      rethrow;
+    } on FirebaseAuthException catch (e) {
+
+      // Firebase error codes mapped to translation keys
+      if (e.code == "email-already-in-use") {
+        throw "auth_email_in_use";
+      } else if (e.code == "invalid-email") {
+        throw "auth_invalid_email";
+      } else if (e.code == "weak-password") {
+        throw "auth_weak_password";
+      } else {
+        throw "auth_unknown_error";
+      }
+    } catch (_) {
+      throw "auth_unexpected_error";
     }
   }
+
+
+  static Future<void> sendEmailVerification() async {
+    final auth = FirebaseAuth.instance;
+
+    // If no user is logged in
+    if (auth.currentUser == null) {
+      throw "auth_user_not_found";
+    }
+
+    try {
+      await auth.currentUser!.sendEmailVerification();
+
+    } on FirebaseAuthException catch (e) {
+      if (e.code == "too-many-requests") {
+        throw "auth_too_many_requests";
+      } else {
+        throw "auth_unknown_error";
+      }
+
+    } catch (_) {
+      throw "auth_unexpected_error";
+    }
+  }
+
+  static Future<bool> confirmAccount() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // No logged-in user → real error
+    if (user == null) {
+      throw "auth_user_not_found";
+    }
+
+    try {
+      // Reload fresh info from Firebase
+      await user.reload();
+      final refreshedUser = FirebaseAuth.instance.currentUser!;
+
+      // If verified → return true
+      // Not verified → return false
+      return refreshedUser.emailVerified;
+
+    } on FirebaseAuthException {
+      throw "auth_unknown_error";
+    } catch (_) {
+      throw "auth_unexpected_error";
+    }
+  }
+
+
 }
