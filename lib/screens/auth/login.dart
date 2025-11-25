@@ -10,6 +10,7 @@ import 'package:yack/widgets/primaryActionButton.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 import 'package:yack/utils/validator.dart';
+import '../../providers/auth/auth_cubit.dart';
 import '../../widgets/inputFormWidget.dart';
 
 
@@ -72,6 +73,7 @@ class LoginScreen extends StatelessWidget {
                       BlocConsumer<LoginCubit,LoginState>(
                         listener: (context, state) {
                           if (state is LoginSuccess) {
+                            context.read<AuthCubit>().markAuthenticated();
                             Navigator.pushReplacementNamed(context, "/home");
                           } else if (state is LoginError) {
                             SnackBarHandler.showError(context,TranslationHandler.get(state.message!));

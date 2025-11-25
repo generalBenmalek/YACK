@@ -6,6 +6,7 @@ import 'package:yack/providers/auth/confirm_state.dart';
 import 'package:yack/utils/platform.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
+import '../../providers/auth/auth_cubit.dart';
 import '../../utils/snackBarHandler.dart';
 import '../../widgets/primaryActionButton.dart';
 import 'package:yack/utils/translation_handler.dart';
@@ -71,6 +72,7 @@ class ConfirmAccount extends StatelessWidget {
                         },
                         listener: (context,state){
                           if(state is ConfirmSuccess){
+                            context.read<AuthCubit>().markAuthenticated();
                             Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                           }
                           else if(state is ConfirmUnverified){
