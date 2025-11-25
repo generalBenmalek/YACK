@@ -13,7 +13,9 @@ class AppWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
+        final userBox = Hive.box('user');
 
+        // ERROR → Show Snack bar only
         if (state is AuthError) {
           SnackBarHandler.showError(
             context,
@@ -21,38 +23,53 @@ class AppWrapper extends StatelessWidget {
           );
         }
 
-        final userBox = Hive.box('user');
+        // ==========================
+        //        UNAUTHENTICATED
+        // ==========================
+        if (state is Unauthenticated || state is AuthError) {
 
-        if (state is Unauthenticated) {
-          // FIRST TIME → welcome
+          // FIRST TIME → WELCOME
           if (userBox.get('didFirstTime') != true) {
             userBox.put('didFirstTime', true);
-            WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => Navigator.pushReplacementNamed(context, '/welcome'),
-            );
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacementNamed(context, '/welcome');
+            });
+
+            return; // IMPORTANT
           }
 
-          // Seen login before → login
+          // Seen login screen before
           if (userBox.get('didFirstLogin') == true) {
-            WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => Navigator.pushReplacementNamed(context, '/login'),
-            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushReplacementNamed(context, '/login');
+            });
+
+            return; // IMPORTANT
           }
 
-          // Default → signup
-          WidgetsBinding.instance.addPostFrameCallback(
-                (_) => Navigator.pushReplacementNamed(context, '/signup'),
-          );
+          // DEFAULT → signup
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, '/signup');
+          });
+
+          return; // IMPORTANT
         }
 
+        // ==========================
+        //         AUTHENTICATED
+        // ==========================
         if (state is Authenticated) {
-          WidgetsBinding.instance.addPostFrameCallback(
-                (_) => Navigator.pushReplacementNamed(context, '/home'),
-          );
-        }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, '/home');
+          });
 
+          return;
+        }
       },
+
       builder: (context, state) {
+        // Simple loading screen
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
