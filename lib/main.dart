@@ -7,6 +7,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:isar/isar.dart';
 import 'package:yack/providers/auth/confirm_cubit.dart';
 import 'package:yack/providers/auth/login_cubit.dart';
+import 'package:yack/providers/auth/password_reset_cubit.dart';
 import 'package:yack/providers/auth/signup_cubit.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -99,8 +100,10 @@ void main() async {
               // BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
               BlocProvider<LoginCubit>(create: (_) => LoginCubit()),
               BlocProvider<SignupCubit>(create: (_) => SignupCubit()),
-              BlocProvider<ConfirmCubit>(create: (_) => ConfirmCubit(),)
-              // BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
+              BlocProvider<ConfirmCubit>(create: (_) => ConfirmCubit(),),
+              BlocProvider<PasswordResetCubit>(create: (_) => PasswordResetCubit(),)
+
+            // BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
               // BlocProvider<ContractCubit>(create: (_) => ContractCubit()),
           // add others here...,
           ],
@@ -193,9 +196,9 @@ class _MyAppState extends State<MyApp> {
             '/login': (context) =>
                 themedRoute(context,  LoginScreen(),transparent: true),
             '/confirm': (context) =>
-                themedRoute(context, const ConfirmAccount(),transparent: true),
+                themedRoute(context,  ConfirmAccount(),transparent: true),
             '/forgot-password': (context) =>
-                themedRoute(context, const ForgetPassword(),transparent: true),
+                themedRoute(context,  ForgetPassword(),transparent: true),
 
             // CONTRACT ROUTES
             '/contract/scan_contract': (context) =>
