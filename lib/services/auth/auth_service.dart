@@ -144,5 +144,29 @@ class AuthService {
     }
   }
 
+  static Future<bool> isAuthenticated() async {
+    final auth = FirebaseAuth.instance;
 
+    try {
+      final user = auth.currentUser;
+
+      // Not logged into Firebase
+      if (user == null) return false;
+
+      // check Hive box
+      final box = await Hive.openBox('user');
+
+      // If user box missing required info → treat as not logged in
+      if (!box.containsKey('didFirstLogin')) {
+        return false;
+      }
+
+      return true;
+
+    } on FirebaseAuthException {
+      throw "auth_unknown_error";
+    } catch (_) {
+      throw "auth_unexpected_error";
+    }
+  }
 }
