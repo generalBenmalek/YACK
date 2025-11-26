@@ -72,6 +72,7 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
                       BlocConsumer<ChangePasswordCubit,ChangePasswordState>(
                           builder:  (context,state){
                             return PrimaryActionButton(
+                              isLoading: state is ChangePasswordLoading,
                               action: TranslationHandler.get('save'),
                               onClick: ()  {
                                 context.read<ChangePasswordCubit>().changePassword(
@@ -83,8 +84,18 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
                             );
                           },
                           listener: (context,state){
-                            Navigator.pop(context);
-                            TranslationHandler.get('password_updated_successfully');
+                            if (state is ChangePasswordError){
+                              SnackBarHandler.showError(context,
+                                  TranslationHandler.get(state.messageKey)
+                              );
+                            }
+                            else if (state is ChangePasswordSuccess){
+                              Navigator.pop(context);
+                              SnackBarHandler.showSuccess(context,
+                                  TranslationHandler.get('password_updated_successfully')
+                              );
+                            }
+
                           }),
 
                       const SizedBox(height: 10),

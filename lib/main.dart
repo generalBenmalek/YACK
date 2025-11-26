@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:isar/isar.dart';
 import 'package:yack/providers/auth/auth_cubit.dart';
+import 'package:yack/providers/auth/change_password_cubit.dart';
 import 'package:yack/providers/auth/confirm_cubit.dart';
 import 'package:yack/providers/auth/login_cubit.dart';
 import 'package:yack/providers/auth/password_reset_cubit.dart';
@@ -72,7 +73,8 @@ void main() async {
               BlocProvider<LoginCubit>(create: (_) => LoginCubit()),
               BlocProvider<SignupCubit>(create: (_) => SignupCubit()),
               BlocProvider<ConfirmCubit>(create: (_) => ConfirmCubit(),),
-              BlocProvider<PasswordResetCubit>(create: (_) => PasswordResetCubit(),)
+              BlocProvider<PasswordResetCubit>(create: (_) => PasswordResetCubit(),),
+              BlocProvider<ChangePasswordCubit>(create: (_) => ChangePasswordCubit(),),
 
             // BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
               // BlocProvider<ContractCubit>(create: (_) => ContractCubit()),
