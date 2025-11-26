@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:yack/utils/translation_handler.dart';
 
 class PasswordService {
 
@@ -27,4 +26,45 @@ class PasswordService {
     }
   }
 
+  static Future<void> changePassword(
+      GlobalKey<FormState> formKey,
+      String oldPassword,
+      String newPassword,
+      ) async {
+    if (!formKey.currentState!.validate()) {
+      throw 'invalid_input';
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null || user.email == null) {
+      throw 'no_user_logged_in';
+    }
+
+    try {
+      // Step 1: Reauthenticate
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: oldPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Step 2: Change Password
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      // Wrong old password
+      if (e.code == 'wrong-password') throw 'wrong_old_password';
+
+      // Too-weak new password (firebase checks strength)
+      if (e.code == 'weak-password') throw 'weak_new_password';
+
+      // Requires recent login (rare)
+      if (e.code == 'requires-recent-login') {
+        throw 'recent_login_required';
+      }
+
+      throw 'generic_error';
+    }
+  }
 }
