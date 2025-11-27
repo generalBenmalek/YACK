@@ -222,5 +222,9 @@ const english = {
   "auth_email_in_use": "Email already in use.",
   "auth_weak_password": "Password is too weak.",
   "auth_verification_sent": "Verification email sent.",
-  "auth_email_not_verified": "Email is not verified yet."
+  "auth_email_not_verified": "Email is not verified yet.",
+  "auth_no_user_logged_in": "No user is logged in.",
+  "auth_wrong_old_password": "Old password is incorrect.",
+  "auth_weak_new_password": "The new password is too weak.",
+  "auth_recent_login_required": "Please re-login to perform this action.",
 };

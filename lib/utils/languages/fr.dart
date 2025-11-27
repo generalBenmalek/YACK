@@ -231,4 +231,8 @@ const french = {
   "auth_account_created": "Compte créé avec succès.",
   "auth_email_in_use": "E-mail déjà utilisé.",
   "auth_weak_password": "Mot de passe trop faible.",
+  "auth_no_user_logged_in": "Aucun utilisateur connecté.",
+  "auth_wrong_old_password": "L'ancien mot de passe est incorrect.",
+  "auth_weak_new_password": "Le nouveau mot de passe est trop faible.",
+  "auth_recent_login_required": "Veuillez vous reconnecter pour effectuer cette action.",
 };

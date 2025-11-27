@@ -223,4 +223,8 @@ const arabic = {
   "auth_account_created": "تم إنشاء الحساب بنجاح.",
   "auth_email_in_use": "البريد الإلكتروني مستخدم بالفعل.",
   "auth_weak_password": "كلمة المرور ضعيفة جدًا.",
+  "auth_no_user_logged_in": "لا يوجد مستخدم سجل الدخول.",
+  "auth_wrong_old_password": "كلمة المرور القديمة غير صحيحة.",
+  "auth_weak_new_password": "كلمة المرور الجديدة ضعيفة جدًا.",
+  "auth_recent_login_required": "يرجى تسجيل الدخول مرة أخرى لإجراء هذا الإجراء.",
 };

@@ -32,13 +32,13 @@ class PasswordService {
       String newPassword,
       ) async {
     if (!formKey.currentState!.validate()) {
-      throw 'invalid_input';
+      throw 'auth_invalid_input';
     }
 
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null || user.email == null) {
-      throw 'no_user_logged_in';
+      throw 'auth_no_user_logged_in';
     }
 
     try {
@@ -54,14 +54,14 @@ class PasswordService {
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
       // Wrong old password
-      if (e.code == 'wrong-password') throw 'wrong_old_password';
+      if (e.code == 'wrong-password') throw 'auth_wrong_old_password';
 
       // Too-weak new password (firebase checks strength)
-      if (e.code == 'weak-password') throw 'weak_new_password';
+      if (e.code == 'weak-password') throw 'auth_weak_new_password';
 
       // Requires recent login (rare)
       if (e.code == 'requires-recent-login') {
-        throw 'recent_login_required';
+        throw 'auth_recent_login_required';
       }
 
       throw 'generic_error';
