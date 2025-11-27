@@ -12,14 +12,16 @@ import '../../utils/snackBarHandler.dart';
 import 'package:yack/utils/translation_handler.dart';
 import '../../widgets/primaryActionButton.dart';
 
-class ForgetPassword extends StatelessWidget {
+class ForgetPassword extends StatefulWidget {
+  const ForgetPassword({super.key});
 
+  @override
+  State<ForgetPassword> createState() => _ForgetPasswordState();
+}
+
+class _ForgetPasswordState extends State<ForgetPassword> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-
-  ForgetPassword({super.key});
-
-
 
   @override
   Widget build(BuildContext context) {

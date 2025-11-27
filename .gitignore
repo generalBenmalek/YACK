@@ -45,3 +45,4 @@ app.*.map.json
 /android/app/release
 lbbi.zip
 lib.zip
+android/build/reports/problems/problems-report.html

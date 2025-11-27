@@ -12,17 +12,21 @@ import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
 import 'package:yack/utils/translation_handler.dart';
 
-class SignUpScreen extends StatelessWidget {
-  final _formKey = GlobalKey<FormState>();
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
+
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
-
-
-  SignUpScreen({super.key});
 
 
   @override
@@ -97,8 +101,6 @@ class SignUpScreen extends StatelessWidget {
                         controller: confirmPasswordController,
                         validator: (v) => Validator.confirmPassword(v, passwordController.value.text),
                       ),
-
-
                       BlocConsumer<SignupCubit,SignupState>(
 
                           builder: (context,state) {
