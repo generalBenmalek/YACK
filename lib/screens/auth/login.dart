@@ -58,74 +58,84 @@ class LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
+    // Removed unused screenWidth; using LayoutBuilder constraints for width
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(TranslationHandler.get('app_name'),
-                  style: theme.textTheme.titleMedium),
-              SizedBox(
-                width: PlatformInfo.isDesktop
-                    ? min(400, screenWidth * 0.9)
-                    : screenWidth,
-                child: Form(
-                  key: _formKey,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double maxWidth = PlatformInfo.isDesktop
+                ? min(400.0, constraints.maxWidth * 0.9)
+                : constraints.maxWidth;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(10),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
                   child: Column(
-                    spacing: 10,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      TitleWidget(
-                          text: TranslationHandler.get('welcome_back')),
-                      const SizedBox(height: 30),
-                      CustomTextFormField(
-                        hintText: TranslationHandler.get('email'),
-                        controller: emailController,
-                        validator: Validator.email,
-                      ),
-                      CustomTextFormField(
-                        hintText: TranslationHandler.get('password'),
-                        isPassword: true,
-                        controller: passwordController,
-                        validator: (v) => Validator.length(v,min: 8),
+                      Text(TranslationHandler.get('app_name'),
+                          style: theme.textTheme.titleMedium),
+                      SizedBox(
+                        width: maxWidth,
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            spacing: 10,
+                            children: [
+                              TitleWidget(
+                                  text: TranslationHandler.get('welcome_back')),
+                              const SizedBox(height: 30),
+                              CustomTextFormField(
+                                hintText: TranslationHandler.get('email'),
+                                controller: emailController,
+                                validator: Validator.email,
+                              ),
+                              CustomTextFormField(
+                                hintText: TranslationHandler.get('password'),
+                                isPassword: true,
+                                controller: passwordController,
+                                validator: (v) => Validator.length(v, min: 8),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  HrefWidget(
+                                    text: TranslationHandler.get('forget_password'),
+                                    onClick: () {
+                                      Navigator.pushNamed(context, '/forgot-password');
+                                    },
+                                  ),
+                                ],
+                              ),
+                              PrimaryActionButtonAutoReload(
+                                onClick: login,
+                                action: TranslationHandler.get('login'),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 5,
                         children: [
+                          Text(TranslationHandler.get('dont_have_account')),
                           HrefWidget(
-                            text: TranslationHandler.get('forget_password'),
+                            text: TranslationHandler.get('sign_up'),
                             onClick: () {
-                              Navigator.pushNamed(context, '/forgot-password');
+                              Navigator.pushNamed(context, '/signup');
                             },
                           ),
                         ],
-                      ),
-                      PrimaryActionButtonAutoReload(
-                        onClick: login,
-                        action: TranslationHandler.get('login'),
                       ),
                     ],
                   ),
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 5,
-                children: [
-                  Text(TranslationHandler.get('dont_have_account')),
-                  HrefWidget(
-                    text: TranslationHandler.get('sign_up'),
-                    onClick: () {
-                      Navigator.pushNamed(context, '/signup');
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
