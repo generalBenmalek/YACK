@@ -51,10 +51,10 @@ class ContractsScreen extends StatelessWidget {
                 }
 
                 final activeContracts = data
-                    .where((c) => c.status == ContractStatus.accepted)
+                    .where((c) => c.status == ContractStatus.accepted || c.status == ContractStatus.pending)
                     .toList();
                 final pastContracts = data
-                    .where((c) => c.status == ContractStatus.completed)
+                    .where((c) => c.status == ContractStatus.completed || c.status == ContractStatus.rejected)
                     .toList();
 
                 return ListView(
@@ -223,7 +223,7 @@ class ContractCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (contract.status == ContractStatus.completed)
+            if (contract.status == ContractStatus.completed || contract.status == ContractStatus.rejected)
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () => _deleteContract(context),
