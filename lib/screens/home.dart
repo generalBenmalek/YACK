@@ -28,8 +28,10 @@ class ContractsScreen extends StatelessWidget {
         ),
         automaticallyImplyLeading: false,
       ),
-      body: SafeArea(
-        child: Center(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
             child: StreamBuilder<List<Contract>>(
@@ -79,8 +81,9 @@ class ContractsScreen extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: Container(
+      Container(
         margin: const EdgeInsets.all(10),
+        alignment: TranslationHandler.isRTL ? Alignment.bottomLeft : Alignment.bottomRight,
         child: FloatingActionButton(
           onPressed: () {
             Navigator.push(
@@ -92,15 +95,11 @@ class ContractsScreen extends StatelessWidget {
           },
           backgroundColor: AppTheme.yackGreen,
           tooltip: TranslationHandler.get('add_contract'),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
           child: const Icon(Icons.add, color: AppTheme.yackWhite, size: 28),
         ),
       ),
-      floatingActionButtonLocation: TranslationHandler.isRTL
-          ? FloatingActionButtonLocation.startFloat
-          : FloatingActionButtonLocation.endFloat,
+    ],
+    ),
     );
   }
 }
