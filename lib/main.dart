@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:yack/db/online.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:yack/screens/contract_agr/contract_agreement.dart';
@@ -45,7 +46,7 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
   final userBox = await Hive.openBox('user');
-
+  await Hive.openBox('contracts');
   await TranslationHandler.initialize(userBox);
 
   late final String initialRoute;
