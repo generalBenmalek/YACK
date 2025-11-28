@@ -46,3 +46,5 @@ app.*.map.json
 lbbi.zip
 lib.zip
 android/build/reports/problems/problems-report.html
+/linux
+/windows
