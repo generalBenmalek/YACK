@@ -110,7 +110,7 @@ class MyApp extends StatelessWidget {
             '/settings': (context) =>
                 themedRoute(context, const SettingsScreen()),
             '/profile': (context) =>
-                themedRoute(context, const ProfileScreen()),
+                themedRoute(context, const ProfileScreen(),transparent: true),
             '/upgrade': (context) =>
                 themedRoute(context, const NoMoreContractsAvailable(),transparent: true),
             '/home': (context) =>

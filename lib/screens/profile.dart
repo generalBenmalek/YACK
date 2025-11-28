@@ -21,10 +21,7 @@ class ProfileScreen extends StatelessWidget {
           style: theme.textTheme.titleMedium,
         ),
       ),
-      body: ValueListenableBuilder(
-        valueListenable: Hive.box('user').listenable(keys: ['firstName', 'lastName']),
-        builder: (context, box, _) {
-          return SingleChildScrollView(
+      body: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Column(
@@ -46,9 +43,7 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-          );
-        },
-      ),
+          )
     );
   }
 }
