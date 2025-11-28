@@ -116,7 +116,10 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: TranslationHandler.get('profile'),
                     subtitle: TranslationHandler.get('profile_subtitle'),
-                    onTap: null,
+                    onTap: () {
+                      Navigator.of(context, rootNavigator: true)
+                          .pushNamed('/profile');
+                    },
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(

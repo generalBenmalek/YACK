@@ -12,6 +12,7 @@ import 'package:yack/screens/auth/login.dart';
 import 'package:yack/screens/auth/signup.dart';
 import 'package:yack/screens/welcome.dart';
 import '../theme/theme.dart';
+import 'screens/profile.dart';
 import 'screens/sign_contract.dart';
 import 'screens/settings.dart';
 import 'screens/create_contract.dart';
@@ -108,6 +109,8 @@ class MyApp extends StatelessWidget {
 
             '/settings': (context) =>
                 themedRoute(context, const SettingsScreen()),
+            '/profile': (context) =>
+                themedRoute(context, const ProfileScreen()),
             '/upgrade': (context) =>
                 themedRoute(context, const NoMoreContractsAvailable(),transparent: true),
             '/home': (context) =>
