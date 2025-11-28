@@ -21,13 +21,55 @@ import 'package:path_provider/path_provider.dart';
 
 late Isar isar;
 
+Future<void> seedMockData(Isar isar) async {
+  final count = await isar.contracts.count();
+  if (count == 0) {
+    final contracts = [
+      Contract()
+        ..name = 'Consulting Agreement'
+        ..description = 'Consulting services for project X'
+        ..price = 12000
+        ..userA = 'User A'
+        ..userB = 'User B'
+        ..status = ContractStatus.accepted
+        ..createdAt = DateTime.now(),
+      Contract()
+        ..name = 'Freelance Contract'
+        ..description = 'Web development services'
+        ..price = 5000
+        ..userA = 'User A'
+        ..userB = 'User B'
+        ..status = ContractStatus.accepted
+        ..createdAt = DateTime.now().subtract(const Duration(days: 2)),
+      Contract()
+        ..name = 'Service Agreement'
+        ..description = 'Maintenance services'
+        ..price = 8000
+        ..userA = 'User A'
+        ..userB = 'User B'
+        ..status = ContractStatus.accepted
+        ..createdAt = DateTime.now().subtract(const Duration(days: 5)),
+      Contract()
+        ..name = 'Past Contract'
+        ..description = 'Completed project'
+        ..price = 5000
+        ..userA = 'User A'
+        ..userB = 'User B'
+        ..status = ContractStatus.completed
+        ..createdAt = DateTime.now().subtract(const Duration(days: 30)),
+    ];
+
+    await isar.writeTxn(() async {
+      await isar.contracts.putAll(contracts);
+    });
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Get the folder where Isar will store the database
   final dir = await getApplicationDocumentsDirectory();
 
-  // Open the database with all your schemas
   isar = await Isar.open(
     [
       ContractSchema,
@@ -38,15 +80,14 @@ void main() async {
     directory: dir.path,
   );
 
-  // Initialize Firebase
+  await seedMockData(isar);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Make the UI edge-to-edge
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // System overlay style
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: Colors.transparent,
@@ -56,7 +97,6 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
-  // Initialize Hive
   await Hive.initFlutter();
 
   final userBox = await Hive.openBox('user');
