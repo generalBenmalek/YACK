@@ -24,7 +24,7 @@ class ContractsScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(
           TranslationHandler.get('contracts'),
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium ,
         ),
         automaticallyImplyLeading: false,
       ),
@@ -184,22 +184,22 @@ class ContractCard extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
-          width: 48,
-          height: 48,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: AppTheme.yackGreenLight,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.description, color: AppTheme.yackGreen),
+          child: const Icon(Icons.description, color: AppTheme.yackGreen,size: 20,),
         ),
         title: Text(
           contract.name,
           style: Theme.of(context)
               .textTheme
-              .titleMedium
+              .titleSmall
               ?.copyWith(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text('${contract.price} DA'),
+        subtitle: Text('${contract.price} DA', style: Theme.of(context).textTheme.bodyMedium),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -217,7 +217,7 @@ class ContractCard extends StatelessWidget {
                   color: contract.status == ContractStatus.accepted
                       ? AppTheme.yackGreen
                       : AppTheme.yackGray,
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),
               ),
