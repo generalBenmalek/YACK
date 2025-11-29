@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yack/db/models/contract.dart';
 import 'package:yack/screens/scan_contract.dart';
 import 'package:yack/screens/shareContract.dart';
 import 'package:yack/utils/translation_handler.dart';
@@ -11,6 +12,18 @@ class CreateContractScreen extends StatefulWidget {
 }
 
 class _CreateContractScreenState extends State<CreateContractScreen> {
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _priceController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -43,6 +56,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
             const SizedBox(height: 8.0),
 
             TextField(
+              controller: _titleController,
               maxLines: 1,
               textAlign: TextAlign.start,
               decoration: InputDecoration(
@@ -76,6 +90,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
             ),
             const SizedBox(height: 8.0),
             TextField(
+              controller: _descriptionController,
               maxLines: 5,
               textAlign: TextAlign.start,
               decoration: InputDecoration(
@@ -108,6 +123,7 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
             ),
             const SizedBox(height: 8.0),
             TextField(
+              controller: _priceController,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -154,15 +170,20 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(
-                      builder: (_) =>  ShareContractScreen(
-                        title: "Web Design Agreement",
-                        price: 250.00,
-                        userFirstName: "Alex",
-                        userLastName: "Turner",
-                        contractLink: "https://yack.app/contracts/WD12345",
-                      )
-                  )
+                  final contract = Contract()
+                    ..name = _titleController.text
+                    ..description = _descriptionController.text
+                    ..price = double.tryParse(_priceController.text) ?? 0.0
+                    ..userA = 'Current User'
+                    ..userB = ''
+                    ..status = ContractStatus.pending
+                    ..createdAt = DateTime.now();
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ShareContractScreen(contract: contract),
+                    ),
                   );
                 },
                 icon: const Icon(Icons.add, size: 20),
