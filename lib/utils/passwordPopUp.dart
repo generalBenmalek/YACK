@@ -1,11 +1,16 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yack/providers/auth/change_password_cubit.dart';
+import 'package:yack/providers/auth/change_password_state.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/utils/translation_handler.dart';
 import 'package:yack/utils/validator.dart';
 import 'package:yack/widgets/inputFormWidget.dart';
 import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
+
+import '../widgets/primaryActionButton.dart';
 
 Future<void> showChangePasswordDialog(BuildContext context) async {
   final oldPasswordController = TextEditingController();
@@ -64,22 +69,35 @@ Future<void> showChangePasswordDialog(BuildContext context) async {
                         hintText: TranslationHandler.get('confirm_password'),
                       ),
                       const SizedBox(height: 20),
-                      PrimaryActionButtonAutoReload(
-                        action: TranslationHandler.get('save'),
-                        onClick: () async {
-                          if (formKey.currentState!.validate()) {
-                            // Simulate backend password update delay
-                            await Future.delayed(const Duration(seconds: 2));
-
-                            Navigator.pop(context);
-
-                            SnackBarHandler.showSuccess(
-                              context,
-                              TranslationHandler.get('password_updated_successfully'),
+                      BlocConsumer<ChangePasswordCubit,ChangePasswordState>(
+                          builder:  (context,state){
+                            return PrimaryActionButton(
+                              isLoading: state is ChangePasswordLoading,
+                              action: TranslationHandler.get('save'),
+                              onClick: ()  {
+                                context.read<ChangePasswordCubit>().changePassword(
+                                    formKey,
+                                    oldPasswordController.value.text,
+                                    newPasswordController.value.text
+                                );
+                              },
                             );
-                          }
-                        },
-                      ),
+                          },
+                          listener: (context,state){
+                            if (state is ChangePasswordError){
+                              SnackBarHandler.showError(context,
+                                  TranslationHandler.get(state.messageKey)
+                              );
+                            }
+                            else if (state is ChangePasswordSuccess){
+                              Navigator.pop(context);
+                              SnackBarHandler.showSuccess(context,
+                                  TranslationHandler.get('password_updated_successfully')
+                              );
+                            }
+
+                          }),
+
                       const SizedBox(height: 10),
                       TextButton(
                         onPressed: () => Navigator.pop(context),

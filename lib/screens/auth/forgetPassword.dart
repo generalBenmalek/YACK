@@ -1,64 +1,33 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yack/providers/auth/password_reset_cubit.dart';
+import 'package:yack/providers/auth/password_reset_state.dart';
 import 'package:yack/utils/platform.dart';
 import 'package:yack/utils/validator.dart';
 import 'package:yack/widgets/inputFormWidget.dart';
-import 'package:yack/widgets/inputWidget.dart';
-import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
 import 'package:yack/widgets/titleWidget.dart';
 import 'package:yack/widgets/hrefTextWidget.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import '../../utils/snackBarHandler.dart'; // only if you use Firebase
+import '../../utils/snackBarHandler.dart';
 import 'package:yack/utils/translation_handler.dart';
+import '../../widgets/primaryActionButton.dart';
 
 class ForgetPassword extends StatefulWidget {
   const ForgetPassword({super.key});
 
   @override
-  State<StatefulWidget> createState() => ForgetPasswordState();
+  State<ForgetPassword> createState() => _ForgetPasswordState();
 }
 
-class ForgetPasswordState extends State<ForgetPassword> {
+class _ForgetPasswordState extends State<ForgetPassword> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-
-  Future<void> _resetPassword() async {
-    if (!_formKey.currentState!.validate()) return;
-
-
-    try {
-      // Firebase password reset
-      await FirebaseAuth.instance
-          .sendPasswordResetEmail(email: _emailController.text.trim());
-
-      if (mounted) {
-        SnackBarHandler.showSuccess(
-            context, TranslationHandler.get('password_reset_sent'));
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = TranslationHandler.get('generic_error');
-      if (e.code == 'user-not-found') {
-        message = TranslationHandler.get('no_account_found');
-      }
-
-      SnackBarHandler.showError(context, message);
-
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    // final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: SafeArea(
@@ -91,11 +60,33 @@ class ForgetPasswordState extends State<ForgetPassword> {
                         validator: Validator.email,
                       ),
                       const SizedBox(height: 25),
-                      PrimaryActionButtonAutoReload(
-                          action: TranslationHandler.get('reset'),
-                          onClick: _resetPassword)
+                      BlocConsumer<PasswordResetCubit,PasswordResetState>(
+                        listener: (context,state) {
 
-                    ],
+                          if (state is PasswordResetSuccess){
+                            SnackBarHandler.showSuccess(
+                                context, TranslationHandler.get('password_reset_sent'));
+                            Navigator.pushReplacementNamed(context, '/login');
+                          }
+                          else if (state is PasswordResetError) {
+                            print (state.messageKey);
+                            SnackBarHandler.showError(context, TranslationHandler.get(state.messageKey));
+                          }
+
+                        },
+                        builder: (context,state) {
+                          return PrimaryActionButton(
+                              isLoading: state is PasswordResetLoading,
+                              action: TranslationHandler.get('reset'),
+                              onClick: (){
+                                context.read<PasswordResetCubit>().resetPassword(
+                                  context,
+                                  _formKey,
+                                  _emailController.text,);
+                                },
+                          );
+                        })
+                     ],
                   ),
                 ),
                 Row(
