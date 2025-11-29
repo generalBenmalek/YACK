@@ -1706,3 +1706,66 @@ Future<void> syncOfflineData() async {
     print('Error during offline data sync: $e');
   }
 }
+
+
+
+
+
+
+/// Changes or sets the user's profile picture
+/// 
+/// [userId]: The user ID
+/// [file]: The image file to upload
+/// Returns: Map with status and URL on success
+Future<Map<String, dynamic>> changeProfilePic(String userId, File file) async {
+  try {
+    // Upload to Cloudinary
+    String? url = await uploadAndGetUrl(file, type: CloudinaryResourceType.Image);
+    if (url == null) {
+      return {"status": false, "error": "Upload failed"};
+    }
+
+    // Set in Firebase (overwrites if exists)
+    DatabaseReference picRef = FirebaseDatabase.instance.ref("profilePic/$userId");
+    await picRef.set(url);
+
+    return {"status": true, "url": url};
+  } catch (e) {
+    print('Change Profile Pic Error: $e');
+    return {"status": false, "error": e.toString()};
+  }
+}
+
+/// Gets the user's profile picture URL
+/// 
+/// [userId]: The user ID
+/// Returns: Map with status and URL (null if none)
+Future<Map<String, dynamic>> getProfilePic(String userId) async {
+  try {
+    DatabaseReference picRef = FirebaseDatabase.instance.ref("profilePic/$userId");
+    DatabaseEvent event = await picRef.once();
+    final data = event.snapshot.value;
+
+    String? url = data?.toString();
+    return {"status": true, "url": url};
+  } catch (e) {
+    print('Get Profile Pic Error: $e');
+    return {"status": false, "error": e.toString()};
+  }
+}
+
+/// Removes the user's profile picture
+/// 
+/// [userId]: The user ID
+/// Returns: Map with status
+Future<Map<String, dynamic>> removeProfilePic(String userId) async {
+  try {
+    DatabaseReference picRef = FirebaseDatabase.instance.ref("profilePic/$userId");
+    await picRef.remove();
+
+    return {"status": true, "message": "Profile pic removed"};
+  } catch (e) {
+    print('Remove Profile Pic Error: $e');
+    return {"status": false, "error": e.toString()};
+  }
+}
