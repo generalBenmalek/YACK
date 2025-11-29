@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:yack/utils/snackBarHandler.dart';
+import 'package:yack/models/contract/contract_preview.dart';
 import '../theme/theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:yack/utils/translation_handler.dart';
@@ -43,35 +45,63 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
   void _onQRScanned(String code) {
     scannerController?.stop();
 
-    SnackBarHandler.showSuccess(
-        context, TranslationHandler.resolve('contract_scanned', params: {'code': code}));
-
-    // simulation
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) Navigator.of(context).pop();
-
-      // temporary
-      Navigator.push(
+    // Step 1: Validate and extract the Base64 string from the link
+    if (!code.startsWith('yack://contract?data=')) {
+      SnackBarHandler.showError(
         context,
-        MaterialPageRoute(
-          builder: (_) => const AcceptDeclineContractScreen(
-              title: "Web Design Agreement",
-              price: 250.00,
-              userFirstName: "Alex",
-              userLastName: "Turner",
-              description: """
-This agreement outlines the terms between the client and the designer for the creation of a responsive, user-friendly website.
-
-The designer agrees to deliver a complete website featuring up to 5 pages, including a homepage, about section, contact form, and portfolio. The website will be optimized for both desktop and mobile devices.
-
-The client agrees to provide all necessary materials (text, images, and branding assets) before the project begins. Two rounds of revisions are included in the project scope. Additional changes beyond these revisions may incur extra fees.
-
-Payment will be processed upon acceptance of this contract. Final deliverables will be transferred once the project is fully completed and approved by the client.
-"""
-          ),
-        ),
+        TranslationHandler.get('invalid_contract_qr'),
       );
-    });
+      _stopScanning();
+      return;
+    }
+
+    try {
+      // Step 2: Extract the Base64 encoded data from the link
+      final uri = Uri.parse(code);
+      final encodedData = uri.queryParameters['data'];
+
+      if (encodedData == null || encodedData.isEmpty) {
+        throw FormatException('Missing contract data');
+      }
+
+      // Step 3: Decode Base64 back into a JSON string
+      final jsonString = utf8.decode(base64Url.decode(encodedData));
+
+      // Step 4: Parse the JSON into a Dart map
+      final Map<String, dynamic> jsonMap = json.decode(jsonString);
+
+      // Step 5: Convert the map into a temporary ContractPreview object
+      final contractPreview = ContractPreview.fromJson(jsonMap);
+
+      SnackBarHandler.showSuccess(
+        context,
+        TranslationHandler.get('contract_decoded_successfully'),
+      );
+
+      // Step 6: Display the decoded information to the user
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AcceptDeclineContractScreen(
+                title: contractPreview.name,
+                price: contractPreview.price,
+                userFirstName: contractPreview.userA,
+                userLastName: '',
+                description: contractPreview.description,
+              ),
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      SnackBarHandler.showError(
+        context,
+        TranslationHandler.get('failed_to_decode_contract'),
+      );
+      _stopScanning();
+    }
   }
 
   @override

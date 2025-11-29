@@ -110,7 +110,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
-                      "${TranslationHandler.get('price_label')}: \$${price.toStringAsFixed(2)}",
+                      "${TranslationHandler.get('price_label')}: ${price.toStringAsFixed(2)} DA",
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: color.primary,
                           fontWeight: FontWeight.bold,
