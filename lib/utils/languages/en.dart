@@ -215,5 +215,9 @@ const english = {
 'password_updated_successfully': 'Password updated successfully!',
 'cancel': 'Cancel',
   'save': 'Save',
+  'currency': 'DA',
+  'contract_decoded_successfully': 'Contract decoded successfully!',
+  'invalid_contract_qr': 'Invalid contract QR code',
+  'failed_to_decode_contract': 'Failed to decode contract',
 
 };

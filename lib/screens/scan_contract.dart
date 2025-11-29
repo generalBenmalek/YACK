@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:isar/isar.dart';
+import 'package:yack/db/models/contract.dart';
+import 'package:yack/main.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/models/contract/contract_preview.dart';
 import '../theme/theme.dart';
@@ -42,7 +45,7 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
     });
   }
 
-  void _onQRScanned(String code) {
+  void _onQRScanned(String code) async {
     scannerController?.stop();
 
     // Step 1: Validate and extract the Base64 string from the link
@@ -78,23 +81,43 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
         TranslationHandler.get('contract_decoded_successfully'),
       );
 
-      // Step 6: Display the decoded information to the user
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AcceptDeclineContractScreen(
-                title: contractPreview.name,
-                price: contractPreview.price,
-                userFirstName: contractPreview.userA,
-                userLastName: '',
-                description: contractPreview.description,
-              ),
+      // Step 6: Display the decoded information to the user and handle result
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AcceptDeclineContractScreen(
+              title: contractPreview.name,
+              price: contractPreview.price,
+              userFirstName: contractPreview.userA,
+              userLastName: '',
+              description: contractPreview.description,
             ),
-          );
+          ),
+        );
+
+        // If accepted, save contract to database
+        if (result == true) {
+          final contract = Contract()
+            ..name = contractPreview.name
+            ..description = contractPreview.description ?? ''
+            ..price = contractPreview.price
+            ..userA = contractPreview.userA
+            ..userB = 'Current User'
+            ..status = ContractStatus.accepted
+            ..createdAt = DateTime.now();
+
+          await isar.writeTxn(() async {
+            await isar.contracts.put(contract);
+          });
         }
-      });
+
+        // Go back to home after accept/decline
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      }
     } catch (e) {
       SnackBarHandler.showError(
         context,

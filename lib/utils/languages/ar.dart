@@ -212,4 +212,8 @@ const arabic = {
     'password_updated_successfully': 'تم تحديث كلمة المرور بنجاح!',
     'cancel': 'إلغاء',
     'save': 'حفظ',
+    'currency': 'دج',
+    'contract_decoded_successfully': 'تم فك تشفير العقد بنجاح!',
+    'invalid_contract_qr': 'رمز QR للعقد غير صالح',
+    'failed_to_decode_contract': 'فشل في فك تشفير العقد',
   };

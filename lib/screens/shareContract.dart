@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../db/models/contract.dart';
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:flutter/services.dart';
-import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
 import 'package:yack/utils/translation_handler.dart';
 import 'acceptDeclineContract.dart';

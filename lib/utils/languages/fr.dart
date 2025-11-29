@@ -217,4 +217,8 @@ const french = {
 'password_updated_successfully': 'Mot de passe mis à jour avec succès !',
 'cancel': 'Annuler',
   'save': 'Enregistrer',
+  'currency': 'DA',
+  'contract_decoded_successfully': 'Contrat décodé avec succès !',
+  'invalid_contract_qr': 'Code QR de contrat invalide',
+  'failed_to_decode_contract': 'Échec du décodage du contrat',
 };
