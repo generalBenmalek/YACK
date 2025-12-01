@@ -4,6 +4,7 @@ import 'package:yack/db/models/contract.dart';
 import 'package:yack/models/contract/contract_preview.dart';
 import 'package:yack/services/network/http_handler.dart';
 
+import 'accept_contract_result.dart';
 import 'create_contract_result.dart';
 
 class ContractService {
@@ -41,9 +42,10 @@ class ContractService {
     // ---------------------------
     final Contract contract = Contract()
       ..name = name
+      ..mongoId = tempId  // use tempId as mongoId for in-memory object
       ..description = description
       ..price = price
-      ..userA = "" // will fill after join
+      ..userA = 'Me'
       ..userB = ""
       ..status = ContractStatus.pending
       ..createdAt = DateTime.now();
@@ -54,7 +56,6 @@ class ContractService {
     return CreateContractResult(
       contract: contract,
       hash: hash,
-      tempId: tempId,
     );
   }
 
@@ -83,7 +84,6 @@ class ContractService {
       final jsonString = utf8.decode(base64Url.decode(encodedData));
       final Map<String, dynamic> jsonMap = json.decode(jsonString);
 
-      final preview = ContractPreview.fromJson(jsonMap);
 
       // ---------------------------------------------
       // 4. BACKEND CALL: join the temporary contract
@@ -91,18 +91,48 @@ class ContractService {
       final response = await _http.post(
         "/contracts/join",
         body: {
-          "tempID": preview.id,  // backend "tempID"
+          "tempID": jsonMap['id'], // backend requires "tempID"
         },
       );
 
+      // ---------------------------------------------
+      // 5. Inject userA first + last name from backend
+      // ---------------------------------------------
 
+      jsonMap['userA'] = response['userAFullName'] ?? jsonMap['userA'];
+      final preview = ContractPreview.fromJson(jsonMap);
       return preview;
 
     } on FormatException {
       throw const FormatException('invalid_contract_qr');
     } catch (e) {
-      // backend error
       throw Exception('failed_to_join_contract: $e');
     }
   }
+
+  static Future<AcceptContractResult> acceptContract(String tempId) async {
+    final response = await _http.post(
+      "/contracts/sign",
+      body: {
+        "tempID": tempId,
+      },
+    );
+
+    // Case 1: Contract fully completed
+    if (response["completed"] == true) {
+      return AcceptContractResult(
+        signed: true,
+        completed: true,
+        finalContractId: response["contractID"],
+      );
+    }
+
+    // Case 2: Only this user signed (waiting for other)
+    return AcceptContractResult(
+      signed: true,
+      completed: false,
+      finalContractId: null,
+    );
+  }
+
 }

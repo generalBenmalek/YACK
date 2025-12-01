@@ -10,6 +10,7 @@ import 'package:yack/providers/auth/login_cubit.dart';
 import 'package:yack/providers/auth/password_reset_cubit.dart';
 import 'package:yack/providers/auth/signup_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:yack/providers/contract/accept_contract_cubit.dart';
 import 'package:yack/providers/contract/create_contract_cubit.dart';
 import 'package:yack/providers/contract/join_contract_cubit.dart';
 import 'app.dart';
@@ -123,7 +124,7 @@ void main() async {
             // Contract related cubits
               BlocProvider<CreateContractCubit>(create: (_) => CreateContractCubit(),),
               BlocProvider<JoinContractCubit>(create: (_) => JoinContractCubit(),),
-
+              BlocProvider<AcceptContractCubit>(create: (_) => AcceptContractCubit(),),
 
 
             // BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
