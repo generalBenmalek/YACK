@@ -16,7 +16,8 @@ class ContractService {
       String description,
       double price,
       String hash,
-      ) async {
+      ) async
+  {
 
     // if (!formKey.currentState!.validate()) {
     //   throw Exception("form_invalid");
@@ -59,8 +60,8 @@ class ContractService {
     );
   }
 
-
-  static Future<ContractPreview> joinContractFromQr(String code) async {
+  static Future<ContractPreview> joinContractFromQr(String code) async
+  {
     // 1. Validate prefix / scheme
     if (!code.startsWith('yack://contract')) {
       throw const FormatException('invalid_contract_qr');
@@ -110,7 +111,8 @@ class ContractService {
     }
   }
 
-  static Future<AcceptContractResult> acceptContract(String tempId) async {
+  static Future<AcceptContractResult> acceptContract(String tempId) async
+  {
     final response = await _http.post(
       "/contracts/sign",
       body: {

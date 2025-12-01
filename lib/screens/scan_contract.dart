@@ -58,10 +58,13 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
   Widget build(BuildContext context) {
     return BlocListener<JoinContractCubit, JoinContractState>(
       listener: (context, state) async {
-        if (state is JoinContractLoading) {
-          // Optionally show nothing; SnackBars are used only on error/success
-          return;
-        }
+
+        // if (state is JoinContractLoading) {
+        //   SnackBarHandler.showMessage(
+        //     context,
+        //     TranslationHandler.get('decoding_contract'),
+        //   );
+        // }
 
         if (state is JoinContractError) {
           SnackBarHandler.showError(
@@ -77,18 +80,16 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
             TranslationHandler.get('contract_decoded_successfully'),
           );
 
-          // Navigate to accept/decline screen
-          await Future.delayed(const Duration(milliseconds: 300));
           if (!mounted) return;
 
-          final result = await Navigator.push<bool>(
+          final result = await Navigator.push<Map<String,dynamic>>(
             context,
             MaterialPageRoute(
               builder: (_) => AcceptDeclineContractScreen(
                 title: state.preview.name,
                 price: state.preview.price,
-                userFirstName: state.preview.userA,
-                userLastName: '',
+                userAFullName: state.preview.userA,
+                userBFullName: 'Me',
                 description: state.preview.description,
                 tempId: state.preview.id,
               ),
@@ -96,15 +97,10 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
           );
 
           // If accepted, save contract to database
-          if (result == true) {
+          if (result?['status'] == true) {
             await isar.writeTxn(() async {
-              await isar.contracts.put(state.contract);
+              await isar.contracts.put(result?['contract'] as Contract);
             });
-          }
-
-          // Go back to home after accept/decline
-          if (mounted) {
-            Navigator.of(context).pop();
           }
         }
       },
