@@ -216,7 +216,12 @@ const arabic = {
 'contract_decoded_successfully': 'تم فك تشفير العقد بنجاح!',
 'invalid_contract_qr': 'رمز QR للعقد غير صالح',
 'failed_to_decode_contract': 'فشل في فك تشفير العقد',
-'profile_information': 'بيانات المستخدم',
+
+  // New keys for accept/waiting flow
+  'contract_waiting_other_user': 'لقد وقّعت العقد. في انتظار توقيع الطرف الآخر.',
+  'accept_contract_failed': 'فشل في قبول العقد. يرجى المحاولة مرة أخرى.',
+
+  'profile_information': 'بيانات المستخدم',
 'profile_name_placeholder': 'اسمك',
 'status_pending': 'قيد الانتظار',
 'status_rejected': 'مرفوض',

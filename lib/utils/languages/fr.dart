@@ -246,4 +246,8 @@ const french = {
   "auth_wrong_old_password": "L'ancien mot de passe est incorrect.",
   "auth_weak_new_password": "Le nouveau mot de passe est trop faible.",
   "auth_recent_login_required": "Veuillez vous reconnecter pour effectuer cette action.",
+  'contract_waiting_other_user':
+      "Vous avez signé le contrat. En attente de la signature de l'autre partie.",
+  'accept_contract_failed':
+      "Échec de l'acceptation du contrat. Veuillez réessayer.",
 };

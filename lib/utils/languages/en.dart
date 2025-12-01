@@ -223,6 +223,8 @@ const english = {
   'contract_decoded_successfully': 'Contract decoded successfully!',
   'invalid_contract_qr': 'Invalid contract QR code',
   'failed_to_decode_contract': 'Failed to decode contract',
+  'contract_waiting_other_user': 'You have signed. Waiting for the other party to sign.',
+  'accept_contract_failed': 'Failed to accept the contract. Please try again.',
   "auth_invalid_input": "Invalid input.",
   "auth_wrong_password": "Wrong password.",
   "auth_user_not_found": "User not found.",
