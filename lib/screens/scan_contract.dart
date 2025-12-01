@@ -90,6 +90,7 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
                 userFirstName: state.preview.userA,
                 userLastName: '',
                 description: state.preview.description,
+                tempId: state.preview.id,
               ),
             ),
           );
