@@ -17,6 +17,7 @@ class ShareContractScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final color = theme.colorScheme;
     final jsonString = json.encode({
+      'id': contract.mongoId,
       'name': contract.name,
       'price': contract.price,
       'description': contract.description,
@@ -125,26 +126,26 @@ class ShareContractScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                // const SizedBox(height: 30),
                 // Proceed Button
-                PrimaryActionButtonAutoReload(
-                  action: TranslationHandler.get('proceed_to_sign'),
-                  onClick: () async {
-                    // Navigate to Accept/Decline screen for confirmation
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AcceptDeclineContractScreen(
-                          title: contract.name,
-                          price: contract.price,
-                          userFirstName: contract.userA,
-                          userLastName: '',
-                          description: contract.description,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                // PrimaryActionButtonAutoReload(
+                //   action: TranslationHandler.get('proceed_to_sign'),
+                //   onClick: () async {
+                //     // Navigate to Accept/Decline screen for confirmation
+                //     await Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (_) => AcceptDeclineContractScreen(
+                //           title: contract.name,
+                //           price: contract.price,
+                //           userFirstName: contract.userA,
+                //           userLastName: '',
+                //           description: contract.description,
+                //         ),
+                //       ),
+                //     );
+                //   },
+                // ),
               ],
             ),
           ),
