@@ -16,6 +16,9 @@ enum ContractStatus {
 class Contract {
   Id id = Isar.autoIncrement;
 
+  /// MongoDB contract _id stored as string
+  late String mongoId;
+
   late String name;
   late String description;
   late double price;

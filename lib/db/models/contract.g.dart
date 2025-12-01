@@ -27,34 +27,39 @@ const ContractSchema = CollectionSchema(
       name: r'description',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'mongoId': PropertySchema(
       id: 2,
+      name: r'mongoId',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 3,
       name: r'name',
       type: IsarType.string,
     ),
     r'price': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'price',
       type: IsarType.double,
     ),
     r'status': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'status',
       type: IsarType.byte,
       enumMap: _ContractstatusEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userA': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'userA',
       type: IsarType.string,
     ),
     r'userB': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'userB',
       type: IsarType.string,
     )
@@ -93,6 +98,7 @@ int _contractEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.description.length * 3;
+  bytesCount += 3 + object.mongoId.length * 3;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.userA.length * 3;
   bytesCount += 3 + object.userB.length * 3;
@@ -107,12 +113,13 @@ void _contractSerialize(
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeString(offsets[1], object.description);
-  writer.writeString(offsets[2], object.name);
-  writer.writeDouble(offsets[3], object.price);
-  writer.writeByte(offsets[4], object.status.index);
-  writer.writeDateTime(offsets[5], object.updatedAt);
-  writer.writeString(offsets[6], object.userA);
-  writer.writeString(offsets[7], object.userB);
+  writer.writeString(offsets[2], object.mongoId);
+  writer.writeString(offsets[3], object.name);
+  writer.writeDouble(offsets[4], object.price);
+  writer.writeByte(offsets[5], object.status.index);
+  writer.writeDateTime(offsets[6], object.updatedAt);
+  writer.writeString(offsets[7], object.userA);
+  writer.writeString(offsets[8], object.userB);
 }
 
 Contract _contractDeserialize(
@@ -125,14 +132,15 @@ Contract _contractDeserialize(
   object.createdAt = reader.readDateTime(offsets[0]);
   object.description = reader.readString(offsets[1]);
   object.id = id;
-  object.name = reader.readString(offsets[2]);
-  object.price = reader.readDouble(offsets[3]);
+  object.mongoId = reader.readString(offsets[2]);
+  object.name = reader.readString(offsets[3]);
+  object.price = reader.readDouble(offsets[4]);
   object.status =
-      _ContractstatusValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+      _ContractstatusValueEnumMap[reader.readByteOrNull(offsets[5])] ??
           ContractStatus.pending;
-  object.updatedAt = reader.readDateTimeOrNull(offsets[5]);
-  object.userA = reader.readString(offsets[6]);
-  object.userB = reader.readString(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[6]);
+  object.userA = reader.readString(offsets[7]);
+  object.userB = reader.readString(offsets[8]);
   return object;
 }
 
@@ -150,15 +158,17 @@ P _contractDeserializeProp<P>(
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 4:
+      return (reader.readDouble(offset)) as P;
+    case 5:
       return (_ContractstatusValueEnumMap[reader.readByteOrNull(offset)] ??
           ContractStatus.pending) as P;
-    case 5:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -502,6 +512,136 @@ extension ContractQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mongoId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mongoId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mongoId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mongoId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'mongoId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'mongoId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'mongoId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'mongoId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mongoId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> mongoIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'mongoId',
+        value: '',
       ));
     });
   }
@@ -1227,6 +1367,18 @@ extension ContractQuerySortBy on QueryBuilder<Contract, Contract, QSortBy> {
     });
   }
 
+  QueryBuilder<Contract, Contract, QAfterSortBy> sortByMongoId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mongoId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterSortBy> sortByMongoIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mongoId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Contract, Contract, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1338,6 +1490,18 @@ extension ContractQuerySortThenBy
     });
   }
 
+  QueryBuilder<Contract, Contract, QAfterSortBy> thenByMongoId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mongoId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterSortBy> thenByMongoIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mongoId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Contract, Contract, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1426,6 +1590,13 @@ extension ContractQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Contract, Contract, QDistinct> distinctByMongoId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mongoId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Contract, Contract, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1483,6 +1654,12 @@ extension ContractQueryProperty
   QueryBuilder<Contract, String, QQueryOperations> descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<Contract, String, QQueryOperations> mongoIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mongoId');
     });
   }
 
