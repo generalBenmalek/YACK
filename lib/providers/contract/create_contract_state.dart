@@ -9,12 +9,10 @@ class CreateContractLoading extends CreateContractState {}
 class CreateContractSuccess extends CreateContractState {
   final Contract contract; // not saved in Isar yet, just in-memory object
   final String hash;
-  final String tempId;
 
   CreateContractSuccess({
     required this.contract,
     required this.hash,
-    required this.tempId,
   });
 }
 

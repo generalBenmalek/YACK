@@ -34,7 +34,6 @@ class CreateContractCubit extends Cubit<CreateContractState> {
         CreateContractSuccess(
           contract: result.contract,
           hash: result.hash,
-          tempId: result.tempId,
         ),
       );
     } catch (e) {
