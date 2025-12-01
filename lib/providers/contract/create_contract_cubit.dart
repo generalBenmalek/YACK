@@ -1,9 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-
 import 'package:yack/services/contract/contract_service.dart';
-import 'package:yack/db/models/contract.dart';
-
 import 'create_contract_state.dart';
 
 class CreateContractCubit extends Cubit<CreateContractState> {
