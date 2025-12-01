@@ -10,6 +10,7 @@ import 'package:yack/providers/auth/login_cubit.dart';
 import 'package:yack/providers/auth/password_reset_cubit.dart';
 import 'package:yack/providers/auth/signup_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:yack/providers/contract/create_contract_cubit.dart';
 import 'app.dart';
 import 'firebase_options.dart';
 import 'utils/translation_handler.dart';
@@ -109,12 +110,19 @@ void main() async {
   runApp(
       MultiBlocProvider(
           providers: [
+
+            // Authentication related cubits
               BlocProvider<AuthCubit>(create: (_) => AuthCubit()..checkAuth()),
               BlocProvider<LoginCubit>(create: (_) => LoginCubit()),
               BlocProvider<SignupCubit>(create: (_) => SignupCubit()),
               BlocProvider<ConfirmCubit>(create: (_) => ConfirmCubit(),),
               BlocProvider<PasswordResetCubit>(create: (_) => PasswordResetCubit(),),
               BlocProvider<ChangePasswordCubit>(create: (_) => ChangePasswordCubit(),),
+
+            // Contract related cubits
+              BlocProvider<CreateContractCubit>(create: (_) => CreateContractCubit(),),
+            
+
 
             // BlocProvider<ProfileCubit>(create: (_) => ProfileCubit()),
               // BlocProvider<ContractCubit>(create: (_) => ContractCubit()),

@@ -14,7 +14,6 @@ class CreateContractCubit extends Cubit<CreateContractState> {
       String name,
       String description,
       double price,
-      String hash,
       ) async {
     emit(CreateContractLoading());
 
@@ -31,7 +30,7 @@ class CreateContractCubit extends Cubit<CreateContractState> {
         name,
         description,
         price,
-        hash,
+        "hash",
       );
 
       emit(

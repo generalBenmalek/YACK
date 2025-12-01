@@ -14,9 +14,10 @@ class ContractService {
       double price,
       String hash,
       ) async {
-    if (!formKey.currentState!.validate()) {
-      throw Exception("form_invalid");
-    }
+
+    // if (!formKey.currentState!.validate()) {
+    //   throw Exception("form_invalid");
+    // }
 
     // ---------------------------
     // 1. Call backend
