@@ -3,6 +3,7 @@ import 'package:yack/db/models/contract.dart';
 import 'package:yack/screens/scan_contract.dart';
 import 'package:yack/screens/shareContract.dart';
 import 'package:yack/utils/translation_handler.dart';
+import 'package:yack/utils/snackBarHandler.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateContractScreen extends StatefulWidget {
@@ -171,14 +172,27 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
+                  // Validate title
+                  if (_titleController.text.trim().isEmpty) {
+                    SnackBarHandler.showError(context, TranslationHandler.get('title_required'));
+                    return;
+                  }
+                  
+                  // Validate price is a valid number
+                  final priceText = _priceController.text.trim();
+                  final price = double.tryParse(priceText);
+                  if (priceText.isEmpty || price == null || price < 0) {
+                    SnackBarHandler.showError(context, TranslationHandler.get('invalid_price'));
+                    return;
+                  }
 
                   final currentUser = FirebaseAuth.instance.currentUser;
                   final currentUserId = currentUser?.uid ?? 'Unknown';
 
                   final contract = Contract()
-                    ..name = _titleController.text
-                    ..description = _descriptionController.text
-                    ..price = double.tryParse(_priceController.text) ?? 0.0
+                    ..name = _titleController.text.trim()
+                    ..description = _descriptionController.text.trim()
+                    ..price = price
                     ..userA = currentUserId
                     ..userB = ''
                     ..status = ContractStatus.pending

@@ -92,14 +92,15 @@ class _ScanContractScreenState extends State<ScanContractScreen> with WidgetsBin
 
   // Process scanned QR code and navigate to contract preview (Chadli)
   void _onQRScanned(String code) async {
-    _navigatingAway = true;
-
     // Validate QR format (Chadli)
     if (!code.startsWith('yack://contract?data=')) {
       if (mounted) {
         SnackBarHandler.showError(context, TranslationHandler.get('invalid_contract_qr'));
       }
-      _navigateToHome();
+      // Reset flags and allow scanning again
+      _isProcessing = false;
+      _navigatingAway = false;
+      _startScanning();
       return;
     }
 
@@ -115,18 +116,32 @@ class _ScanContractScreenState extends State<ScanContractScreen> with WidgetsBin
       final Map<String, dynamic> jsonMap = json.decode(jsonString);
       final contractPreview = ContractPreview.fromJson(jsonMap);
 
+      // Check if invitation exists (sharing must be started first)
+      final invitationCheck = await online_db.seeInv(contractPreview.id);
+      if (invitationCheck['exists'] != true) {
+        if (mounted) {
+          SnackBarHandler.showError(context, TranslationHandler.get('invitation_not_started'));
+        }
+        // Reset flags and allow scanning again
+        _isProcessing = false;
+        _navigatingAway = false;
+        _startScanning();
+        return;
+      }
+
       if (!mounted) return;
 
+      _navigatingAway = true;
       _stopScanning();
       
-      // Navigate to accept/decline screen (Chadli)
+      // Navigate to accept/decline screen using userAName (Chadli)
       final result = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
           builder: (_) => AcceptDeclineContractScreen(
             title: contractPreview.name,
             price: contractPreview.price,
-            userFirstName: contractPreview.userA,
+            userFirstName: contractPreview.userAName, // Use display name, not UID
             userLastName: '',
             description: contractPreview.description,
           ),
@@ -148,6 +163,18 @@ class _ScanContractScreenState extends State<ScanContractScreen> with WidgetsBin
           final currentUser = FirebaseAuth.instance.currentUser;
           final currentUserId = currentUser?.uid ?? 'test_user_${DateTime.now().millisecondsSinceEpoch}';
           
+          // Prevent user from accepting their own contract
+          if (contractPreview.userA == currentUserId) {
+            if (mounted) {
+              try {
+                Navigator.of(context, rootNavigator: true).pop();
+              } catch (_) {}
+              SnackBarHandler.showError(context, TranslationHandler.get('cannot_accept_own_contract'));
+            }
+            _navigateToHome();
+            return;
+          }
+          
           // Save contract to Isar (Chadli)
           final contract = Contract()
             ..externalId = contractPreview.id
@@ -155,6 +182,7 @@ class _ScanContractScreenState extends State<ScanContractScreen> with WidgetsBin
             ..description = contractPreview.description ?? ''
             ..price = contractPreview.price
             ..userA = contractPreview.userA
+            ..userAName = contractPreview.userAName
             ..userB = currentUserId
             ..status = ContractStatus.accepted
             ..createdAt = DateTime.now();
@@ -238,7 +266,10 @@ class _ScanContractScreenState extends State<ScanContractScreen> with WidgetsBin
       if (mounted) {
         SnackBarHandler.showError(context, TranslationHandler.get('failed_to_decode_contract'));
       }
-      _navigateToHome();
+      // Reset flags and allow scanning again
+      _isProcessing = false;
+      _navigatingAway = false;
+      _startScanning();
     }
   }
 

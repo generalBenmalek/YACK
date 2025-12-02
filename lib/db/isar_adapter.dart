@@ -11,6 +11,8 @@ Future<void> saveContractToIsar({
   required double price,
   required String userA,
   required String userB,
+  String? userAName,
+  String? userBName,
   String status = 'pending',
 }) async {
   // Check if contract already exists
@@ -23,6 +25,8 @@ Future<void> saveContractToIsar({
       existing.price = price;
       existing.userA = userA;
       existing.userB = userB;
+      existing.userAName = userAName;
+      existing.userBName = userBName;
       existing.updatedAt = DateTime.now();
       existing.status = _mapStringToStatus(status); // definition of function below
       await isar.contracts.put(existing);
@@ -37,6 +41,8 @@ Future<void> saveContractToIsar({
     ..price = price
     ..userA = userA
     ..userB = userB
+    ..userAName = userAName
+    ..userBName = userBName
     ..status = _mapStringToStatus(status)
     ..createdAt = DateTime.now();
 

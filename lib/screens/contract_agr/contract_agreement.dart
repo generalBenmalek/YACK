@@ -1047,7 +1047,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
                 const SizedBox(height: 12),
                 _buildDetailRow(TranslationHandler.get('contract_name'), contract.name, Icons.badge),
                 _buildDetailRow(TranslationHandler.get('price'), '${contract.price} ${TranslationHandler.get('currency')}', Icons.attach_money),
-                _buildDetailRow(TranslationHandler.get('client'), contract.userA, Icons.person),
+                _buildDetailRow(TranslationHandler.get('client'), contract.userAName ?? contract.userA, Icons.person),
                 const SizedBox(height: 10),
                 Text(TranslationHandler.get('description'), style: theme.textTheme.titleSmall),
                 const SizedBox(height: 8),

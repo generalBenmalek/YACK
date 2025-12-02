@@ -6,6 +6,7 @@ class ContractPreview {
   final double price;
   final String? description;
   final String userA;
+  final String userAName; // Display name of userA
 
   const ContractPreview({
     required this.id,
@@ -13,6 +14,7 @@ class ContractPreview {
     required this.price,
     this.description,
     required this.userA,
+    required this.userAName,
   });
 
   // Creates a ContractPreview from a decoded JSON map.
@@ -23,6 +25,7 @@ class ContractPreview {
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       description: json['description'] as String?,
       userA: json['userA'] as String? ?? '',
+      userAName: json['userAName'] as String? ?? json['userA'] as String? ?? 'Unknown',
     );
   }
 
@@ -33,6 +36,7 @@ class ContractPreview {
       'price': price,
       'description': description,
       'userA': userA,
+      'userAName': userAName,
     };
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive/hive.dart';
 import '../db/models/contract.dart';
 import '../db/online.dart' as online_db;
 import '../db/isar_adapter.dart';
@@ -22,9 +23,11 @@ class ShareContractScreen extends StatefulWidget {
 class _ShareContractScreenState extends State<ShareContractScreen> {
   late String contractId;
   late String link;
+  late String _userDisplayName; // Store user's display name for contract saving
   bool _isWaiting = false;
   bool _isAccepted = false;
   String? _error;
+  bool _contractSaved = false; // Track if contract was saved to Isar
 
   @override
   void initState() {
@@ -32,13 +35,41 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
     // Generate unique contract ID
     contractId = widget.contract.externalId ?? const Uuid().v4();
     
-    // Build QR data
+    // Get user's actual name from Hive, fallback to Firebase displayName
+    final userBox = Hive.box('user');
+    final firstName = userBox.get('firstName', defaultValue: '') ?? '';
+    final lastName = userBox.get('lastName', defaultValue: '') ?? '';
+    _userDisplayName = [firstName, lastName]
+        .where((s) => s.isNotEmpty)
+        .join(' ')
+        .trim();
+    
+    // Fallback to Firebase displayName if Hive name is empty
+    if (_userDisplayName.isEmpty) {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      _userDisplayName = currentUser?.displayName ?? '';
+    }
+    
+    // Fallback to Firebase email (extract name from email)
+    if (_userDisplayName.isEmpty) {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final email = currentUser?.email ?? '';
+      if (email.isNotEmpty && email.contains('@')) {
+        _userDisplayName = email.split('@').first;
+      }
+    }
+    
+    // Final fallback to 'Unknown'
+    if (_userDisplayName.isEmpty) _userDisplayName = 'Unknown';
+    
+    // Build QR data with actual user name (not Firebase UID)
     final jsonString = json.encode({
       'id': contractId,
       'name': widget.contract.name,
       'price': widget.contract.price,
       'description': widget.contract.description,
-      'userA': widget.contract.userA,
+      'userA': widget.contract.userA, // Keep UID for contract linking
+      'userAName': _userDisplayName, // Add display name
     });
     final encodedData = base64Url.encode(utf8.encode(jsonString));
     link = "yack://contract?data=$encodedData";
@@ -62,9 +93,11 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
         description: widget.contract.description,
         price: widget.contract.price,
         userA: userId,
+        userAName: _userDisplayName,
         userB: '', 
         status: 'pending',
       );
+      _contractSaved = true; // Mark that contract was saved
 
       // Call invite and wait for acceptance (5 min timeout)
       final result = await online_db.invite(
@@ -83,6 +116,7 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
           description: widget.contract.description,
           price: widget.contract.price,
           userA: userId,
+          userAName: _userDisplayName,
           userB: '', // Will be filled by the other party
           status: 'accepted',
         );
@@ -105,13 +139,15 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
           }
         }
       } else {
-        // Timeout or error
+        // Timeout or error - delete the pending contract
+        await _deletePendingContract();
         setState(() {
           _isWaiting = false;
           _error = result['error'] ?? TranslationHandler.get('invitation_timeout');
         });
       }
     } catch (e) {
+      await _deletePendingContract();
       setState(() {
         _isWaiting = false;
         _error = e.toString();
@@ -119,9 +155,21 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
     }
   }
 
-  void _cancelInvitation() {
-    // just go back, the timeout will clean up Firebase
-    Navigator.of(context).pop(false);
+  /// Delete the pending contract from Isar if it was saved
+  Future<void> _deletePendingContract() async {
+    if (!_contractSaved) return;
+    try {
+      await deleteContractFromIsar(contractId);
+      _contractSaved = false;
+    } catch (_) {}
+  }
+
+  Future<void> _cancelInvitation() async {
+    // Delete the pending contract before navigating back
+    await _deletePendingContract();
+    if (mounted) {
+      Navigator.of(context).pop(false);
+    }
   }
 
   @override
@@ -129,7 +177,17 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
     final theme = Theme.of(context);
     final color = theme.colorScheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        // Delete pending contract if user navigates away
+        await _deletePendingContract();
+        if (mounted) {
+          Navigator.of(context).pop(false);
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(
           TranslationHandler.get('share_contract'),
@@ -282,6 +340,7 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
