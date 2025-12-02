@@ -32,7 +32,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^4.2.0
   firebase_auth: ^6.1.1
-  cloud_firestore: ^6.0.3
 
   hive: ^2.2.3
   hive_flutter: ^1.1.0
@@ -59,6 +58,7 @@ dependencies:
   path_provider: ^2.1.5
   uuid: ^4.2.1
   flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 dev_dependencies:

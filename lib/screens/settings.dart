@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yack/utils/passwordPopUp.dart';
 import 'package:yack/utils/translation_handler.dart';
 import 'package:yack/widgets/secondaryActionButtonAutoLoading.dart';
+import '../providers/auth/auth_cubit.dart';
 import '../widgets/settingWidgets/appearanceSheet.dart';
 import '../widgets/settingWidgets/languageSheet.dart';
 import '../widgets/settingWidgets/notificationSheet.dart';
@@ -114,7 +116,10 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     title: TranslationHandler.get('profile'),
                     subtitle: TranslationHandler.get('profile_subtitle'),
-                    onTap: null,
+                    onTap: () {
+                      Navigator.of(context, rootNavigator: true)
+                          .pushNamed('/profile');
+                    },
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
                   SettingsItem(
@@ -295,7 +300,10 @@ class SettingsScreen extends StatelessWidget {
               SecondaryActionButtonAutoReload(
                 action: TranslationHandler.get('logout'),
                 onClick: () async {
+
                   FirebaseAuth.instance.signOut();
+                  context.read<AuthCubit>().markUnauthenticated();
+
                   Navigator.of(context, rootNavigator: true)
                       .pushNamedAndRemoveUntil('/login', (route) => false);
                 },
