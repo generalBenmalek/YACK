@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:yack/db/models/contract.dart';
 import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/widgets/secondaryActionButtonAutoLoading.dart';
 import 'package:yack/utils/translation_handler.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yack/providers/contract/accept_contract_cubit.dart';
+import 'package:yack/providers/contract/accept_contract_state.dart';
 
 class AcceptDeclineContractScreen extends StatelessWidget {
   final String title;
   final double price;
   final String? description;
-  final String userFirstName;
-  final String userLastName;
+  final String userAFullName;
+  final String userBFullName;
+  final String tempId; // backend tempID
 
   const AcceptDeclineContractScreen({
     super.key,
     required this.title,
     required this.price,
-    required this.userFirstName,
-    required this.userLastName,
+    required this.userAFullName,
+    required this.userBFullName,
+    required this.tempId,
     this.description,
   });
 
@@ -67,7 +73,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           TranslationHandler.resolve('from_user',
-                              params: {'name': '$userFirstName $userLastName'}),
+                              params: {'name': '$userAFullName $userBFullName'}),
                           style: theme.textTheme.titleSmall?.copyWith(
                             color: color.onSurface.withOpacity(0.8),
                             fontWeight: FontWeight.w600,
@@ -110,7 +116,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
-                      "${TranslationHandler.get('price_label')}: ${price.toStringAsFixed(2)} ${TranslationHandler.get('currency')}",
+                        "${TranslationHandler.get('price_label')}: ${price.toStringAsFixed(2)} ${TranslationHandler.get('currency')}",
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: color.primary,
                           fontWeight: FontWeight.bold,
@@ -123,59 +129,117 @@ class AcceptDeclineContractScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Warning message
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: color.errorContainer.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: color.error.withOpacity(0.4)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: color.error,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      TranslationHandler.get('binding_warning'),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: color.error,
-                        fontWeight: FontWeight.w500,
+            // Warning / status + buttons area follows cubit
+            BlocConsumer<AcceptContractCubit, AcceptContractState>(
+              listener: (context, state) {
+                if (state is AcceptContractCompleted) {
+                  SnackBarHandler.showSuccess(
+                    context,
+                    TranslationHandler.get('contract_accepted'),
+                  );
+                  Navigator.pop(context, {
+                    'status': true,
+                    'contract': Contract()
+                    ..mongoId = state.finalContractId
+                    ..description = description?? ""
+                    ..name = title
+                    ..price = price
+                    ..userA = userAFullName
+                    ..userB = userBFullName
+                  });
+
+                } else if (state is AcceptContractSigned) {
+                  // user signed, waiting for the other
+                  SnackBarHandler.showMessage(
+                    context,
+                    TranslationHandler.get(state.messageKey),
+                  );
+                } else if (state is AcceptContractError) {
+                  SnackBarHandler.showError(
+                    context,
+                    TranslationHandler.get(state.messageKey),
+                  );
+                }
+              },
+              builder: (context, state) {
+                final bool isLoading = state is AcceptContractLoading;
+                final bool isSignedWaiting = state is AcceptContractSigned;
+
+                return Column(
+                  children: [
+                    // Warning / waiting message
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: (isSignedWaiting
+                                ? color.primaryContainer
+                                : color.errorContainer)
+                            .withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: (isSignedWaiting ? color.primary : color.error)
+                              .withOpacity(0.4),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            isSignedWaiting
+                                ? Icons.hourglass_bottom
+                                : Icons.warning_amber_rounded,
+                            color:
+                                isSignedWaiting ? color.primary : color.error,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              isSignedWaiting
+                                  ? TranslationHandler.get(
+                                      'contract_waiting_other_user')
+                                  : TranslationHandler.get('binding_warning'),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isSignedWaiting
+                                    ? color.primary
+                                    : color.error,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-            // Accept / Decline buttons
-            PrimaryActionButtonAutoReload(
-              action: TranslationHandler.get('accept_contract'),
-              onClick: () async {
-                await Future.delayed(const Duration(seconds: 1));
-                SnackBarHandler.showSuccess(
-                  context,
-                  TranslationHandler.get('contract_accepted'),
-                );
-                Navigator.pop(context, true);
-              },
-            ),
-            const SizedBox(height: 5),
+                    // Accept / Decline buttons
+                    PrimaryActionButtonAutoReload(
+                      action: TranslationHandler.get('accept_contract'),
+                      onClick: isLoading || isSignedWaiting
+                          ? () async {}
+                          : () async {
+                              await context
+                                  .read<AcceptContractCubit>()
+                                  .acceptContract(tempId);
+                            },
+                    ),
+                    const SizedBox(height: 5),
 
-            SecondaryActionButtonAutoReload(
-              action: TranslationHandler.get('decline_contract'),
-              onClick: () {
-                SnackBarHandler.showError(
-                  context,
-                  TranslationHandler.get('contract_declined'),
+                    // Decline button disappears after user has signed
+                    if (!isSignedWaiting)
+                      SecondaryActionButtonAutoReload(
+                        action: TranslationHandler.get('decline_contract'),
+                        onClick: () {
+                          SnackBarHandler.showError(
+                            context,
+                            TranslationHandler.get('contract_declined'),
+                          );
+                          Navigator.pop(context, false);
+                        },
+                      ),
+                  ],
                 );
-                Navigator.pop(context, false);
               },
             ),
           ],

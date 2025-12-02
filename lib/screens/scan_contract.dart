@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
 import 'package:yack/db/models/contract.dart';
 import 'package:yack/main.dart';
 import 'package:yack/utils/snackBarHandler.dart';
-import 'package:yack/models/contract/contract_preview.dart';
 import '../theme/theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:yack/utils/translation_handler.dart';
-
 import '../widgets/secondaryActionButtonAutoLoading.dart';
 import 'acceptDeclineContract.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
