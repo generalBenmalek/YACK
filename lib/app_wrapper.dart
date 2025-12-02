@@ -24,6 +24,16 @@ class AppWrapper extends StatelessWidget {
         }
 
         // ==========================
+        //     UNVERIFIED USER
+        // ==========================
+        if (state is UnverifiedUser) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, '/confirm');
+          });
+          return; // IMPORTANT
+        }
+
+        // ==========================
         //        UNAUTHENTICATED
         // ==========================
         if (state is Unauthenticated || state is AuthError) {

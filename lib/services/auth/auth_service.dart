@@ -144,7 +144,11 @@ class AuthService {
     }
   }
 
-  static Future<bool> isAuthenticated() async {
+  /// Returns:
+  /// - true  -> authenticated & verified
+  /// - false -> unauthenticated
+  /// - null  -> authenticated but email NOT verified
+  static Future<bool?> isAuthenticated() async {
     final auth = FirebaseAuth.instance;
 
     try {
@@ -161,6 +165,12 @@ class AuthService {
         return false;
       }
 
+      // email not verified -> unverified user
+      if (!(user.emailVerified)) {
+        return null;
+      }
+
+      // logged in + verified
       return true;
 
     } on FirebaseAuthException {

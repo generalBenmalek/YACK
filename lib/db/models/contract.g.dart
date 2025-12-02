@@ -27,34 +27,39 @@ const ContractSchema = CollectionSchema(
       name: r'description',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'externalId': PropertySchema(
       id: 2,
+      name: r'externalId',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 3,
       name: r'name',
       type: IsarType.string,
     ),
     r'price': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'price',
       type: IsarType.double,
     ),
     r'status': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'status',
       type: IsarType.byte,
       enumMap: _ContractstatusEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userA': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'userA',
       type: IsarType.string,
     ),
     r'userB': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'userB',
       type: IsarType.string,
     )
@@ -64,7 +69,21 @@ const ContractSchema = CollectionSchema(
   deserialize: _contractDeserialize,
   deserializeProp: _contractDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'externalId': IndexSchema(
+      id: 8629824136592255998,
+      name: r'externalId',
+      unique: true,
+      replace: true,
+      properties: [
+        IndexPropertySchema(
+          name: r'externalId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {
     r'messages': LinkSchema(
       id: -7202641077800699556,
@@ -83,7 +102,7 @@ const ContractSchema = CollectionSchema(
   getId: _contractGetId,
   getLinks: _contractGetLinks,
   attach: _contractAttach,
-  version: '3.1.0',
+  version: '3.1.0+1',
 );
 
 int _contractEstimateSize(
@@ -93,6 +112,12 @@ int _contractEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.description.length * 3;
+  {
+    final value = object.externalId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.userA.length * 3;
   bytesCount += 3 + object.userB.length * 3;
@@ -107,12 +132,13 @@ void _contractSerialize(
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeString(offsets[1], object.description);
-  writer.writeString(offsets[2], object.name);
-  writer.writeDouble(offsets[3], object.price);
-  writer.writeByte(offsets[4], object.status.index);
-  writer.writeDateTime(offsets[5], object.updatedAt);
-  writer.writeString(offsets[6], object.userA);
-  writer.writeString(offsets[7], object.userB);
+  writer.writeString(offsets[2], object.externalId);
+  writer.writeString(offsets[3], object.name);
+  writer.writeDouble(offsets[4], object.price);
+  writer.writeByte(offsets[5], object.status.index);
+  writer.writeDateTime(offsets[6], object.updatedAt);
+  writer.writeString(offsets[7], object.userA);
+  writer.writeString(offsets[8], object.userB);
 }
 
 Contract _contractDeserialize(
@@ -124,15 +150,16 @@ Contract _contractDeserialize(
   final object = Contract();
   object.createdAt = reader.readDateTime(offsets[0]);
   object.description = reader.readString(offsets[1]);
+  object.externalId = reader.readStringOrNull(offsets[2]);
   object.id = id;
-  object.name = reader.readString(offsets[2]);
-  object.price = reader.readDouble(offsets[3]);
+  object.name = reader.readString(offsets[3]);
+  object.price = reader.readDouble(offsets[4]);
   object.status =
-      _ContractstatusValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+      _ContractstatusValueEnumMap[reader.readByteOrNull(offsets[5])] ??
           ContractStatus.pending;
-  object.updatedAt = reader.readDateTimeOrNull(offsets[5]);
-  object.userA = reader.readString(offsets[6]);
-  object.userB = reader.readString(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[6]);
+  object.userA = reader.readString(offsets[7]);
+  object.userB = reader.readString(offsets[8]);
   return object;
 }
 
@@ -148,17 +175,19 @@ P _contractDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 4:
+      return (reader.readDouble(offset)) as P;
+    case 5:
       return (_ContractstatusValueEnumMap[reader.readByteOrNull(offset)] ??
           ContractStatus.pending) as P;
-    case 5:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -170,12 +199,14 @@ const _ContractstatusEnumValueMap = {
   'accepted': 1,
   'rejected': 2,
   'completed': 3,
+  'onDispute': 4,
 };
 const _ContractstatusValueEnumMap = {
   0: ContractStatus.pending,
   1: ContractStatus.accepted,
   2: ContractStatus.rejected,
   3: ContractStatus.completed,
+  4: ContractStatus.onDispute,
 };
 
 Id _contractGetId(Contract object) {
@@ -190,6 +221,61 @@ void _contractAttach(IsarCollection<dynamic> col, Id id, Contract object) {
   object.id = id;
   object.messages.attach(col, col.isar.collection<Message>(), r'messages', id);
   object.media.attach(col, col.isar.collection<MediaFile>(), r'media', id);
+}
+
+extension ContractByIndex on IsarCollection<Contract> {
+  Future<Contract?> getByExternalId(String? externalId) {
+    return getByIndex(r'externalId', [externalId]);
+  }
+
+  Contract? getByExternalIdSync(String? externalId) {
+    return getByIndexSync(r'externalId', [externalId]);
+  }
+
+  Future<bool> deleteByExternalId(String? externalId) {
+    return deleteByIndex(r'externalId', [externalId]);
+  }
+
+  bool deleteByExternalIdSync(String? externalId) {
+    return deleteByIndexSync(r'externalId', [externalId]);
+  }
+
+  Future<List<Contract?>> getAllByExternalId(List<String?> externalIdValues) {
+    final values = externalIdValues.map((e) => [e]).toList();
+    return getAllByIndex(r'externalId', values);
+  }
+
+  List<Contract?> getAllByExternalIdSync(List<String?> externalIdValues) {
+    final values = externalIdValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'externalId', values);
+  }
+
+  Future<int> deleteAllByExternalId(List<String?> externalIdValues) {
+    final values = externalIdValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'externalId', values);
+  }
+
+  int deleteAllByExternalIdSync(List<String?> externalIdValues) {
+    final values = externalIdValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'externalId', values);
+  }
+
+  Future<Id> putByExternalId(Contract object) {
+    return putByIndex(r'externalId', object);
+  }
+
+  Id putByExternalIdSync(Contract object, {bool saveLinks = true}) {
+    return putByIndexSync(r'externalId', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByExternalId(List<Contract> objects) {
+    return putAllByIndex(r'externalId', objects);
+  }
+
+  List<Id> putAllByExternalIdSync(List<Contract> objects,
+      {bool saveLinks = true}) {
+    return putAllByIndexSync(r'externalId', objects, saveLinks: saveLinks);
+  }
 }
 
 extension ContractQueryWhereSort on QueryBuilder<Contract, Contract, QWhere> {
@@ -263,6 +349,71 @@ extension ContractQueryWhere on QueryBuilder<Contract, Contract, QWhereClause> {
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterWhereClause> externalIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'externalId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterWhereClause> externalIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'externalId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterWhereClause> externalIdEqualTo(
+      String? externalId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'externalId',
+        value: [externalId],
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterWhereClause> externalIdNotEqualTo(
+      String? externalId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'externalId',
+              lower: [],
+              upper: [externalId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'externalId',
+              lower: [externalId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'externalId',
+              lower: [externalId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'externalId',
+              lower: [],
+              upper: [externalId],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
@@ -449,6 +600,154 @@ extension ContractQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'description',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'externalId',
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition>
+      externalIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'externalId',
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'externalId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'externalId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'externalId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'externalId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'externalId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'externalId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'externalId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'externalId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition> externalIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'externalId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterFilterCondition>
+      externalIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'externalId',
         value: '',
       ));
     });
@@ -1227,6 +1526,18 @@ extension ContractQuerySortBy on QueryBuilder<Contract, Contract, QSortBy> {
     });
   }
 
+  QueryBuilder<Contract, Contract, QAfterSortBy> sortByExternalId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'externalId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterSortBy> sortByExternalIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'externalId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Contract, Contract, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1323,6 +1634,18 @@ extension ContractQuerySortThenBy
   QueryBuilder<Contract, Contract, QAfterSortBy> thenByDescriptionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterSortBy> thenByExternalId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'externalId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Contract, Contract, QAfterSortBy> thenByExternalIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'externalId', Sort.desc);
     });
   }
 
@@ -1426,6 +1749,13 @@ extension ContractQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Contract, Contract, QDistinct> distinctByExternalId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'externalId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Contract, Contract, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1483,6 +1813,12 @@ extension ContractQueryProperty
   QueryBuilder<Contract, String, QQueryOperations> descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<Contract, String?, QQueryOperations> externalIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'externalId');
     });
   }
 

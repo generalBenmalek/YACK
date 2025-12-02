@@ -10,11 +10,15 @@ enum ContractStatus {
   accepted,
   rejected,
   completed,
+  onDispute,
 }
 
 @collection
 class Contract {
   Id id = Isar.autoIncrement;
+
+  @Index(unique: true, replace: true)
+  String? externalId; // for online DB synchronization (firebase)
 
   late String name;
   late String description;

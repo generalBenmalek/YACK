@@ -3,6 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:isar/isar.dart';
+import 'package:yack/db/online.dart';
+import 'package:yack/screens/auth/confirm.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:yack/screens/contract_agr/contract_agreement.dart';
+import 'package:yack/screens/contract_agr/nomore_contracts.dart';
+import 'package:yack/screens/subscription.dart';
+import 'package:yack/screens/root.dart';
 import 'package:yack/providers/auth/auth_cubit.dart';
 import 'package:yack/providers/auth/change_password_cubit.dart';
 import 'package:yack/providers/auth/confirm_cubit.dart';
@@ -21,85 +28,45 @@ import 'package:path_provider/path_provider.dart';
 
 late Isar isar;
 
-Future<void> seedMockData(Isar isar) async {
-  final count = await isar.contracts.count();
-  if (count == 0) {
-    final contracts = [
-      Contract()
-        ..name = 'Consulting Agreement'
-        ..description = 'Consulting services for project X'
-        ..price = 12000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.accepted
-        ..createdAt = DateTime.now(),
-      Contract()
-        ..name = 'Freelance Contract'
-        ..description = 'Web development services'
-        ..price = 5000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.accepted
-        ..createdAt = DateTime.now().subtract(const Duration(days: 2)),
-      Contract()
-        ..name = 'Service Agreement'
-        ..description = 'Maintenance services'
-        ..price = 8000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.accepted
-        ..createdAt = DateTime.now().subtract(const Duration(days: 5)),
-      Contract()
-        ..name = 'Past Contract'
-        ..description = 'Completed project'
-        ..price = 5000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.completed
-        ..createdAt = DateTime.now().subtract(const Duration(days: 30)),
-    ];
-
-    await isar.writeTxn(() async {
-      await isar.contracts.putAll(contracts);
-    });
-  }
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final dir = await getApplicationDocumentsDirectory();
 
-  isar = await Isar.open(
-    [
-      ContractSchema,
-      MessageSchema,
-      MediaFileSchema,
-      AppNotificationSchema,
-    ],
-    directory: dir.path,
-  );
+  isar = await Isar.open([
+    ContractSchema,
+    MessageSchema,
+    MediaFileSchema,
+    AppNotificationSchema,
+  ], directory: dir.path);
 
-  await seedMockData(isar);
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarContrastEnforced: false,
-    systemNavigationBarDividerColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+      systemNavigationBarDividerColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
 
   await Hive.initFlutter();
+  
+  await Hive.openBox('contracts');
 
   final userBox = await Hive.openBox('user');
+
+  await TranslationHandler.initialize(userBox);
+
+  // Sync offline data and check completed contracts status (Chadli)
+  syncOfflineData();
+  syncCompletedContractsStatus();
 
 
   // Initialize Translation Handler
@@ -124,4 +91,3 @@ void main() async {
       )
   );
 }
-

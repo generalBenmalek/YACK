@@ -66,12 +66,14 @@ class NoMoreContractsAvailable extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
                 child: Column(
                   children: [
-                    // Image
+                    // Image - using local asset
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 360),
                       child: Center(
-                        child: Image.network(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuCgnLO7hJcgz7fiGYeGrIKs4xhCy7vX0W2TEC_KOP7qgtruqOfPjdokze8Nu63k6wHBBRJaYvar9JUYA4twXltF9h_UgrfTU-ZdvjVSyAp3ht1UryGE4UsPkDDzeHp7zUfQUoTuf4RpQ8IFQ35ei3utV5ezr2iRdei5P1Ab_3Vsht0pWg-Cix62YcxnHqHVK4H1miw1nzjpVN5OpwkNI-ZdfZL7nBodAQLD_YGnpVys_t7lTqNWqXOJwc2J5RChGIjJsMzdowMgIilv',
+                        child: Image.asset(
+                          'assets/images/no_more_contracts.png',
+                          width: 200,
+                          height: 200,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -101,47 +103,52 @@ class NoMoreContractsAvailable extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    // Upgrade card
+                    // Upgrade card - navigates to subscription page (Chadli)
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 480),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    TranslationHandler.get('go_unlimited'),
-                                    style: textTheme.labelSmall?.copyWith(
-                                      letterSpacing: 1.25,
-                                      color: colorScheme.onPrimary
-                                          .withOpacity(0.7),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/subscription');
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      TranslationHandler.get('go_unlimited'),
+                                      style: textTheme.labelSmall?.copyWith(
+                                        letterSpacing: 1.25,
+                                        color: colorScheme.onPrimary
+                                            .withOpacity(0.7),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    TranslationHandler.get('upgrade_plan'),
-                                    style: textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.onPrimary,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      TranslationHandler.get('upgrade_plan'),
+                                      style: textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onPrimary,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Icon(
-                              Icons.trending_up,
-                              size: 32,
-                              color: colorScheme.onPrimary,
-                            ),
-                          ],
+                              Icon(
+                                Icons.arrow_forward,
+                                size: 32,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

@@ -105,8 +105,11 @@ class MyApp extends StatelessWidget {
                 themedRoute(context, const SignContractScreen()),
             '/contract/create_contract': (context) =>
                 themedRoute(context, const CreateContractScreen()),
-            '/contract/view': (context) => const ContractAgreement(),
-
+            '/contract/view': (context) {
+              final contractId =
+              ModalRoute.of(context)!.settings.arguments as int;
+              return themedRoute(context, ContractAgreement(contractId: contractId));
+            },
             '/settings': (context) =>
                 themedRoute(context, const SettingsScreen()),
             '/profile': (context) =>

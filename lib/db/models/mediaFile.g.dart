@@ -61,7 +61,7 @@ const MediaFileSchema = CollectionSchema(
   getId: _mediaFileGetId,
   getLinks: _mediaFileGetLinks,
   attach: _mediaFileAttach,
-  version: '3.1.0',
+  version: '3.1.0+1',
 );
 
 int _mediaFileEstimateSize(

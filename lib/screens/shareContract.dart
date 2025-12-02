@@ -1,29 +1,133 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../db/models/contract.dart';
+import '../db/online.dart' as online_db;
+import '../db/isar_adapter.dart';
 import 'dart:convert';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
+import 'package:uuid/uuid.dart';
+import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/utils/translation_handler.dart';
-import 'acceptDeclineContract.dart';
 import 'sign_contract.dart';
 
-class ShareContractScreen extends StatelessWidget {
+class ShareContractScreen extends StatefulWidget {
   final Contract contract;
 
   const ShareContractScreen({super.key, required this.contract});
 
   @override
+  State<ShareContractScreen> createState() => _ShareContractScreenState();
+}
+
+class _ShareContractScreenState extends State<ShareContractScreen> {
+  late String contractId;
+  late String link;
+  bool _isWaiting = false;
+  bool _isAccepted = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Generate unique contract ID
+    contractId = widget.contract.externalId ?? const Uuid().v4();
+    
+    // Build QR data
+    final jsonString = json.encode({
+      'id': contractId,
+      'name': widget.contract.name,
+      'price': widget.contract.price,
+      'description': widget.contract.description,
+      'userA': widget.contract.userA,
+    });
+    final encodedData = base64Url.encode(utf8.encode(jsonString));
+    link = "yack://contract?data=$encodedData";
+  }
+
+  Future<void> _startInvitation() async {
+    setState(() {
+      _isWaiting = true;
+      _error = null;
+    });
+
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      // Use device-specific ID when auth is bypassed for testing
+      final userId = currentUser?.uid ?? 'test_inviter_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Save as pending immediately to prevent data loss (Chadli)
+      await saveContractToIsar(
+        externalId: contractId,
+        name: widget.contract.name,
+        description: widget.contract.description,
+        price: widget.contract.price,
+        userA: userId,
+        userB: '', 
+        status: 'pending',
+      );
+
+      // Call invite and wait for acceptance (5 min timeout)
+      final result = await online_db.invite(
+        contractId,
+        widget.contract.name,
+        widget.contract.description,
+        widget.contract.price,
+        userId,
+      );
+
+      if (result['status'] == true) {
+        // Contract accepted! Save to Isar
+        await saveContractToIsar(
+          externalId: contractId,
+          name: widget.contract.name,
+          description: widget.contract.description,
+          price: widget.contract.price,
+          userA: userId,
+          userB: '', // Will be filled by the other party
+          status: 'accepted',
+        );
+
+        setState(() {
+          _isAccepted = true;
+          _isWaiting = false;
+        });
+
+        if (mounted) {
+          SnackBarHandler.showSuccess(
+            context,
+            TranslationHandler.get('contract_accepted'),
+          );
+          
+          // Navigate to sign screen or go back
+          await Future.delayed(const Duration(seconds: 1));
+          if (mounted) {
+            Navigator.of(context).pop(true); // Return success
+          }
+        }
+      } else {
+        // Timeout or error
+        setState(() {
+          _isWaiting = false;
+          _error = result['error'] ?? TranslationHandler.get('invitation_timeout');
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isWaiting = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  void _cancelInvitation() {
+    // just go back, the timeout will clean up Firebase
+    Navigator.of(context).pop(false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = theme.colorScheme;
-    final jsonString = json.encode({
-      'name': contract.name,
-      'price': contract.price,
-      'description': contract.description,
-      'userA': contract.userA,
-    });
-    final encodedData = base64Url.encode(utf8.encode(jsonString));
-    final link = "yack://contract?data=$encodedData";
 
     return Scaffold(
       appBar: AppBar(
@@ -34,7 +138,7 @@ class ShareContractScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         centerTitle: true,
       ),
-      backgroundColor: color.background,
+      backgroundColor: color.surface,
       body: Stack(
         children: [
           // Hidden button for signing simulation (top-left corner)
@@ -51,10 +155,7 @@ class ShareContractScreen extends StatelessWidget {
                 );
               },
               behavior: HitTestBehavior.translucent,
-              child: const SizedBox(
-                width: 60,
-                height: 60,
-              ),
+              child: const SizedBox(width: 60, height: 60),
             ),
           ),
           // Main content
@@ -92,26 +193,51 @@ class ShareContractScreen extends StatelessWidget {
                           backgroundColor: Colors.white,
                         ),
                         const SizedBox(height: 20),
-                        Text(
-                          TranslationHandler.get('scan_contract_prompt'),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: color.onSurface.withOpacity(0.7),
+                        
+                        // Status indicator: Chadli
+                        if (_isWaiting) ...[
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 12),
+                          Text(
+                            TranslationHandler.get('waiting_for_acceptance'),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: color.primary,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
+                        ] else if (_isAccepted) ...[
+                          Icon(Icons.check_circle, color: Colors.green, size: 48),
+                          const SizedBox(height: 12),
+                          Text(
+                            TranslationHandler.get('contract_accepted'),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ] else if (_error != null) ...[
+                          Icon(Icons.error_outline, color: color.error, size: 48),
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: color.error,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ] else ...[
+                          Text(
+                            TranslationHandler.get('scan_contract_prompt'),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: color.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                        
                         const SizedBox(height: 30),
-                        // Divider
                         const Divider(thickness: 1, height: 10),
                         const SizedBox(height: 20),
-                        // Alternative link field
-                        Text(
-                          TranslationHandler.get('alternative_link'),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: color.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const SizedBox(height: 20),
+                        
                         Text(
                           TranslationHandler.get('share_warning'),
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -126,25 +252,32 @@ class ShareContractScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 30),
-                // Proceed Button
-                PrimaryActionButtonAutoReload(
-                  action: TranslationHandler.get('proceed_to_sign'),
-                  onClick: () async {
-                    // Navigate to Accept/Decline screen for confirmation
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AcceptDeclineContractScreen(
-                          title: contract.name,
-                          price: contract.price,
-                          userFirstName: contract.userA,
-                          userLastName: '',
-                          description: contract.description,
-                        ),
+                
+                // Buttons
+                if (!_isWaiting && !_isAccepted) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _startInvitation,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                    );
-                  },
-                ),
+                      child: Text(TranslationHandler.get('start_sharing')),
+                    ),
+                  ),
+                ] else if (_isWaiting) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _cancelInvitation,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        foregroundColor: color.error,
+                      ),
+                      child: Text(TranslationHandler.get('cancel')),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
