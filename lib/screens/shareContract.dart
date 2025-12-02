@@ -86,18 +86,9 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
       // Use device-specific ID when auth is bypassed for testing
       final userId = currentUser?.uid ?? 'test_inviter_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Save as pending immediately to prevent data loss (Chadli)
-      await saveContractToIsar(
-        externalId: contractId,
-        name: widget.contract.name,
-        description: widget.contract.description,
-        price: widget.contract.price,
-        userA: userId,
-        userAName: _userDisplayName,
-        userB: '', 
-        status: 'pending',
-      );
-      _contractSaved = true; // Mark that contract was saved
+      // DON'T save as pending - only save after acceptance (Chadli - fixed)
+      // The contract should NOT be saved until the other user scans and accepts
+      _contractSaved = false;
 
       // Call invite and wait for acceptance (5 min timeout)
       final result = await online_db.invite(
@@ -109,7 +100,7 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
       );
 
       if (result['status'] == true) {
-        // Contract accepted! Save to Isar
+        // Contract accepted! Now save to Isar
         await saveContractToIsar(
           externalId: contractId,
           name: widget.contract.name,
@@ -120,6 +111,7 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
           userB: '', // Will be filled by the other party
           status: 'accepted',
         );
+        _contractSaved = true;
 
         setState(() {
           _isAccepted = true;
@@ -139,15 +131,16 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
           }
         }
       } else {
-        // Timeout or error - delete the pending contract
-        await _deletePendingContract();
+        // Timeout or error or cancelled - no contract was saved, just cleanup Firebase
+        await online_db.cancelInvitation(contractId);
         setState(() {
           _isWaiting = false;
           _error = result['error'] ?? TranslationHandler.get('invitation_timeout');
         });
       }
     } catch (e) {
-      await _deletePendingContract();
+      // Error occurred - cleanup Firebase invitation
+      await online_db.cancelInvitation(contractId);
       setState(() {
         _isWaiting = false;
         _error = e.toString();
@@ -155,17 +148,22 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
     }
   }
 
-  /// Delete the pending contract from Isar if it was saved
+  /// Delete the pending contract from Isar and cancel Firebase invitation (Chadli)
   Future<void> _deletePendingContract() async {
-    if (!_contractSaved) return;
     try {
-      await deleteContractFromIsar(contractId);
-      _contractSaved = false;
+      // Always cancel Firebase invitation when user navigates away
+      await online_db.cancelInvitation(contractId);
+      
+      // Only delete from Isar if it was actually saved (which now only happens after acceptance)
+      if (_contractSaved) {
+        await deleteContractFromIsar(contractId);
+        _contractSaved = false;
+      }
     } catch (_) {}
   }
 
   Future<void> _cancelInvitation() async {
-    // Delete the pending contract before navigating back
+    // Cancel the invitation and cleanup
     await _deletePendingContract();
     if (mounted) {
       Navigator.of(context).pop(false);

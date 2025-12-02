@@ -1449,6 +1449,11 @@ Future<Map<String, dynamic>> getKey(String contractId) async {
   }
 }
 
+/// Active invitation listeners - used for cleanup when user navigates away (Chadli)
+Map<String, StreamSubscription?> _activeInvitations = {};
+Map<String, Timer?> _activeTimers = {};
+Map<String, Completer<Map<String, dynamic>>?> _activeCompleters = {};
+
 /// Invitation System - Fixed with proper cleanup
 Future<Map<String, dynamic>> invite(String id, String title, String details, double price, String userId) async {
   var contract = {
@@ -1468,24 +1473,25 @@ Future<Map<String, dynamic>> invite(String id, String title, String details, dou
     });
 
     final completer = Completer<Map<String, dynamic>>();
+    _activeCompleters[id] = completer;
     StreamSubscription? subscription;
     
     // Set 5-minute timeout
     final timeoutTimer = Timer(const Duration(minutes: 5), () {
-      subscription?.cancel();
+      _cleanupInvitation(id);
       invitationRef.remove();
       if (!completer.isCompleted) {
         completer.complete({"status": false, "contract": contract, "error": "Invitation timeout"});
       }
     });
+    _activeTimers[id] = timeoutTimer;
 
     // Listen for acceptance
     subscription = invitationRef.onValue.listen((DatabaseEvent event) async {
       final data = event.snapshot.value;
       
       if (data != null && data is Map && data['accepted'] == true) {
-        timeoutTimer.cancel();
-        subscription?.cancel();
+        _cleanupInvitation(id);
         
         var contractData = {
           'contractId': id,
@@ -1497,6 +1503,10 @@ Future<Map<String, dynamic>> invite(String id, String title, String details, dou
         
         // CRITICAL: Must await saveContract before registerContract (Chadli)
         await saveContract(contractData);
+        
+        // Save contract key to Firebase for cross-device sync (Chadli)
+        await _saveUserContractKey(userId, id, key);
+        
         await registerContract(id, contract, users);
         
         await invitationRef.remove();
@@ -1506,11 +1516,21 @@ Future<Map<String, dynamic>> invite(String id, String title, String details, dou
         }
       }
     });
+    _activeInvitations[id] = subscription;
 
     return completer.future;
   } catch (e) {
     return {"status": false, "error": e.toString()};
   }
+}
+
+/// Cleanup active invitation listeners and timers (Chadli)
+void _cleanupInvitation(String id) {
+  _activeTimers[id]?.cancel();
+  _activeTimers.remove(id);
+  _activeInvitations[id]?.cancel();
+  _activeInvitations.remove(id);
+  _activeCompleters.remove(id);
 }
 
 Future<Map<String, dynamic>> seeInv(String contractId) async {
@@ -1560,6 +1580,10 @@ Future<Map<String, dynamic>> acceptContract(String contractId, String userId, Ma
     };
     
     await saveContract(contractData);
+    
+    // Save contract key to user's Firebase storage for cross-device sync (Chadli)
+    await _saveUserContractKey(userId, contractId, randomKey);
+    await _saveUserContractKey(inviterId, contractId, randomKey);
 
     // Register contract in Firebase immediately (Chadli)
     // This ensures the contract exists even if the inviter is offline
@@ -1570,6 +1594,17 @@ Future<Map<String, dynamic>> acceptContract(String contractId, String userId, Ma
   } catch (e) {
     return {"status": false, "error": e.toString()};
   }
+}
+
+/// Save contract key to user's Firebase storage for cross-device sync (Chadli)
+Future<void> _saveUserContractKey(String userId, String contractId, String key) async {
+  try {
+    DatabaseReference ref = FirebaseDatabase.instance.ref("userContracts/$userId/$contractId");
+    await ref.set({
+      'key': key,
+      'addedAt': ServerValue.timestamp,
+    });
+  } catch (_) {}
 }
 
 /// Add File with improved error handling
@@ -1757,6 +1792,408 @@ Future<void> syncOfflineData() async {
     }
   } catch (e) {
     // Offline sync error, will retry later (Chadli)
+  }
+}
+
+/// Cancel an invitation and clean up Firebase (Chadli)
+Future<void> cancelInvitation(String contractId) async {
+  try {
+    // First cleanup local listeners/timers
+    _cleanupInvitation(contractId);
+    
+    // Complete the completer if it exists and is not completed
+    final completer = _activeCompleters[contractId];
+    if (completer != null && !completer.isCompleted) {
+      completer.complete({"status": false, "error": "Invitation cancelled by user"});
+    }
+    
+    // Remove from Firebase
+    DatabaseReference invitationRef = FirebaseDatabase.instance.ref("invitation/$contractId");
+    await invitationRef.remove();
+  } catch (_) {}
+}
+
+/// Sync contracts from Firebase to Isar for the current user (Chadli)
+/// Called after login to restore contracts on new device
+Future<void> syncContractsFromFirebase(String userId) async {
+  try {
+    // Get all contracts where this user is a participant
+    DatabaseReference contractsRef = FirebaseDatabase.instance.ref("contracts");
+    DatabaseEvent event = await contractsRef.once();
+    final data = event.snapshot.value;
+    
+    if (data == null || data is! Map) return;
+    
+    // Iterate through all contracts
+    for (var entry in data.entries) {
+      try {
+        final contractId = entry.key;
+        final contractData = entry.value;
+        
+        if (contractData == null || contractData is! Map) continue;
+        
+        // Check if user is a participant
+        final users = contractData['users'];
+        if (users == null || users is! List) continue;
+        
+        // We need to check if user is in the encrypted users list
+        // First, we need to find the key for this contract
+        var keyResult = await getKey(contractId);
+        
+        bool isParticipant = false;
+        String? userAId;
+        String? userBId;
+        
+        if (keyResult["status"] == true) {
+          // We have the key - decrypt and check
+          String key = keyResult["key"];
+          for (int i = 0; i < users.length; i++) {
+            try {
+              String decryptedUser = decrypt(users[i], key);
+              if (i == 0) userAId = decryptedUser;
+              if (i == 1) userBId = decryptedUser;
+              if (decryptedUser == userId) {
+                isParticipant = true;
+              }
+            } catch (_) {}
+          }
+        }
+        
+        if (!isParticipant) continue;
+        
+        // User is a participant - sync this contract to Isar
+        final contractInfo = contractData['contract'];
+        if (contractInfo == null || contractInfo is! Map) continue;
+        
+        String key = keyResult["key"];
+        
+        // Decrypt contract data
+        String title = '';
+        String details = '';
+        double price = 0.0;
+        
+        try {
+          title = decrypt(contractInfo["title"] ?? '', key);
+          details = decrypt(contractInfo["details"] ?? '', key);
+          price = double.tryParse(decrypt(contractInfo["price"] ?? '0', key)) ?? 0.0;
+        } catch (_) {
+          continue;
+        }
+        
+        // Determine status
+        String status = 'accepted';
+        if (contractData['close'] != null) {
+          status = 'pending'; // Waiting for close confirmation
+        }
+        
+        // Check if disputed
+        DatabaseReference dispRef = FirebaseDatabase.instance.ref("dispute/$contractId");
+        final dispSnapshot = await dispRef.get();
+        if (dispSnapshot.exists) {
+          status = 'disputed';
+        }
+        
+        // Check if completed
+        DatabaseReference completedRef = FirebaseDatabase.instance.ref("completedContracts/$contractId");
+        final completedSnapshot = await completedRef.get();
+        if (completedSnapshot.exists) {
+          status = 'completed';
+        }
+        
+        // Save to Isar
+        await saveContractToIsar(
+          externalId: contractId,
+          name: title,
+          description: details,
+          price: price,
+          userA: userAId ?? '',
+          userB: userBId ?? '',
+          status: status,
+        );
+        
+        // Also save contract key to SharedPreferences if not already there
+        final prefs = await SharedPreferences.getInstance();
+        List<String> contractsJson = prefs.getStringList('contracts') ?? [];
+        bool keyExists = contractsJson.any((c) {
+          try {
+            var parsed = json.decode(c);
+            return parsed['contractId'] == contractId;
+          } catch (_) {
+            return false;
+          }
+        });
+        
+        if (!keyExists) {
+          contractsJson.add(json.encode({
+            'contractId': contractId,
+            'contractkey': key,
+          }));
+          await prefs.setStringList('contracts', contractsJson);
+        }
+      } catch (_) {
+        // Error processing this contract, continue to next
+      }
+    }
+  } catch (_) {
+    // Sync error
+  }
+}
+
+/// Fetch user's contracts by checking Firebase for contracts where user is participant (Chadli)
+/// This uses a different approach - checks the user's stored keys
+Future<void> syncContractsUsingStoredKeys(String userId) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> contractsJson = prefs.getStringList('contracts') ?? [];
+    
+    for (var contractJson in contractsJson) {
+      try {
+        var contract = json.decode(contractJson);
+        String contractId = contract['contractId'];
+        String key = contract['contractkey'];
+        
+        // Check if contract exists in Firebase
+        DatabaseReference contractRef = FirebaseDatabase.instance.ref("contracts/$contractId");
+        DatabaseEvent event = await contractRef.once();
+        final data = event.snapshot.value;
+        
+        if (data == null || data is! Map) continue;
+        
+        final contractInfo = data['contract'];
+        if (contractInfo == null || contractInfo is! Map) continue;
+        
+        // Decrypt contract data
+        String title = '';
+        String details = '';
+        double price = 0.0;
+        String? userAId;
+        String? userBId;
+        
+        try {
+          title = decrypt(contractInfo["title"] ?? '', key);
+          details = decrypt(contractInfo["details"] ?? '', key);
+          price = double.tryParse(decrypt(contractInfo["price"] ?? '0', key)) ?? 0.0;
+          
+          // Decrypt users
+          final users = data['users'];
+          if (users != null && users is List) {
+            if (users.isNotEmpty) userAId = decrypt(users[0], key);
+            if (users.length > 1) userBId = decrypt(users[1], key);
+          }
+        } catch (_) {
+          continue;
+        }
+        
+        // Determine status
+        String status = 'accepted';
+        if (data['close'] != null) {
+          status = 'pending';
+        }
+        
+        // Check if disputed
+        DatabaseReference dispRef = FirebaseDatabase.instance.ref("dispute/$contractId");
+        final dispSnapshot = await dispRef.get();
+        if (dispSnapshot.exists) {
+          status = 'disputed';
+        }
+        
+        // Check if completed
+        DatabaseReference completedRef = FirebaseDatabase.instance.ref("completedContracts/$contractId");
+        final completedSnapshot = await completedRef.get();
+        if (completedSnapshot.exists) {
+          status = 'completed';
+        }
+        
+        // Save to Isar
+        await saveContractToIsar(
+          externalId: contractId,
+          name: title,
+          description: details,
+          price: price,
+          userA: userAId ?? '',
+          userB: userBId ?? '',
+          status: status,
+        );
+      } catch (_) {
+        // Error processing this contract
+      }
+    }
+  } catch (_) {
+    // Sync error
+  }
+}
+
+/// Sync contracts from Firebase userContracts node (Chadli)
+/// This fetches the contract keys stored per user for cross-device sync
+Future<void> syncContractsFromUserNode(String userId) async {
+  try {
+    print('Starting syncContractsFromUserNode for user: $userId');
+    
+    // Fetch user's contract keys from Firebase
+    DatabaseReference userContractsRef = FirebaseDatabase.instance.ref("userContracts/$userId");
+    DatabaseEvent event = await userContractsRef.once();
+    final data = event.snapshot.value;
+    
+    print('User contracts data from Firebase: $data');
+    
+    if (data == null || data is! Map) {
+      print('No user contracts found in Firebase for user: $userId');
+      return;
+    }
+    
+    final prefs = await SharedPreferences.getInstance();
+    List<String> contractsJson = prefs.getStringList('contracts') ?? [];
+    bool keysUpdated = false;
+    
+    // Process each contract
+    for (var entry in data.entries) {
+      try {
+        final contractId = entry.key.toString();
+        final contractMeta = entry.value;
+        
+        print('Processing contract: $contractId');
+        
+        if (contractMeta == null || contractMeta is! Map) {
+          print('Invalid contract meta for $contractId');
+          continue;
+        }
+        
+        String? key = contractMeta['key']?.toString();
+        if (key == null || key.isEmpty) {
+          print('No key found for contract $contractId');
+          continue;
+        }
+        
+        // Check if we already have this key locally
+        bool keyExists = contractsJson.any((c) {
+          try {
+            var parsed = json.decode(c);
+            return parsed['contractId'] == contractId;
+          } catch (_) {
+            return false;
+          }
+        });
+        
+        // Save key locally if not exists - CRITICAL for decryption
+        if (!keyExists) {
+          print('Adding key for contract $contractId to local storage');
+          contractsJson.add(json.encode({
+            'contractId': contractId,
+            'contractkey': key,
+          }));
+          keysUpdated = true;
+          
+          // Also save to Hive offline storage
+          saveContract_offline({
+            'contractId': contractId,
+            'contractkey': key,
+          });
+        }
+        
+        // Save keys immediately before trying to fetch contract data
+        if (keysUpdated) {
+          await prefs.setStringList('contracts', contractsJson);
+          keysUpdated = false;
+        }
+        
+        // Now fetch and sync the contract data
+        DatabaseReference contractRef = FirebaseDatabase.instance.ref("contracts/$contractId");
+        DatabaseEvent contractEvent = await contractRef.once();
+        final contractData = contractEvent.snapshot.value;
+        
+        print('Contract data from Firebase for $contractId: $contractData');
+        
+        if (contractData == null || contractData is! Map) {
+          print('Contract $contractId not found in active contracts, checking completed...');
+          
+          // Check if it's a completed contract
+          DatabaseReference completedRef = FirebaseDatabase.instance.ref("completedContracts/$contractId");
+          final completedSnapshot = await completedRef.get();
+          if (completedSnapshot.exists) {
+            // Try to get contract info from completed data if available
+            print('Contract $contractId is completed');
+          }
+          continue;
+        }
+        
+        final contractInfo = contractData['contract'];
+        if (contractInfo == null || contractInfo is! Map) {
+          print('Invalid contract info for $contractId');
+          continue;
+        }
+        
+        // Decrypt contract data
+        String title = '';
+        String details = '';
+        double price = 0.0;
+        String? userAId;
+        String? userBId;
+        
+        try {
+          title = decrypt(contractInfo["title"]?.toString() ?? '', key);
+          details = decrypt(contractInfo["details"]?.toString() ?? '', key);
+          price = double.tryParse(decrypt(contractInfo["price"]?.toString() ?? '0', key)) ?? 0.0;
+          
+          // Decrypt users
+          final users = contractData['users'];
+          if (users != null && users is List) {
+            if (users.isNotEmpty) userAId = decrypt(users[0].toString(), key);
+            if (users.length > 1) userBId = decrypt(users[1].toString(), key);
+          }
+          
+          print('Decrypted contract $contractId: title=$title, price=$price');
+        } catch (e) {
+          print('Error decrypting contract $contractId: $e');
+          continue;
+        }
+        
+        // Determine status
+        String status = 'accepted';
+        if (contractData['close'] != null) {
+          status = 'pending'; // Close requested, waiting for confirmation
+        }
+        
+        // Check if disputed
+        DatabaseReference dispRef = FirebaseDatabase.instance.ref("dispute/$contractId");
+        final dispSnapshot = await dispRef.get();
+        if (dispSnapshot.exists) {
+          status = 'disputed';
+        }
+        
+        // Check if completed
+        DatabaseReference completedRef = FirebaseDatabase.instance.ref("completedContracts/$contractId");
+        final completedSnapshot = await completedRef.get();
+        if (completedSnapshot.exists) {
+          status = 'completed';
+        }
+        
+        print('Saving contract $contractId to Isar with status: $status');
+        
+        // Save to Isar
+        await saveContractToIsar(
+          externalId: contractId,
+          name: title,
+          description: details,
+          price: price,
+          userA: userAId ?? '',
+          userB: userBId ?? '',
+          status: status,
+        );
+        
+        print('Successfully synced contract $contractId');
+      } catch (e) {
+        print('Error processing contract in syncContractsFromUserNode: $e');
+      }
+    }
+    
+    // Save any remaining key updates to SharedPreferences
+    if (keysUpdated) {
+      await prefs.setStringList('contracts', contractsJson);
+    }
+    
+    print('Completed syncContractsFromUserNode for user: $userId');
+  } catch (e) {
+    print('Error in syncContractsFromUserNode: $e');
   }
 }
 

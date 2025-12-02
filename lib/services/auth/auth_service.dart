@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:yack/db/online.dart' as online_db;
 
 class AuthService {
 
@@ -28,6 +29,17 @@ class AuthService {
 
       final box = await Hive.openBox('user');
       box.put("didFirstLogin", true);
+      
+      // Sync contracts from Firebase after successful login (Chadli)
+      final user = auth.currentUser;
+      if (user != null) {
+        // First sync from user's stored contract keys in Firebase (for new device)
+        await online_db.syncContractsFromUserNode(user.uid);
+        // Then sync using any locally stored keys
+        await online_db.syncContractsUsingStoredKeys(user.uid);
+        // Finally check for completed status updates
+        await online_db.syncCompletedContractsStatus();
+      }
 
     } on FirebaseAuthException catch (e) {
       if (e.code == "wrong-password") {
@@ -170,7 +182,16 @@ class AuthService {
         return null;
       }
 
-      // logged in + verified
+      // logged in + verified - sync contracts from Firebase (Chadli)
+      // This ensures contracts are synced when app restarts with existing session
+      try {
+        await online_db.syncContractsFromUserNode(user.uid);
+        await online_db.syncContractsUsingStoredKeys(user.uid);
+        await online_db.syncCompletedContractsStatus();
+      } catch (_) {
+        // Sync errors shouldn't block authentication
+      }
+
       return true;
 
     } on FirebaseAuthException {
