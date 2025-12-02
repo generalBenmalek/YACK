@@ -11,8 +11,11 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final isLoggedIn = await AuthService.isAuthenticated();
 
-      if (isLoggedIn) {
+      if (isLoggedIn == true) {
         emit(Authenticated());
+      } else if (isLoggedIn == null) {
+        // logged in but email not verified
+        emit(UnverifiedUser());
       } else {
         emit(Unauthenticated());
       }

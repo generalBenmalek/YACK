@@ -155,7 +155,6 @@ const french = {
   'status_active': 'Actif',
   'status_completed': 'Terminé',
   'status_pending': 'En attente',
-  'status_completed': 'Terminé',
   'status_rejected': 'Rejeté',
   'contracts_summary': 'Résumé des contrats',
   'edit_name': 'Modifier le nom',
@@ -239,8 +238,6 @@ const french = {
   'failed_to_save_contract':
       'Échec de l\'enregistrement du contrat. Veuillez réessayer.',
   'status_disputed': 'En litige',
-  'status_pending': 'En attente',
-  'status_rejected': 'Refusé',
   'contract_accepted_notification': 'Contrat accepté',
   'contract_accepted_notification_desc':
       'Vous avez accepté un contrat partagé.',

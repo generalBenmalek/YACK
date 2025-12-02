@@ -13,6 +13,8 @@ class Authenticated extends AuthState {}
 
 class Unauthenticated extends AuthState {}
 
+class UnverifiedUser extends AuthState {} // new state
+
 class AuthError extends AuthState {
   final String messageKey;
   AuthError(this.messageKey);

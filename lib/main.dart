@@ -59,12 +59,14 @@ void main() async {
   await Hive.initFlutter();
   
   await Hive.openBox('contracts');
+
+  final userBox = await Hive.openBox('user');
+
   await TranslationHandler.initialize(userBox);
 
   // Sync offline data and check completed contracts status (Chadli)
   syncOfflineData();
   syncCompletedContractsStatus();
-  final userBox = await Hive.openBox('user');
 
 
   // Initialize Translation Handler
