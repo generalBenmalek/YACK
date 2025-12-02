@@ -4,9 +4,8 @@ import 'package:yack/screens/home.dart';
 import 'package:yack/screens/notifications.dart';
 import 'package:yack/screens/scan_contract.dart';
 import 'package:yack/screens/settings.dart';
-import 'package:yack/utils/translation_handler.dart';
 
-import '../models/notification.dart';
+
 
 class BottomNavBar extends StatefulWidget {
   final int initialIndex;
@@ -30,22 +29,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
     final screens = [
       const ContractsScreen(),
       const ScanContractScreen(),
-      NotificationsPage(
-        notifications: [
-          NotificationModel(
-            title: TranslationHandler.get('contract_approved_notification'),
-            body: TranslationHandler.get('contract_approved_message'),
-            date: DateTime.now().subtract(const Duration(hours: 3)),
-            icon: Icons.check_circle_outline,
-          ),
-          NotificationModel(
-            title: TranslationHandler.get('new_message_notification'),
-            body: TranslationHandler.get('new_message_body'),
-            date: DateTime.now().subtract(const Duration(days: 1)),
-            icon: Icons.chat_bubble_outline,
-          ),
-        ],
-      ),
+      const NotificationsPage(), // removed hardcoded notifications: Chadli
       const SettingsScreen(),
     ];
 

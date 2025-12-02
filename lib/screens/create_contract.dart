@@ -3,6 +3,7 @@ import 'package:yack/db/models/contract.dart';
 import 'package:yack/screens/scan_contract.dart';
 import 'package:yack/screens/shareContract.dart';
 import 'package:yack/utils/translation_handler.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateContractScreen extends StatefulWidget {
   const CreateContractScreen({super.key});
@@ -170,11 +171,15 @@ class _CreateContractScreenState extends State<CreateContractScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
+
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  final currentUserId = currentUser?.uid ?? 'Unknown';
+
                   final contract = Contract()
                     ..name = _titleController.text
                     ..description = _descriptionController.text
                     ..price = double.tryParse(_priceController.text) ?? 0.0
-                    ..userA = 'Current User'
+                    ..userA = currentUserId
                     ..userB = ''
                     ..status = ContractStatus.pending
                     ..createdAt = DateTime.now();

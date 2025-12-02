@@ -3,8 +3,10 @@ import 'package:yack/widgets/primaryActionButtonAutoLoading.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/widgets/secondaryActionButtonAutoLoading.dart';
 import 'package:yack/utils/translation_handler.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class AcceptDeclineContractScreen extends StatelessWidget {
+class AcceptDeclineContractScreen extends StatefulWidget {
   final String title;
   final double price;
   final String? description;
@@ -19,6 +21,64 @@ class AcceptDeclineContractScreen extends StatelessWidget {
     required this.userLastName,
     this.description,
   });
+
+  @override
+  State<AcceptDeclineContractScreen> createState() =>
+      _AcceptDeclineContractScreenState();
+}
+
+class _AcceptDeclineContractScreenState
+    extends State<AcceptDeclineContractScreen> {
+  String? _translatedTitle;
+  String? _translatedDescription;
+  bool _isTranslating = false;
+
+  // Translation using MyMemory API: Chadli
+  Future<void> _translateContent() async {
+    setState(() => _isTranslating = true);
+
+    try {
+      final currentLang = TranslationHandler.currentLanguage;
+      final targetLang = currentLang == 'ar'
+          ? 'ar'
+          : currentLang == 'fr'
+          ? 'fr'
+          : 'en';
+
+      // translate title
+      final titleResponse = await http.get(
+        Uri.parse(
+          'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(widget.title)}&langpair=en|$targetLang',
+        ),
+      );
+
+      // translate description
+      final descResponse = await http.get(
+        Uri.parse(
+          'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(widget.description ?? '')}&langpair=en|$targetLang',
+        ),
+      );
+
+      if (titleResponse.statusCode == 200) {
+        // success
+        final titleJson = json.decode(titleResponse.body);
+        _translatedTitle = titleJson['responseData']['translatedText'];
+      }
+      if (descResponse.statusCode == 200) {
+        // success
+        final descJson = json.decode(descResponse.body);
+        _translatedDescription = descJson['responseData']['translatedText'];
+      }
+      setState(() {});
+    } catch (e) {
+      SnackBarHandler.showError(
+        context,
+        TranslationHandler.get('translation_failed'),
+      );
+    } finally {
+      setState(() => _isTranslating = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +126,13 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                         const Icon(Icons.person, size: 22),
                         const SizedBox(width: 8),
                         Text(
-                          TranslationHandler.resolve('from_user',
-                              params: {'name': '$userFirstName $userLastName'}),
+                          TranslationHandler.resolve(
+                            'from_user',
+                            params: {
+                              'name':
+                                  '${widget.userFirstName} ${widget.userLastName}',
+                            },
+                          ),
                           style: theme.textTheme.titleSmall?.copyWith(
                             color: color.onSurface.withOpacity(0.8),
                             fontWeight: FontWeight.w600,
@@ -80,7 +145,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                     // Centered Contract Title
                     Center(
                       child: Text(
-                        title,
+                        _translatedTitle ?? widget.title, // updated
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: color.onSurface,
@@ -93,9 +158,8 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                     // Description
                     Expanded(
                       child: SingleChildScrollView(
-                        child: Text(
-                          description ??
-                              TranslationHandler.get('accept_decline_description'),
+                        child: Text( // updated
+                          _translatedDescription ?? widget.description ?? TranslationHandler.get('accept_decline_description'),
                           textAlign: TextAlign.justify,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: color.onSurface.withOpacity(0.85),
@@ -110,7 +174,7 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
-                      "${TranslationHandler.get('price_label')}: ${price.toStringAsFixed(2)} ${TranslationHandler.get('currency')}",
+                        "${TranslationHandler.get('price_label')}: ${widget.price.toStringAsFixed(2)} ${TranslationHandler.get('currency')}",
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: color.primary,
                           fontWeight: FontWeight.bold,
@@ -152,17 +216,27 @@ class AcceptDeclineContractScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-            // Accept / Decline buttons
+            // added translation button: Chadli
+            TextButton.icon(
+              onPressed: _isTranslating ? null : _translateContent,
+              icon: _isTranslating
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.translate, size: 18),
+              label: Text(TranslationHandler.get('translate_contract')),
+            ),
+            const SizedBox(height: 12),
+
+            // Accept / Decline buttons (Chadli)
             PrimaryActionButtonAutoReload(
               action: TranslationHandler.get('accept_contract'),
               onClick: () async {
-                await Future.delayed(const Duration(seconds: 1));
-                SnackBarHandler.showSuccess(
-                  context,
-                  TranslationHandler.get('contract_accepted'),
-                );
+                await Future.delayed(const Duration(milliseconds: 500));
                 Navigator.pop(context, true);
               },
             ),
@@ -171,10 +245,6 @@ class AcceptDeclineContractScreen extends StatelessWidget {
             SecondaryActionButtonAutoReload(
               action: TranslationHandler.get('decline_contract'),
               onClick: () {
-                SnackBarHandler.showError(
-                  context,
-                  TranslationHandler.get('contract_declined'),
-                );
                 Navigator.pop(context, false);
               },
             ),

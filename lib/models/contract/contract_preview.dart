@@ -1,12 +1,14 @@
 // A temporary model representing decoded contract data from a QR code.
 // This simulates receiving contract data from a backend.
 class ContractPreview {
+  final String id; // firebase/external id
   final String name;
   final double price;
   final String? description;
   final String userA;
 
   const ContractPreview({
+    required this.id,
     required this.name,
     required this.price,
     this.description,
@@ -16,6 +18,7 @@ class ContractPreview {
   // Creates a ContractPreview from a decoded JSON map.
   factory ContractPreview.fromJson(Map<String, dynamic> json) {
     return ContractPreview(
+      id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       description: json['description'] as String?,
@@ -25,6 +28,7 @@ class ContractPreview {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'price': price,
       'description': description,

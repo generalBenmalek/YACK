@@ -4,10 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:isar/isar.dart';
+import 'package:yack/db/online.dart';
 import 'package:yack/screens/auth/confirm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:yack/screens/contract_agr/contract_agreement.dart';
 import 'package:yack/screens/contract_agr/nomore_contracts.dart';
+import 'package:yack/screens/subscription.dart';
 import 'package:yack/screens/root.dart';
 import 'firebase_options.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
@@ -28,92 +30,55 @@ import 'package:path_provider/path_provider.dart';
 
 late Isar isar;
 
-Future<void> seedMockData(Isar isar) async {
-  final count = await isar.contracts.count();
-  if (count == 0) {
-    final contracts = [
-      Contract()
-        ..name = 'Consulting Agreement'
-        ..description = 'Consulting services for project X'
-        ..price = 12000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.accepted
-        ..createdAt = DateTime.now(),
-      Contract()
-        ..name = 'Freelance Contract'
-        ..description = 'Web development services'
-        ..price = 5000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.accepted
-        ..createdAt = DateTime.now().subtract(const Duration(days: 2)),
-      Contract()
-        ..name = 'Service Agreement'
-        ..description = 'Maintenance services'
-        ..price = 8000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.accepted
-        ..createdAt = DateTime.now().subtract(const Duration(days: 5)),
-      Contract()
-        ..name = 'Past Contract'
-        ..description = 'Completed project'
-        ..price = 5000
-        ..userA = 'User A'
-        ..userB = 'User B'
-        ..status = ContractStatus.completed
-        ..createdAt = DateTime.now().subtract(const Duration(days: 30)),
-    ];
-
-    await isar.writeTxn(() async {
-      await isar.contracts.putAll(contracts);
-    });
-  }
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final dir = await getApplicationDocumentsDirectory();
 
-  isar = await Isar.open(
-    [
-      ContractSchema,
-      MessageSchema,
-      MediaFileSchema,
-      AppNotificationSchema,
-    ],
-    directory: dir.path,
-  );
+  isar = await Isar.open([
+    ContractSchema,
+    MessageSchema,
+    MediaFileSchema,
+    AppNotificationSchema,
+  ], directory: dir.path);
 
-  await seedMockData(isar);
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarContrastEnforced: false,
-    systemNavigationBarDividerColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+      systemNavigationBarDividerColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
 
   await Hive.initFlutter();
   final userBox = await Hive.openBox('user');
-
+  await Hive.openBox('contracts');
   await TranslationHandler.initialize(userBox);
+
+  // Sync offline data and check completed contracts status (Chadli)
+  syncOfflineData();
+  syncCompletedContractsStatus();
 
   late final String initialRoute;
 
+  // BYPASS AUTH FOR TESTING - Remove this line when auth is ready
+  const bypassAuth = true;
+
   final user = FirebaseAuth.instance.currentUser;
 
-  if (userBox.get('didFirstTime') == null || userBox.get('didFirstTime') == false) {
+  if (bypassAuth) {
+    // TESTING MODE: Skip authentication
+    initialRoute = '/home';
+  } else if (userBox.get('didFirstTime') == null ||
+      userBox.get('didFirstTime') == false) {
     initialRoute = '/welcome';
     await userBox.put('didFirstTime', true);
   } else if (user != null) {
@@ -158,21 +123,29 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Widget themedRoute(BuildContext context, Widget child, {
-   bool transparent = false
+  Widget themedRoute(
+    BuildContext context,
+    Widget child, {
+    bool transparent = false,
   }) {
     final brightness = MediaQuery.of(context).platformBrightness;
-    final isDarkMode = _themeMode == ThemeMode.dark ||
+    final isDarkMode =
+        _themeMode == ThemeMode.dark ||
         (_themeMode == ThemeMode.system && brightness == Brightness.dark);
 
     final overlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      systemNavigationBarColor: !transparent? Theme.of(context).colorScheme.surface: Colors.transparent,
-      systemNavigationBarDividerColor: !transparent?Theme.of(context).colorScheme.surface: Colors.transparent,
+      systemNavigationBarColor: !transparent
+          ? Theme.of(context).colorScheme.surface
+          : Colors.transparent,
+      systemNavigationBarDividerColor: !transparent
+          ? Theme.of(context).colorScheme.surface
+          : Colors.transparent,
       systemNavigationBarContrastEnforced: false,
       statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
-      systemNavigationBarIconBrightness:
-      isDarkMode ? Brightness.light : Brightness.dark,
+      systemNavigationBarIconBrightness: isDarkMode
+          ? Brightness.light
+          : Brightness.dark,
       statusBarBrightness: isDarkMode ? Brightness.dark : Brightness.light,
     );
 
@@ -185,32 +158,35 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: userBox.listenable(keys: ['theme','language']),
+      valueListenable: userBox.listenable(keys: ['theme', 'language']),
       builder: (context, box, _) {
-            return MaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: _themeMode,
-              locale: TranslationHandler.locale,
-              supportedLocales: TranslationHandler.supportedLocales.toList(),
-              localizationsDelegates: const [
-                GlobalMaterialLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-              ],
-              routes: {
-            '/welcome': (context) =>
-                themedRoute(context, const OnboardingScreen(),transparent: true),
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: _themeMode,
+          locale: TranslationHandler.locale,
+          supportedLocales: TranslationHandler.supportedLocales.toList(),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          routes: {
+            '/welcome': (context) => themedRoute(
+              context,
+              const OnboardingScreen(),
+              transparent: true,
+            ),
 
             '/signup': (context) =>
-                themedRoute(context, const SignUpScreen(),transparent: true),
+                themedRoute(context, const SignUpScreen(), transparent: true),
             '/login': (context) =>
-                themedRoute(context, const LoginScreen(),transparent: true),
+                themedRoute(context, const LoginScreen(), transparent: true),
             '/confirm': (context) =>
-                themedRoute(context, const ConfirmAccount(),transparent: true),
+                themedRoute(context, const ConfirmAccount(), transparent: true),
             '/forgot-password': (context) =>
-                themedRoute(context, const ForgetPassword(),transparent: true),
+                themedRoute(context, const ForgetPassword(), transparent: true),
 
             '/contract/scan_contract': (context) =>
                 themedRoute(context, const ScanContractScreen()),
@@ -218,19 +194,26 @@ class _MyAppState extends State<MyApp> {
                 themedRoute(context, const SignContractScreen()),
             '/contract/create_contract': (context) =>
                 themedRoute(context, const CreateContractScreen()),
-            '/contract/view': (context) => const ContractAgreement(),
+            '/contract/view': (context) {
+              final contractId =
+                ModalRoute.of(context)!.settings.arguments as int;
+                return themedRoute(context, ContractAgreement(contractId: contractId));
+            },
 
             '/settings': (context) =>
                 themedRoute(context, const SettingsScreen()),
-            '/upgrade': (context) =>
-                themedRoute(context, const NoMoreContractsAvailable(),transparent: true),
-            '/home': (context) =>
-                themedRoute(context, const BottomNavBar()),
+            '/upgrade': (context) => themedRoute(
+              context,
+              const NoMoreContractsAvailable(),
+              transparent: true,
+            ),
+            '/subscription': (context) =>
+                themedRoute(context, const SubscriptionScreen()),
+            '/home': (context) => themedRoute(context, const BottomNavBar()),
           },
           initialRoute: widget.initialRoute,
-            );
-          },
+        );
+      },
     );
   }
 }
-

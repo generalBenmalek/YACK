@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'dart:convert';
-import 'package:isar/isar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:yack/db/online.dart' as online_db;
 import 'package:yack/db/models/contract.dart';
+import 'package:yack/db/models/notification.dart';
 import 'package:yack/main.dart';
 import 'package:yack/utils/snackBarHandler.dart';
 import 'package:yack/models/contract/contract_preview.dart';
@@ -19,14 +22,54 @@ class ScanContractScreen extends StatefulWidget {
   State<ScanContractScreen> createState() => _ScanContractScreenState();
 }
 
-class _ScanContractScreenState extends State<ScanContractScreen> {
+class _ScanContractScreenState extends State<ScanContractScreen> with WidgetsBindingObserver {
   bool _isScanning = false;
+  bool _isProcessing = false; // Prevent multiple scans - (fixed issue: Chadli)
+  bool _navigatingAway = false; // Prevent camera restart during navigation - fixed (Chadli)
   MobileScannerController? scannerController;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reset flags when screen becomes visible again (e.g., returning from navigation)
+    _resetState();
+  }
+
+  void _resetState() {
+    if (_navigatingAway || _isProcessing) {
+      setState(() {
+        _navigatingAway = false;
+        _isProcessing = false;
+        _isScanning = false;
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     scannerController?.dispose();
     super.dispose();
+  }
+
+  /// Safely navigate to home, avoiding navigator lock issues
+  void _navigateToHome() {
+    if (!mounted || _navigatingAway) return;
+    _navigatingAway = true;
+    
+    // Use addPostFrameCallback to ensure navigation happens after current frame
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Use root navigator to properly exit all nested navigators
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/home', (route) => false);
+      }
+    });
   }
 
   void _startScanning() {
@@ -39,91 +82,163 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
   void _stopScanning() {
     scannerController?.stop();
     scannerController?.dispose();
-    setState(() {
-      _isScanning = false;
-      scannerController = null;
-    });
+    scannerController = null;
+    if (mounted && !_navigatingAway) {
+      setState(() {
+        _isScanning = false;
+      });
+    }
   }
 
+  // Process scanned QR code and navigate to contract preview (Chadli)
   void _onQRScanned(String code) async {
-    scannerController?.stop();
+    _navigatingAway = true;
 
-    // Step 1: Validate and extract the Base64 string from the link
+    // Validate QR format (Chadli)
     if (!code.startsWith('yack://contract?data=')) {
-      SnackBarHandler.showError(
-        context,
-        TranslationHandler.get('invalid_contract_qr'),
-      );
-      _stopScanning();
+      if (mounted) {
+        SnackBarHandler.showError(context, TranslationHandler.get('invalid_contract_qr'));
+      }
+      _navigateToHome();
       return;
     }
 
     try {
-      // Step 2: Extract the Base64 encoded data from the link
+      // Decode Base64 contract data (Chadli)
       final uri = Uri.parse(code);
       final encodedData = uri.queryParameters['data'];
-
       if (encodedData == null || encodedData.isEmpty) {
         throw FormatException('Missing contract data');
       }
 
-      // Step 3: Decode Base64 back into a JSON string
       final jsonString = utf8.decode(base64Url.decode(encodedData));
-
-      // Step 4: Parse the JSON into a Dart map
       final Map<String, dynamic> jsonMap = json.decode(jsonString);
-
-      // Step 5: Convert the map into a temporary ContractPreview object
       final contractPreview = ContractPreview.fromJson(jsonMap);
 
-      SnackBarHandler.showSuccess(
+      if (!mounted) return;
+
+      _stopScanning();
+      
+      // Navigate to accept/decline screen (Chadli)
+      final result = await Navigator.push<bool>(
         context,
-        TranslationHandler.get('contract_decoded_successfully'),
+        MaterialPageRoute(
+          builder: (_) => AcceptDeclineContractScreen(
+            title: contractPreview.name,
+            price: contractPreview.price,
+            userFirstName: contractPreview.userA,
+            userLastName: '',
+            description: contractPreview.description,
+          ),
+        ),
       );
 
-      // Step 6: Display the decoded information to the user and handle result
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        final result = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AcceptDeclineContractScreen(
-              title: contractPreview.name,
-              price: contractPreview.price,
-              userFirstName: contractPreview.userA,
-              userLastName: '',
-              description: contractPreview.description,
-            ),
-          ),
-        );
+      // Handle acceptance (Chadli)
+      if (result == true) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            useRootNavigator: true,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-        // If accepted, save contract to database
-        if (result == true) {
+        try {
+          final currentUser = FirebaseAuth.instance.currentUser;
+          final currentUserId = currentUser?.uid ?? 'test_user_${DateTime.now().millisecondsSinceEpoch}';
+          
+          // Save contract to Isar (Chadli)
           final contract = Contract()
+            ..externalId = contractPreview.id
             ..name = contractPreview.name
             ..description = contractPreview.description ?? ''
             ..price = contractPreview.price
             ..userA = contractPreview.userA
-            ..userB = 'Current User'
+            ..userB = currentUserId
             ..status = ContractStatus.accepted
             ..createdAt = DateTime.now();
 
           await isar.writeTxn(() async {
             await isar.contracts.put(contract);
           });
-        }
 
-        // Go back to home after accept/decline
-        if (mounted) {
-          Navigator.of(context).pop();
+          // Create silent notification (Chadli)
+          final appNotification = AppNotification()
+            ..title = TranslationHandler.get('contract_accepted_notification')
+            ..description = TranslationHandler.get('contract_accepted_notification_desc')
+            ..createdAt = DateTime.now()
+            ..isRead = true
+            ..contractId = contract.id;
+
+          await isar.writeTxn(() async {
+            await isar.appNotifications.put(appNotification);
+          });
+
+          // Sync with Firebase (Chadli)
+          if (contractPreview.id.isNotEmpty) {
+            try {
+              await online_db.acceptContract(
+                contractPreview.id, 
+                currentUserId,
+                {
+                  "title": contractPreview.name,
+                  "details": contractPreview.description ?? '',
+                  "price": contractPreview.price
+                },
+                contractPreview.userA
+              );
+            } catch (_) {}
+          }
+
+          if (mounted) {
+            try {
+              Navigator.of(context, rootNavigator: true).pop();
+            } catch (_) {}
+          }
+          
+          await Future.delayed(const Duration(milliseconds: 100));
+
+          if (mounted) {
+            SnackBarHandler.showSuccess(context, TranslationHandler.get('contract_saved_successfully'));
+          }
+          
+          _navigateToHome();
+          return;
+        } catch (_) {
+          if (mounted) {
+            try {
+              Navigator.of(context, rootNavigator: true).pop();
+            } catch (_) {}
+            SnackBarHandler.showError(context, TranslationHandler.get('failed_to_save_contract'));
+          }
+          await Future.delayed(const Duration(milliseconds: 100));
+          _navigateToHome();
+          return;
         }
       }
-    } catch (e) {
-      SnackBarHandler.showError(
-        context,
-        TranslationHandler.get('failed_to_decode_contract'),
-      );
-      _stopScanning();
+      
+      // Handle decline (Chadli)
+      if (result == false) {
+        try {
+          await isar.writeTxn(() async {
+            final appNotification = AppNotification()
+              ..title = TranslationHandler.get('contract_declined_notification')
+              ..description = TranslationHandler.get('contract_declined_notification_desc')
+              ..createdAt = DateTime.now()
+              ..isRead = true
+              ..contractId = null;
+            await isar.appNotifications.put(appNotification);
+          });
+        } catch (_) {}
+      }
+
+      _navigateToHome();
+    } catch (_) {
+      if (mounted) {
+        SnackBarHandler.showError(context, TranslationHandler.get('failed_to_decode_contract'));
+      }
+      _navigateToHome();
     }
   }
 
@@ -141,10 +256,18 @@ class _ScanContractScreenState extends State<ScanContractScreen> {
           MobileScanner(
             controller: scannerController,
             onDetect: (capture) {
+              // Extra guard at the callback level
+              if (_isProcessing) return;
+              
               final List<Barcode> barcodes = capture.barcodes;
               if (barcodes.isNotEmpty) {
                 final String? code = barcodes.first.rawValue;
-                if (code != null) _onQRScanned(code);
+                if (code != null) {
+                  // Set processing flag immediately before async call
+                  _isProcessing = true;
+                  scannerController?.stop();
+                  _onQRScanned(code);
+                }
               }
             },
           ),
