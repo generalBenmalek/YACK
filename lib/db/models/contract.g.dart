@@ -112,7 +112,7 @@ const ContractSchema = CollectionSchema(
   getId: _contractGetId,
   getLinks: _contractGetLinks,
   attach: _contractAttach,
-  version: '3.1.0+1',
+  version: '3.1.0',
 );
 
 int _contractEstimateSize(

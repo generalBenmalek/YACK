@@ -75,7 +75,7 @@ const MessageSchema = CollectionSchema(
   getId: _messageGetId,
   getLinks: _messageGetLinks,
   attach: _messageAttach,
-  version: '3.1.0+1',
+  version: '3.1.0',
 );
 
 int _messageEstimateSize(

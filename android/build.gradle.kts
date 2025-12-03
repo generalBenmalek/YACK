@@ -1,11 +1,3 @@
-plugins {
-    id("com.android.application") apply false
-    id("com.android.library") apply false
-    id("kotlin-android") apply false
-    id("dev.flutter.flutter-gradle-plugin") apply false
-    id("com.google.gms.google-services") apply false
-}
-
 allprojects {
     repositories {
         google()
@@ -13,15 +5,40 @@ allprojects {
     }
 }
 
-val newBuildDir: org.gradle.api.file.Directory =
-    rootProject.layout.buildDirectory.dir("../../build").get()
+val newBuildDir: Directory =
+    rootProject.layout.buildDirectory
+        .dir("../../build")
+        .get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val newSubprojectBuildDir: org.gradle.api.file.Directory = newBuildDir.dir(project.name)
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+
+    plugins.withId("com.android.library") {
+        val android = project.extensions.getByType(com.android.build.gradle.LibraryExtension::class.java)
+        if (android.namespace == null) {
+            android.namespace = "com.example.${project.name.replace("-", "_")}"
+        }
+        
+        project.afterEvaluate {
+             android.sourceSets.getByName("main").manifest.srcFile.let { manifestFile ->
+                 if (manifestFile.exists()) {
+                     val content = manifestFile.readText()
+                     if (content.contains("package=\"")) {
+                         val newContent = content.replace(Regex("package=\"[^\"]+\""), "")
+                         manifestFile.writeText(newContent)
+                     }
+                 }
+             }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
