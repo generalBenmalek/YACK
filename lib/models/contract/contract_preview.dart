@@ -25,7 +25,7 @@ class ContractPreview {
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       description: json['description'] as String?,
       userA: json['userA'] as String? ?? '',
-      userAName: json['userAName'] as String? ?? json['userA'] as String? ?? 'Unknown',
+      userAName: json['userAName'] as String? ?? 'Unknown', // Don't fall back to userA UID
     );
   }
 
