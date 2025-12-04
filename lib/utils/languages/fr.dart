@@ -227,6 +227,10 @@ const french = {
   'currency': 'DA',
   'contract_decoded_successfully': 'Contrat décodé avec succès !',
   'invalid_contract_qr': 'Code QR de contrat invalide',
+  'invitation_not_started': 'Le partage n\'a pas été démarré. Demandez à l\'autre partie de cliquer sur Commencer le partage.',
+  'cannot_accept_own_contract': 'Vous ne pouvez pas accepter votre propre contrat.',
+  'title_required': 'Veuillez entrer un titre de contrat.',
+  'invalid_price': 'Veuillez entrer un prix valide.',
   'failed_to_decode_contract': 'Échec du décodage du contrat',
   'waiting_for_acceptance':
       'En attente que l\'autre partie scanne et accepte...',

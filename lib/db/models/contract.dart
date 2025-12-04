@@ -25,7 +25,9 @@ class Contract {
   late double price;
 
   late String userA;
+  String? userAName; // Display name for userA
   late String userB;
+  String? userBName; // Display name for userB
 
   @enumerated
   late ContractStatus status;

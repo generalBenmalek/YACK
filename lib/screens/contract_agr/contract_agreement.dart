@@ -35,9 +35,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
   StreamSubscription? _closeSubscription;
   StreamSubscription? _completedSubscription;
   StreamSubscription? _mediaSubscription;
-  
+
   bool _hasShownCompletionDialog = false;
   bool _hasShownDisputeDialog = false;
+  bool _initialDisputeCheckDone = false;
 
   @override
   void initState() {
@@ -52,36 +53,40 @@ class _ContractAgreementState extends State<ContractAgreement> {
     if (contract != null) {
       // Set current user from contract if not from Firebase Auth (Chadli)
       if (_currentUserId.isEmpty) {
-        _currentUserId = contract.userB.isNotEmpty ? contract.userB : contract.userA;
+        _currentUserId = contract.userB.isNotEmpty
+            ? contract.userB
+            : contract.userA;
       }
-      
+
       if (contract.externalId != null && contract.externalId!.isNotEmpty) {
         _externalContractId = contract.externalId;
-      
-      final keyResult = await online_db.getKey(_externalContractId!);
-      if (keyResult['status'] == true) {
-        _contractKey = keyResult['key'];
-      }
-      
-      // Check if contract was completed while user was away (Chadli)
-      await _checkCompletedStatus();
-      
-      _subscribeToFirebaseMessages();
-      _subscribeToDisputeNotifications();
-      _subscribeToCloseRequests();
-      _subscribeToCompletedStatus();
-      _subscribeToMediaFiles();
+
+        final keyResult = await online_db.getKey(_externalContractId!);
+        if (keyResult['status'] == true) {
+          _contractKey = keyResult['key'];
+        }
+
+        // Check if contract was completed while user was away (Chadli)
+        await _checkCompletedStatus();
+
+        _subscribeToFirebaseMessages();
+        _subscribeToDisputeNotifications();
+        _subscribeToCloseRequests();
+        _subscribeToCompletedStatus();
+        _subscribeToMediaFiles();
       }
     }
   }
-  
+
   // One-time check for completed status on chat entry (Chadli)
   Future<void> _checkCompletedStatus() async {
     if (_externalContractId == null) return;
-    
-    final completedRef = FirebaseDatabase.instance.ref('completedContracts/$_externalContractId');
+
+    final completedRef = FirebaseDatabase.instance.ref(
+      'completedContracts/$_externalContractId',
+    );
     final snapshot = await completedRef.get();
-    
+
     if (snapshot.exists && snapshot.value != null) {
       await _updateLocalContractStatus(ContractStatus.completed);
     }
@@ -90,8 +95,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
   // Listen for contract completion in persistent node (Chadli)
   void _subscribeToCompletedStatus() {
     if (_externalContractId == null) return;
-    
-    final completedRef = FirebaseDatabase.instance.ref('completedContracts/$_externalContractId');
+
+    final completedRef = FirebaseDatabase.instance.ref(
+      'completedContracts/$_externalContractId',
+    );
     _completedSubscription = completedRef.onValue.listen((event) async {
       final data = event.snapshot.value;
       if (data != null) {
@@ -103,12 +110,14 @@ class _ContractAgreementState extends State<ContractAgreement> {
   // Listen to Firebase supportDocs and sync media files (Chadli)
   void _subscribeToMediaFiles() {
     if (_externalContractId == null) return;
-    
-    final ref = FirebaseDatabase.instance.ref('contracts/$_externalContractId/supportDocs');
+
+    final ref = FirebaseDatabase.instance.ref(
+      'contracts/$_externalContractId/supportDocs',
+    );
     _mediaSubscription = ref.onValue.listen((event) async {
       final data = event.snapshot.value;
       if (data == null) return;
-      
+
       if (data is List) {
         for (var doc in data) {
           if (doc is Map) await _syncMediaToIsar(doc);
@@ -122,31 +131,34 @@ class _ContractAgreementState extends State<ContractAgreement> {
     final senderId = doc['userId']?.toString() ?? '';
     final type = doc['type']?.toString() ?? '';
     String content = doc['content']?.toString() ?? '';
-    
+
     if (content.isEmpty || type == 'text') return;
     if (senderId == _currentUserId) return; // Skip own files (Chadli)
-    
+
     // Decrypt the URL (Chadli)
     if (_contractKey != null) {
       try {
         content = online_db.decrypt(content, _contractKey!);
-      } catch (_) { return; }
+      } catch (_) {
+        return;
+      }
     }
-    
+
     // Check if already synced (Chadli)
     final existing = await isar.mediaFiles
         .filter()
         .contractIdEqualTo(widget.contractId)
         .filePathEqualTo(content)
         .findFirst();
-    
+
     if (existing == null) {
       await isar.writeTxn(() async {
         await isar.mediaFiles.put(
           MediaFile()
             ..contractId = widget.contractId
             ..senderId = senderId
-            ..filePath = content // URL from Cloudinary (Chadli)
+            ..filePath =
+                content // URL from Cloudinary (Chadli)
             ..type = type
             ..createdAt = DateTime.now(),
         );
@@ -157,12 +169,14 @@ class _ContractAgreementState extends State<ContractAgreement> {
   // Listen to Firebase messages and sync to local Isar (Chadli)
   void _subscribeToFirebaseMessages() {
     if (_externalContractId == null) return;
-    
-    final ref = FirebaseDatabase.instance.ref('contracts/$_externalContractId/messages');
+
+    final ref = FirebaseDatabase.instance.ref(
+      'contracts/$_externalContractId/messages',
+    );
     _messagesSubscription = ref.onValue.listen((event) async {
       final data = event.snapshot.value;
       if (data == null) return;
-      
+
       // Firebase push() creates Map with unique keys (Chadli)
       if (data is Map) {
         for (var entry in data.entries) {
@@ -187,28 +201,32 @@ class _ContractAgreementState extends State<ContractAgreement> {
     String text = msg['text']?.toString() ?? '';
     final timestamp = msg['timestamp'];
     final isEncrypted = msg['encrypted'] == true;
-    
+
     if (text.isEmpty) return;
-    
+
     if (isEncrypted && _contractKey != null) {
       try {
         text = online_db.decrypt(text, _contractKey!);
       } catch (_) {}
     }
-    
-    final msgTime = timestamp != null 
-        ? DateTime.fromMillisecondsSinceEpoch(timestamp is int ? timestamp : int.tryParse(timestamp.toString()) ?? 0)
+
+    final msgTime = timestamp != null
+        ? DateTime.fromMillisecondsSinceEpoch(
+            timestamp is int
+                ? timestamp
+                : int.tryParse(timestamp.toString()) ?? 0,
+          )
         : DateTime.now();
-    
+
     // Unique key combines contractId + firebaseKey (Chadli)
     final uniqueKey = '${widget.contractId}_$firebaseKey';
-    
+
     // 1. Check if message already exists by unique key (Chadli)
     final existing = await isar.messages
         .filter()
         .firebaseKeyEqualTo(uniqueKey)
         .findFirst();
-    
+
     if (existing != null) return;
 
     // 2. Check for local temporary message to update (Deduplication) (Chadli)
@@ -230,36 +248,52 @@ class _ContractAgreementState extends State<ContractAgreement> {
       });
       return;
     }
-    
+
     // 3. Insert new if not found
     await isar.writeTxn(() async {
-        await isar.messages.put(
-          db.Message()
-            ..contractId = widget.contractId
-            ..senderId = senderId
-            ..text = text
-            ..createdAt = msgTime
-            ..firebaseKey = uniqueKey,
-        );
+      await isar.messages.put(
+        db.Message()
+          ..contractId = widget.contractId
+          ..senderId = senderId
+          ..text = text
+          ..createdAt = msgTime
+          ..firebaseKey = uniqueKey,
+      );
     });
   }
 
   // Listen for dispute notifications from other party (Chadli)
   void _subscribeToDisputeNotifications() {
     if (_externalContractId == null) return;
-    
-    final disputeRef = FirebaseDatabase.instance.ref('dispute/$_externalContractId');
+
+    final disputeRef = FirebaseDatabase.instance.ref(
+      'dispute/$_externalContractId',
+    );
     _disputeSubscription = disputeRef.onValue.listen((event) async {
       final data = event.snapshot.value;
       if (data == null) return;
-      
-      if (data is Map && !_hasShownDisputeDialog) {
+
+      if (data is Map) {
         final disputedBy = data['disputedBy']?.toString() ?? '';
-        
-        if (disputedBy.isNotEmpty && disputedBy != _currentUserId) {
-          _hasShownDisputeDialog = true;
+
+        // Always update local status if disputed (Chadli)
+        if (disputedBy.isNotEmpty) {
           await _updateLocalContractStatus(ContractStatus.onDispute);
+        }
+
+        // Only show dialog once and only if disputed by other party (Chadli)
+        // Skip if this is the initial check and contract was already disputed
+        if (!_hasShownDisputeDialog &&
+            disputedBy.isNotEmpty &&
+            disputedBy != _currentUserId &&
+            _initialDisputeCheckDone) {
+          _hasShownDisputeDialog = true;
           if (mounted) _showDisputeNotificationDialog();
+        }
+
+        // Mark initial check as done after first callback (Chadli)
+        if (!_initialDisputeCheckDone) {
+          _initialDisputeCheckDone = true;
         }
       }
     });
@@ -268,20 +302,24 @@ class _ContractAgreementState extends State<ContractAgreement> {
   // Listen for close requests from other party (Chadli)
   void _subscribeToCloseRequests() {
     if (_externalContractId == null) return;
-    
-    final closeRef = FirebaseDatabase.instance.ref('contracts/$_externalContractId/close');
+
+    final closeRef = FirebaseDatabase.instance.ref(
+      'contracts/$_externalContractId/close',
+    );
     _closeSubscription = closeRef.onValue.listen((event) async {
       final data = event.snapshot.value;
       if (data == null || _hasShownCompletionDialog) return;
-      
+
       if (data is String) {
         String requesterId = data;
         if (_contractKey != null) {
           try {
             requesterId = online_db.decrypt(data, _contractKey!);
-          } catch (_) { return; }
+          } catch (_) {
+            return;
+          }
         }
-        
+
         // Show dialog only to OTHER party (Chadli)
         if (requesterId.isNotEmpty && requesterId != _currentUserId) {
           _hasShownCompletionDialog = true;
@@ -304,7 +342,9 @@ class _ContractAgreementState extends State<ContractAgreement> {
             Text(TranslationHandler.get('dispute_raised')),
           ],
         ),
-        content: const Text('The other party has raised a dispute against this contract.'),
+        content: const Text(
+          'The other party has raised a dispute against this contract.',
+        ),
         actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -326,18 +366,20 @@ class _ContractAgreementState extends State<ContractAgreement> {
           children: [
             const Icon(Icons.check_circle, color: Colors.green, size: 28),
             const SizedBox(width: 8),
-            Text(TranslationHandler.get('completion_request')),
+            Flexible(child: Text(TranslationHandler.get('completion_request'))),
           ],
         ),
-        content: const Text('The other party wants to complete this contract. Do you confirm?'),
+        content: const Text(
+          'The other party wants to complete this contract. Do you confirm?',
+        ),
         actions: [
           TextButton(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(ctx);
               _hasShownCompletionDialog = false;
               // Decline the request (Chadli)
               if (_externalContractId != null) {
-                await online_db.declineCompletion(_externalContractId!);
+                online_db.declineCompletion(_externalContractId!);
               }
             },
             child: Text(TranslationHandler.get('no')),
@@ -346,10 +388,20 @@ class _ContractAgreementState extends State<ContractAgreement> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             onPressed: () async {
               Navigator.pop(ctx);
-              await online_db.closeContract(_externalContractId!, _currentUserId);
+              // Confirm completion - update UI immediately (Chadli)
               await _updateLocalContractStatus(ContractStatus.completed);
+              // Then sync with backend
+              if (_externalContractId != null) {
+                await online_db.closeContract(
+                  _externalContractId!,
+                  _currentUserId,
+                );
+              }
             },
-            child: Text(TranslationHandler.get('yes'), style: const TextStyle(color: Colors.white)),
+            child: Text(
+              TranslationHandler.get('yes'),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -365,7 +417,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
         contract.updatedAt = DateTime.now();
         await isar.contracts.put(contract);
       });
-      if (mounted) setState(() {});
+      // The Isar watch subscription will automatically trigger UI update (Chadli)
     }
   }
 
@@ -400,11 +452,12 @@ class _ContractAgreementState extends State<ContractAgreement> {
 
     _messageController.clear();
     final timestamp = DateTime.now();
-    
+
     // Generate local key first, will be replaced by Firebase key after push (Chadli)
-    final localKey = 'local_${timestamp.millisecondsSinceEpoch}_${_currentUserId.hashCode}';
+    final localKey =
+        'local_${timestamp.millisecondsSinceEpoch}_${_currentUserId.hashCode}';
     final uniqueKey = '${widget.contractId}_$localKey';
-    
+
     await isar.writeTxn(() async {
       await isar.messages.put(
         db.Message()
@@ -417,17 +470,19 @@ class _ContractAgreementState extends State<ContractAgreement> {
     });
 
     _scrollToBottom();
-    
+
     if (_externalContractId != null) {
       try {
-        final ref = FirebaseDatabase.instance.ref('contracts/$_externalContractId/messages');
+        final ref = FirebaseDatabase.instance.ref(
+          'contracts/$_externalContractId/messages',
+        );
         String messageToSend = text;
         bool isEncrypted = false;
         if (_contractKey != null) {
           messageToSend = online_db.encrypt(text, _contractKey!);
           isEncrypted = true;
         }
-        
+
         // Push returns a reference with the generated key (Chadli)
         final newRef = ref.push();
         await newRef.set({
@@ -436,10 +491,13 @@ class _ContractAgreementState extends State<ContractAgreement> {
           'timestamp': timestamp.millisecondsSinceEpoch,
           'encrypted': isEncrypted,
         });
-        
+
         // Update local message with Firebase key (Chadli)
         final firebaseUniqueKey = '${widget.contractId}_${newRef.key}';
-        final localMsg = await isar.messages.filter().firebaseKeyEqualTo(uniqueKey).findFirst();
+        final localMsg = await isar.messages
+            .filter()
+            .firebaseKeyEqualTo(uniqueKey)
+            .findFirst();
         if (localMsg != null) {
           await isar.writeTxn(() async {
             localMsg.firebaseKey = firebaseUniqueKey;
@@ -453,7 +511,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
   // Send media file with upload to Cloudinary (Chadli)
   Future<void> _sendMedia(String filePath, String type) async {
     final timestamp = DateTime.now();
-    
+
     await isar.writeTxn(() async {
       await isar.mediaFiles.put(
         MediaFile()
@@ -464,8 +522,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
           ..createdAt = timestamp,
       );
     });
-    
-    final fileMessage = type == 'image' ? '📷 Shared an image' : '🎥 Shared a video';
+
+    final fileMessage = type == 'image'
+        ? '📷 Shared an image'
+        : '🎥 Shared a video';
     await isar.writeTxn(() async {
       await isar.messages.put(
         db.Message()
@@ -475,20 +535,27 @@ class _ContractAgreementState extends State<ContractAgreement> {
           ..createdAt = timestamp,
       );
     });
-    
+
     _scrollToBottom();
-    
+
     if (_externalContractId != null) {
       try {
         final file = File(filePath);
-        await online_db.addFile(_externalContractId!, _currentUserId, file, type);
-        
-        final ref = FirebaseDatabase.instance.ref('contracts/$_externalContractId/messages');
+        await online_db.addFile(
+          _externalContractId!,
+          _currentUserId,
+          file,
+          type,
+        );
+
+        final ref = FirebaseDatabase.instance.ref(
+          'contracts/$_externalContractId/messages',
+        );
         String messageToSend = fileMessage;
         if (_contractKey != null) {
           messageToSend = online_db.encrypt(fileMessage, _contractKey!);
         }
-        
+
         await ref.push().set({
           'senderId': _currentUserId,
           'text': messageToSend,
@@ -503,15 +570,22 @@ class _ContractAgreementState extends State<ContractAgreement> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ContractCubit(widget.contractId)..loadContract(),
-      child: BlocBuilder<ContractCubit, ContractState>(
-        builder: (context, state) {
-          if (state is ContractLoading) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      child: StreamBuilder<Contract?>(
+        stream: isar.contracts.watchObject(
+          widget.contractId,
+          fireImmediately: true,
+        ),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
-          if (state is ContractError) {
-            return Scaffold(body: Center(child: Text(state.message)));
+          if (!snapshot.hasData || snapshot.data == null) {
+            return Scaffold(body: Center(child: Text('Contract not found')));
           }
-          final contract = (state as ContractLoaded).contract;
+          final contract = snapshot.data!;
           return _buildPage(context, contract);
         },
       ),
@@ -525,7 +599,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(TranslationHandler.get('contract_agreement_title'), style: theme.textTheme.titleMedium),
+        title: Text(
+          TranslationHandler.get('contract_agreement_title'),
+          style: theme.textTheme.titleMedium,
+        ),
         centerTitle: true,
         backgroundColor: colors.surface,
         elevation: 0,
@@ -558,16 +635,36 @@ class _ContractAgreementState extends State<ContractAgreement> {
     final cubit = context.read<ContractCubit>();
 
     if (contract.status == ContractStatus.pending) {
-      return _buildStatusBadge(colors, Colors.orange, Icons.hourglass_empty, 'status_pending');
+      return _buildStatusBadge(
+        colors,
+        Colors.orange,
+        Icons.hourglass_empty,
+        'status_pending',
+      );
     }
     if (contract.status == ContractStatus.onDispute) {
-      return _buildStatusBadge(colors, Colors.red, Icons.gavel, 'status_disputed');
+      return _buildStatusBadge(
+        colors,
+        Colors.red,
+        Icons.gavel,
+        'status_disputed',
+      );
     }
     if (contract.status == ContractStatus.completed) {
-      return _buildStatusBadge(colors, Colors.green, Icons.check_circle, 'status_completed');
+      return _buildStatusBadge(
+        colors,
+        Colors.green,
+        Icons.check_circle,
+        'status_completed',
+      );
     }
     if (contract.status == ContractStatus.rejected) {
-      return _buildStatusBadge(colors, Colors.grey, Icons.cancel, 'status_rejected');
+      return _buildStatusBadge(
+        colors,
+        Colors.grey,
+        Icons.cancel,
+        'status_rejected',
+      );
     }
 
     return Container(
@@ -577,14 +674,20 @@ class _ContractAgreementState extends State<ContractAgreement> {
         children: [
           Expanded(
             child: _buildActionButton(
-              TranslationHandler.get('dispute'), Icons.gavel, Colors.white, Colors.red,
+              TranslationHandler.get('dispute'),
+              Icons.gavel,
+              Colors.white,
+              Colors.red,
               () => _showDisputeConfirmation(context, cubit),
             ),
           ),
           const SizedBox(width: 20),
           Expanded(
             child: _buildActionButton(
-              TranslationHandler.get('complete'), Icons.check_circle, Colors.white, Colors.green,
+              TranslationHandler.get('complete'),
+              Icons.check_circle,
+              Colors.white,
+              Colors.green,
               () => _showCompleteConfirmation(context, cubit),
             ),
           ),
@@ -593,7 +696,12 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
-  Widget _buildStatusBadge(ColorScheme colors, Color statusColor, IconData icon, String statusKey) {
+  Widget _buildStatusBadge(
+    ColorScheme colors,
+    Color statusColor,
+    IconData icon,
+    String statusKey,
+  ) {
     return Container(
       color: colors.surface,
       padding: const EdgeInsets.all(16),
@@ -611,7 +719,11 @@ class _ContractAgreementState extends State<ContractAgreement> {
             const SizedBox(width: 8),
             Text(
               TranslationHandler.get(statusKey).toUpperCase(),
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                color: statusColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
@@ -666,7 +778,13 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
-  Widget _buildActionButton(String text, IconData icon, Color textColor, Color bgColor, VoidCallback onPressed) {
+  Widget _buildActionButton(
+    String text,
+    IconData icon,
+    Color textColor,
+    Color bgColor,
+    VoidCallback onPressed,
+  ) {
     return Material(
       color: bgColor,
       borderRadius: BorderRadius.circular(12),
@@ -682,7 +800,14 @@ class _ContractAgreementState extends State<ContractAgreement> {
             children: [
               Icon(icon, color: textColor, size: 20),
               const SizedBox(width: 8),
-              Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
             ],
           ),
         ),
@@ -713,7 +838,11 @@ class _ContractAgreementState extends State<ContractAgreement> {
               return Center(
                 child: Text(
                   TranslationHandler.get('no_messages_yet'),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
+                  ),
                 ),
               );
             }
@@ -721,8 +850,12 @@ class _ContractAgreementState extends State<ContractAgreement> {
             // Combine messages and media into a single sorted list
             final List<dynamic> allItems = [...messages, ...mediaFiles];
             allItems.sort((a, b) {
-              final aTime = a is db.Message ? a.createdAt : (a as MediaFile).createdAt;
-              final bTime = b is db.Message ? b.createdAt : (b as MediaFile).createdAt;
+              final aTime = a is db.Message
+                  ? a.createdAt
+                  : (a as MediaFile).createdAt;
+              final bTime = b is db.Message
+                  ? b.createdAt
+                  : (b as MediaFile).createdAt;
               return aTime.compareTo(bTime);
             });
 
@@ -733,9 +866,15 @@ class _ContractAgreementState extends State<ContractAgreement> {
               itemBuilder: (context, index) {
                 final item = allItems[index];
                 if (item is db.Message) {
-                  return _buildMessageBubble(item, item.senderId == _currentUserId);
+                  return _buildMessageBubble(
+                    item,
+                    item.senderId == _currentUserId,
+                  );
                 } else if (item is MediaFile) {
-                  return _buildMediaBubble(item, item.senderId == _currentUserId);
+                  return _buildMediaBubble(
+                    item,
+                    item.senderId == _currentUserId,
+                  );
                 }
                 return const SizedBox.shrink();
               },
@@ -752,14 +891,19 @@ class _ContractAgreementState extends State<ContractAgreement> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
             CircleAvatar(
               radius: 14,
               backgroundColor: colors.surfaceContainerHighest,
-              child: Text(message.senderId.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 12, color: colors.onSurface)),
+              child: Text(
+                message.senderId.substring(0, 1).toUpperCase(),
+                style: TextStyle(fontSize: 12, color: colors.onSurface),
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -770,20 +914,41 @@ class _ContractAgreementState extends State<ContractAgreement> {
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
-                  bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(4),
-                  bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(16),
+                  bottomLeft: isMe
+                      ? const Radius.circular(16)
+                      : const Radius.circular(4),
+                  bottomRight: isMe
+                      ? const Radius.circular(4)
+                      : const Radius.circular(16),
                 ),
                 color: isMe ? colors.primary : colors.surface,
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(message.text, style: TextStyle(color: isMe ? colors.onPrimary : colors.onSurface, fontSize: 14)),
+                  Text(
+                    message.text,
+                    style: TextStyle(
+                      color: isMe ? colors.onPrimary : colors.onSurface,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '${message.createdAt.hour}:${message.createdAt.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(color: isMe ? colors.onPrimary.withOpacity(0.7) : colors.onSurface.withOpacity(0.5), fontSize: 10),
+                    style: TextStyle(
+                      color: isMe
+                          ? colors.onPrimary.withOpacity(0.7)
+                          : colors.onSurface.withOpacity(0.5),
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),
@@ -794,7 +959,14 @@ class _ContractAgreementState extends State<ContractAgreement> {
             CircleAvatar(
               radius: 14,
               backgroundColor: colors.primary,
-              child: Text('Me', style: TextStyle(fontSize: 10, color: colors.onPrimary, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Me',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: colors.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ],
@@ -810,14 +982,19 @@ class _ContractAgreementState extends State<ContractAgreement> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
             CircleAvatar(
               radius: 14,
               backgroundColor: colors.surfaceContainerHighest,
-              child: Text(media.senderId.substring(0, 1).toUpperCase(), style: TextStyle(fontSize: 12, color: colors.onSurface)),
+              child: Text(
+                media.senderId.substring(0, 1).toUpperCase(),
+                style: TextStyle(fontSize: 12, color: colors.onSurface),
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -827,7 +1004,13 @@ class _ContractAgreementState extends State<ContractAgreement> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: isMe ? colors.primary : colors.surface,
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -841,19 +1024,25 @@ class _ContractAgreementState extends State<ContractAgreement> {
                               fit: BoxFit.cover,
                               width: 200,
                               height: 150,
-                              loadingBuilder: (_, child, progress) => progress == null
+                              loadingBuilder: (_, child, progress) =>
+                                  progress == null
                                   ? child
                                   : Container(
                                       width: 200,
                                       height: 150,
                                       color: colors.surfaceContainerHighest,
-                                      child: const Center(child: CircularProgressIndicator()),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
                                     ),
                               errorBuilder: (_, __, ___) => Container(
                                 width: 200,
                                 height: 150,
                                 color: colors.surfaceContainerHighest,
-                                child: Icon(Icons.broken_image, color: colors.onSurface.withOpacity(0.5)),
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: colors.onSurface.withOpacity(0.5),
+                                ),
                               ),
                             )
                           : Image.file(
@@ -865,7 +1054,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
                                 width: 200,
                                 height: 150,
                                 color: colors.surfaceContainerHighest,
-                                child: Icon(Icons.broken_image, color: colors.onSurface.withOpacity(0.5)),
+                                child: Icon(
+                                  Icons.broken_image,
+                                  color: colors.onSurface.withOpacity(0.5),
+                                ),
                               ),
                             )
                     else
@@ -873,13 +1065,22 @@ class _ContractAgreementState extends State<ContractAgreement> {
                         width: 200,
                         height: 150,
                         color: colors.surfaceContainerHighest,
-                        child: Icon(Icons.videocam, size: 50, color: colors.primary),
+                        child: Icon(
+                          Icons.videocam,
+                          size: 50,
+                          color: colors.primary,
+                        ),
                       ),
                     Padding(
                       padding: const EdgeInsets.all(8),
                       child: Text(
                         '${media.createdAt.hour}:${media.createdAt.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(color: isMe ? colors.onPrimary.withOpacity(0.7) : colors.onSurface.withOpacity(0.5), fontSize: 10),
+                        style: TextStyle(
+                          color: isMe
+                              ? colors.onPrimary.withOpacity(0.7)
+                              : colors.onSurface.withOpacity(0.5),
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ],
@@ -892,7 +1093,14 @@ class _ContractAgreementState extends State<ContractAgreement> {
             CircleAvatar(
               radius: 14,
               backgroundColor: colors.primary,
-              child: Text('Me', style: TextStyle(fontSize: 10, color: colors.onPrimary, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Me',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: colors.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ],
@@ -904,7 +1112,13 @@ class _ContractAgreementState extends State<ContractAgreement> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))],
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
       ),
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12, top: 12),
       child: Row(
@@ -920,7 +1134,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
               decoration: InputDecoration(
                 hintText: TranslationHandler.get('type_your_message'),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 hintStyle: TextStyle(color: colors.onSurface.withOpacity(0.5)),
               ),
               maxLines: null,
@@ -931,7 +1148,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
           ),
           const SizedBox(width: 8),
           Container(
-            decoration: BoxDecoration(shape: BoxShape.circle, color: colors.primary),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.primary,
+            ),
             child: IconButton(
               onPressed: _sendMessage,
               icon: Icon(Icons.send, color: colors.onPrimary, size: 20),
@@ -952,20 +1172,42 @@ class _ContractAgreementState extends State<ContractAgreement> {
         return Container(
           decoration: BoxDecoration(
             color: colors.surface,
-            borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
           ),
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(TranslationHandler.get('choose_file_type'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.onSurface)),
+              Text(
+                TranslationHandler.get('choose_file_type'),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colors.onSurface,
+                ),
+              ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildAttachmentOption(Icons.photo_camera, TranslationHandler.get('camera'), _pickImageFromCamera),
-                  _buildAttachmentOption(Icons.photo, TranslationHandler.get('gallery'), _pickImageFromGallery),
-                  _buildAttachmentOption(Icons.videocam, TranslationHandler.get('video'), _pickVideo),
+                  _buildAttachmentOption(
+                    Icons.photo_camera,
+                    TranslationHandler.get('camera'),
+                    _pickImageFromCamera,
+                  ),
+                  _buildAttachmentOption(
+                    Icons.photo,
+                    TranslationHandler.get('gallery'),
+                    _pickImageFromGallery,
+                  ),
+                  _buildAttachmentOption(
+                    Icons.videocam,
+                    TranslationHandler.get('video'),
+                    _pickVideo,
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -981,8 +1223,15 @@ class _ContractAgreementState extends State<ContractAgreement> {
     return Column(
       children: [
         Container(
-          decoration: BoxDecoration(color: colors.primaryContainer, shape: BoxShape.circle),
-          child: IconButton(onPressed: onTap, icon: Icon(icon, color: colors.onPrimaryContainer, size: 24), padding: const EdgeInsets.all(12)),
+          decoration: BoxDecoration(
+            color: colors.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            onPressed: onTap,
+            icon: Icon(icon, color: colors.onPrimaryContainer, size: 24),
+            padding: const EdgeInsets.all(12),
+          ),
         ),
         const SizedBox(height: 4),
         Text(label, style: TextStyle(fontSize: 12, color: colors.onSurface)),
@@ -1016,7 +1265,9 @@ class _ContractAgreementState extends State<ContractAgreement> {
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           backgroundColor: colors.surface,
           child: Container(
             padding: const EdgeInsets.all(24),
@@ -1028,30 +1279,59 @@ class _ContractAgreementState extends State<ContractAgreement> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: colors.primaryContainer, borderRadius: BorderRadius.circular(12)),
-                      child: Icon(Icons.assignment, color: colors.onPrimaryContainer, size: 20),
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.assignment,
+                        color: colors.onPrimaryContainer,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(TranslationHandler.get('contract_details'), style: theme.textTheme.titleMedium),
+                          Text(
+                            TranslationHandler.get('contract_details'),
+                            style: theme.textTheme.titleMedium,
+                          ),
                           const SizedBox(height: 4),
-                          Text('${_getStatusText(contract.status)} • ${contract.createdAt.toString().split(' ')[0]}', style: theme.textTheme.bodyMedium),
+                          Text(
+                            '${_getStatusText(contract.status)} • ${contract.createdAt.toString().split(' ')[0]}',
+                            style: theme.textTheme.bodyMedium,
+                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                _buildDetailRow(TranslationHandler.get('contract_name'), contract.name, Icons.badge),
-                _buildDetailRow(TranslationHandler.get('price'), '${contract.price} ${TranslationHandler.get('currency')}', Icons.attach_money),
-                _buildDetailRow(TranslationHandler.get('client'), contract.userA, Icons.person),
+                _buildDetailRow(
+                  TranslationHandler.get('contract_name'),
+                  contract.name,
+                  Icons.badge,
+                ),
+                _buildDetailRow(
+                  TranslationHandler.get('price'),
+                  '${contract.price} ${TranslationHandler.get('currency')}',
+                  Icons.attach_money,
+                ),
                 const SizedBox(height: 10),
-                Text(TranslationHandler.get('description'), style: theme.textTheme.titleSmall),
+                Text(
+                  TranslationHandler.get('description'),
+                  style: theme.textTheme.titleSmall,
+                ),
                 const SizedBox(height: 8),
-                Text(contract.description, style: TextStyle(color: colors.onSurface.withOpacity(0.7), fontSize: 14)),
+                Text(
+                  contract.description,
+                  style: TextStyle(
+                    color: colors.onSurface.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -1061,7 +1341,9 @@ class _ContractAgreementState extends State<ContractAgreement> {
                       backgroundColor: colors.primary,
                       foregroundColor: colors.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: Text(TranslationHandler.get('close')),
                   ),
@@ -1076,11 +1358,16 @@ class _ContractAgreementState extends State<ContractAgreement> {
 
   String _getStatusText(ContractStatus status) {
     switch (status) {
-      case ContractStatus.accepted: return TranslationHandler.get('status_active');
-      case ContractStatus.pending: return TranslationHandler.get('status_pending');
-      case ContractStatus.onDispute: return TranslationHandler.get('status_disputed');
-      case ContractStatus.completed: return TranslationHandler.get('status_completed');
-      case ContractStatus.rejected: return TranslationHandler.get('status_rejected');
+      case ContractStatus.accepted:
+        return TranslationHandler.get('status_active');
+      case ContractStatus.pending:
+        return TranslationHandler.get('status_pending');
+      case ContractStatus.onDispute:
+        return TranslationHandler.get('status_disputed');
+      case ContractStatus.completed:
+        return TranslationHandler.get('status_completed');
+      case ContractStatus.rejected:
+        return TranslationHandler.get('status_rejected');
     }
   }
 
@@ -1089,7 +1376,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: colors.surface, borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
         children: [
           Icon(icon, color: colors.primary, size: 18),
@@ -1098,9 +1388,22 @@ class _ContractAgreementState extends State<ContractAgreement> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 12, color: colors.onSurface.withOpacity(0.6))),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.onSurface.withOpacity(0.6),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.onSurface)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
+                ),
               ],
             ),
           ),
