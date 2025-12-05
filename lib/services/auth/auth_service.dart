@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:yack/db/online.dart' as online_db;
+import 'package:yack/core/db/online.dart' as online_db;
 import 'package:firebase_database/firebase_database.dart';
 
 class AuthService {

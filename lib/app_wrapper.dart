@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:yack/providers/auth/auth_cubit.dart';
-import 'package:yack/providers/auth/auth_state.dart';
-import 'package:yack/utils/snackBarHandler.dart';
-import 'utils/translation_handler.dart';
+import 'package:yack/features/auth/state/auth_cubit.dart';
+import 'package:yack/features/auth/state/auth_state.dart';
+import 'package:yack/core/utils/snack_bar_handler.dart';
+import 'core/utils/translation_handler.dart';
 
 class AppWrapper extends StatelessWidget {
   const AppWrapper({super.key});
