@@ -342,14 +342,17 @@ class _ContractAgreementState extends State<ContractAgreement> {
             Text(TranslationHandler.get('dispute_raised')),
           ],
         ),
-        content: const Text(
-          'The other party has raised a dispute against this contract.',
+        content: Text(
+          TranslationHandler.get('dialog_dispute_raised_message'),
         ),
         actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK', style: TextStyle(color: Colors.white)),
+            child: Text(
+              TranslationHandler.get('dialog_dispute_ok'),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -369,8 +372,8 @@ class _ContractAgreementState extends State<ContractAgreement> {
             Flexible(child: Text(TranslationHandler.get('completion_request'))),
           ],
         ),
-        content: const Text(
-          'The other party wants to complete this contract. Do you confirm?',
+        content: Text(
+          TranslationHandler.get('dialog_completion_request_message'),
         ),
         actions: [
           TextButton(
@@ -524,8 +527,8 @@ class _ContractAgreementState extends State<ContractAgreement> {
     });
 
     final fileMessage = type == 'image'
-        ? '📷 Shared an image'
-        : '🎥 Shared a video';
+        ? TranslationHandler.get('message_shared_image')
+        : TranslationHandler.get('message_shared_video');
     await isar.writeTxn(() async {
       await isar.messages.put(
         db.Message()
@@ -583,7 +586,13 @@ class _ContractAgreementState extends State<ContractAgreement> {
             );
           }
           if (!snapshot.hasData || snapshot.data == null) {
-            return Scaffold(body: Center(child: Text('Contract not found')));
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  TranslationHandler.get('error_contract_not_found'),
+                ),
+              ),
+            );
           }
           final contract = snapshot.data!;
           return _buildPage(context, contract);
@@ -758,8 +767,12 @@ class _ContractAgreementState extends State<ContractAgreement> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(TranslationHandler.get('dispute')),
-        content: const Text('Are you sure you want to dispute this contract?'),
+        title: Text(
+          TranslationHandler.get('dialog_dispute_confirmation_title'),
+        ),
+        content: Text(
+          TranslationHandler.get('dialog_dispute_confirmation_message'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),

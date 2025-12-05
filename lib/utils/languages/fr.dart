@@ -314,4 +314,19 @@ const french = {
   "auth_wrong_old_password": "L'ancien mot de passe est incorrect.",
   "auth_weak_new_password": "Le nouveau mot de passe est trop faible.",
   "auth_recent_login_required": "Veuillez vous reconnecter pour effectuer cette action.",
+  'dialog_delete_contract_title': 'Supprimer le contrat ?',
+  'dialog_delete_contract_message':
+      'Cette action est irréversible.',
+  'dialog_delete_contract_confirm': 'Supprimer',
+  'dialog_dispute_confirmation_title': 'Litige',
+  'dialog_dispute_confirmation_message':
+      'Êtes-vous sûr de vouloir contester ce contrat ?',
+  'dialog_dispute_ok': 'OK',
+  'dialog_completion_request_message':
+      'L’autre partie souhaite terminer ce contrat. Confirmez-vous ?',
+  'dialog_dispute_raised_message':
+      'L’autre partie a soulevé un litige concernant ce contrat.',
+  'error_contract_not_found': 'Contrat introuvable',
+  'message_shared_image': '📷 Image partagée',
+  'message_shared_video': '🎥 Vidéo partagée',
 };

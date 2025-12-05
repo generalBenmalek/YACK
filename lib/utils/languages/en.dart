@@ -31,6 +31,7 @@ const english = {
   'forget_password_message': 'Send a request to reset your account password.',
   'reset': 'Reset',
   'password_reset_sent': 'Password reset email sent! Check your inbox.',
+  'auth_password_reset_sent': 'Password reset email sent.',
   'generic_error': 'An error occurred',
   'no_account_found': 'No account found with that email.',
   'confirm_account': 'Confirm Account',
@@ -302,4 +303,19 @@ const english = {
   "auth_wrong_old_password": "Old password is incorrect.",
   "auth_weak_new_password": "The new password is too weak.",
   "auth_recent_login_required": "Please re-login to perform this action.",
+  "auth_account_created": "Account created successfully.",
+  'dialog_delete_contract_title': 'Delete Contract?',
+  'dialog_delete_contract_message': 'This action cannot be undone.',
+  'dialog_delete_contract_confirm': 'Delete',
+  'dialog_dispute_confirmation_title': 'Dispute',
+  'dialog_dispute_confirmation_message':
+      'Are you sure you want to dispute this contract?',
+  'dialog_dispute_ok': 'OK',
+  'dialog_completion_request_message':
+      'The other party wants to complete this contract. Do you confirm?',
+  'dialog_dispute_raised_message':
+      'The other party has raised a dispute against this contract.',
+  'error_contract_not_found': 'Contract not found',
+  'message_shared_image': '📷 Shared an image',
+  'message_shared_video': '🎥 Shared a video',
 };

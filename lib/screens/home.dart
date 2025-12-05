@@ -148,8 +148,9 @@ class ContractCard extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Contract?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text(TranslationHandler.get('dialog_delete_contract_title')),
+        content:
+            Text(TranslationHandler.get('dialog_delete_contract_message')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -158,7 +159,8 @@ class ContractCard extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child:
+                Text(TranslationHandler.get('dialog_delete_contract_confirm')),
           ),
         ],
       ),
