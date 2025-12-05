@@ -28,7 +28,7 @@ class AppWrapper extends StatelessWidget {
         // ==========================
         if (state is UnverifiedUser) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacementNamed(context, '/confirm');
+            Navigator.pushNamedAndRemoveUntil(context, '/confirm' , (_) => false);
           });
           return; // IMPORTANT
         }
@@ -43,7 +43,7 @@ class AppWrapper extends StatelessWidget {
             userBox.put('didFirstTime', true);
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pushReplacementNamed(context, '/welcome');
+              Navigator.pushNamedAndRemoveUntil(context, '/welcome', (_) => false);
             });
 
             return; // IMPORTANT
@@ -52,7 +52,7 @@ class AppWrapper extends StatelessWidget {
           // Seen login screen before
           if (userBox.get('didFirstLogin') == true) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.pushNamedAndRemoveUntil(context, '/login' , (_) => false);
             });
 
             return; // IMPORTANT
@@ -60,7 +60,7 @@ class AppWrapper extends StatelessWidget {
 
           // DEFAULT → signup
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacementNamed(context, '/signup');
+            Navigator.pushNamedAndRemoveUntil(context, '/signup', (_) => false);
           });
 
           return; // IMPORTANT
@@ -71,7 +71,7 @@ class AppWrapper extends StatelessWidget {
         // ==========================
         if (state is Authenticated) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
           });
 
           return;
