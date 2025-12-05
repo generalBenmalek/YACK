@@ -17,6 +17,25 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+
+    plugins.withId("com.android.library") {
+        val android = project.extensions.getByType(com.android.build.gradle.LibraryExtension::class.java)
+        if (android.namespace == null) {
+            android.namespace = "com.example.${project.name.replace("-", "_")}"
+        }
+        
+        project.afterEvaluate {
+             android.sourceSets.getByName("main").manifest.srcFile.let { manifestFile ->
+                 if (manifestFile.exists()) {
+                     val content = manifestFile.readText()
+                     if (content.contains("package=\"")) {
+                         val newContent = content.replace(Regex("package=\"[^\"]+\""), "")
+                         manifestFile.writeText(newContent)
+                     }
+                 }
+             }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
