@@ -6,6 +6,7 @@ import 'package:yack/screens/auth/confirm.dart';
 import 'package:yack/screens/contract_agr/contract_agreement.dart';
 import 'package:yack/screens/contract_agr/nomore_contracts.dart';
 import 'package:yack/screens/root.dart';
+import 'package:yack/screens/subscription.dart';
 import 'app_wrapper.dart';
 import 'package:yack/screens/auth/forgetPassword.dart';
 import 'package:yack/screens/auth/login.dart';
@@ -118,6 +119,9 @@ class MyApp extends StatelessWidget {
                 themedRoute(context, const NoMoreContractsAvailable(),transparent: true),
             '/home': (context) =>
                 themedRoute(context, const BottomNavBar()),
+            '/subscription' : (context) =>
+                themedRoute(context, const SubscriptionScreen(),transparent: true),
+
             '/': (context) => const AppWrapper()
           },
           initialRoute: '/',
