@@ -75,6 +75,25 @@ class HttpHandler {
   }
 
   // -----------------------
+  // PUT request
+  // -----------------------
+  Future<dynamic> put(String endpoint, {Map<String, dynamic>? body}) async {
+    final url = Uri.parse("$baseUrl$endpoint");
+
+    body ??= {};
+    final fcm = await _getFcmToken();
+    if (fcm != null) body["fcmToken"] = fcm;
+
+    final response = await http.put(
+      url,
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+
+    return _handleResponse(response);
+  }
+
+  // -----------------------
   // PATCH request
   // -----------------------
   Future<dynamic> patch(String endpoint, {Map<String, dynamic>? body}) async {
