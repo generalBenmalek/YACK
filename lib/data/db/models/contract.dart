@@ -7,10 +7,11 @@ part 'contract.g.dart';
 
 enum ContractStatus {
   pending,
+  active,
   accepted,
   rejected,
   completed,
-  onDispute,
+  disputed,
 }
 
 @collection
@@ -18,20 +19,40 @@ class Contract {
   Id id = Isar.autoIncrement;
 
   @Index(unique: true, replace: true)
-  String? externalId; // for online DB synchronization (firebase)
+  String? externalId; // MongoDB ObjectId from backend
 
-  late String name;
+  // Encrypted fields for the current user (decrypted locally)
+  late String title;
   late String description;
-  late double price;
+  late String price;
 
-  late String userA;
-  String? userAName; // Display name for userA
-  late String userB;
-  String? userBName; // Display name for userB
+  // Hash for verification (SHA256 of plaintext title+description+price)
+  String? detailsHash;
 
+  // User A (creator)
+  late String userAId;
+  String? userAName;
+  String? userAPublicKey;
+
+  // User B (joiner)
+  String? userBId;
+  String? userBName;
+  String? userBPublicKey;
+
+  // Status tracking
   @enumerated
   late ContractStatus status;
 
+  bool userAAccepted = false;
+  bool userBAccepted = false;
+  bool userASigned = false;
+  bool userBSigned = false;
+
+  // Dispute info
+  String? disputeReason;
+  String? disputedBy;
+
+  // Timestamps
   late DateTime createdAt;
   DateTime? updatedAt;
 
