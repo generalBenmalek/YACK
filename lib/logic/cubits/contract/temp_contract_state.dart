@@ -24,6 +24,32 @@ class TempContractSuccess extends TempContractState {
   List<Object?> get props => [contract];
 }
 
+/// State emitted after successfully joining a temp contract
+class TempContractJoinSuccess extends TempContractState {
+  const TempContractJoinSuccess({
+    required this.contract,
+    this.userAPublicKey,
+  });
+  final TempContract contract;
+  final String? userAPublicKey; // For encrypting messages to user A
+
+  @override
+  List<Object?> get props => [contract, userAPublicKey];
+}
+
+/// State emitted after successfully signing a temp contract
+class TempContractSignSuccess extends TempContractState {
+  const TempContractSignSuccess({
+    required this.contract,
+    this.contractId,
+  });
+  final TempContract contract;
+  final String? contractId; // Final contract ID when both users have signed
+
+  @override
+  List<Object?> get props => [contract, contractId];
+}
+
 class TempContractError extends TempContractState {
   const TempContractError(this.message);
   final String message;
