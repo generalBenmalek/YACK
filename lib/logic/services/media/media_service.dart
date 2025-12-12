@@ -1,0 +1,138 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:yack/logic/services/network/http_handler.dart';
+
+/// Represents a media entry from the API
+class ContractMedia {
+  final String id;
+  final String senderId;
+  final String? senderName;
+  final String filename;
+  final String path;
+  final String? mimeType;
+  final DateTime createdAt;
+
+  const ContractMedia({
+    required this.id,
+    required this.senderId,
+    this.senderName,
+    required this.filename,
+    required this.path,
+    this.mimeType,
+    required this.createdAt,
+  });
+
+  factory ContractMedia.fromJson(Map<String, dynamic> json) {
+    final who = json['who'] ?? json['sender'];
+    String senderId;
+    String? senderName;
+
+    if (who is Map) {
+      senderId = who['_id']?.toString() ?? who['id']?.toString() ?? '';
+      final firstName = who['firstName']?.toString() ?? '';
+      final lastName = who['lastName']?.toString() ?? '';
+      senderName = '$firstName $lastName'.trim();
+      if (senderName.isEmpty) senderName = null;
+    } else {
+      senderId = who?.toString() ?? json['senderId']?.toString() ?? '';
+    }
+
+    return ContractMedia(
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      senderId: senderId,
+      senderName: senderName,
+      filename: json['filename']?.toString() ?? json['name']?.toString() ?? '',
+      path: json['path']?.toString() ?? json['url']?.toString() ?? '',
+      mimeType: json['mimeType']?.toString() ?? json['type']?.toString(),
+      createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
+    );
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    return null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'senderId': senderId,
+      'senderName': senderName,
+      'filename': filename,
+      'path': path,
+      'mimeType': mimeType,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+}
+
+class MediaService {
+  MediaService({HttpHandler? httpHandler})
+      : _http = httpHandler ?? HttpHandler();
+
+  final HttpHandler _http;
+
+  /// Store an uploaded media payload and attach metadata to the contract.
+  /// file: The file to upload
+  /// Returns: The stored media record
+  Future<ContractMedia> send({
+    required String contractId,
+    required File file,
+    String? filename,
+  }) async {
+    // Read file and convert to base64
+    final bytes = await file.readAsBytes();
+    final base64Buffer = base64Encode(bytes);
+
+    final actualFilename = filename ?? file.path.split(Platform.pathSeparator).last;
+
+    final response = await _http.post('/media/send', body: {
+      'contractId': contractId,
+      'file': {
+        'filename': actualFilename,
+        'buffer': base64Buffer,
+      },
+    });
+
+    return _parseMediaResponse(response);
+  }
+
+  /// Return all media entries for a contract.
+  Future<List<ContractMedia>> getAll({required String contractId}) async {
+    final response = await _http.get('/media/all?contractId=$contractId');
+    return _parseMediaList(response);
+  }
+
+  ContractMedia _parseMediaResponse(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      final media = response['media'] ?? response['data'] ?? response;
+      if (media is Map<String, dynamic>) {
+        return ContractMedia.fromJson(media);
+      }
+    }
+    throw Exception('Invalid media response');
+  }
+
+  List<ContractMedia> _parseMediaList(dynamic response) {
+    final List<dynamic> mediaList;
+
+    if (response is Map) {
+      mediaList = response['media'] ?? response['data'] ?? [];
+    } else if (response is List) {
+      mediaList = response;
+    } else {
+      mediaList = [];
+    }
+
+    return mediaList
+        .whereType<Map<String, dynamic>>()
+        .map((json) => ContractMedia.fromJson(json))
+        .toList();
+  }
+}
+
