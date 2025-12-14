@@ -82,7 +82,7 @@ class _DecryptAccountScreenState extends State<DecryptAccountScreen> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       TitleWidget(
                         text: TranslationHandler.get('decrypt_account_title'),

@@ -30,7 +30,7 @@ class _ScanContractScreenState extends State<ScanContractScreen>
   bool _isProcessing = false;
   bool _navigatingAway = false;
   bool _isWaitingForUserASign = false;
-  bool _hasReSignedAfterNotification = false; // Prevent infinite re-sign loop
+  bool _userBSigned = false; // Track if User B has signed
   bool _showManualInput = false;
   MobileScannerController? scannerController;
   StreamSubscription<ContractNotificationEvent>? _notificationSubscription;
@@ -110,21 +110,9 @@ class _ScanContractScreenState extends State<ScanContractScreen>
       switch (event.type) {
         case ContractNotificationType.contractSign:
           // User A signed the contract
-          if (_isWaitingForUserASign) {
-            if (event.contractId != null && event.contractId!.isNotEmpty) {
-              // Both users signed - contract is complete
-              await _saveContractAndNavigateHome(event.contractId!);
-            } else if (!_hasReSignedAfterNotification) {
-              // User A signed but we may need to re-sign to get contractId
-              // Re-trigger sign API to get the final contractId since both have now signed
-              print('[DEBUG ScanContract] Re-triggering sign to get contractId...');
-              _hasReSignedAfterNotification = true;
-              SnackBarHandler.showMessage(
-                context,
-                TranslationHandler.get('has_signed_contract'),
-              );
-              context.read<TempContractCubit>().sign(tempId);
-            }
+          if (_isWaitingForUserASign && _userBSigned) {
+            // Both users have signed - sync and complete
+            await _syncAndNavigateHome();
           }
           break;
         default:
@@ -156,24 +144,17 @@ class _ScanContractScreenState extends State<ScanContractScreen>
       final type = data['type']?.toString() ?? '';
       print('[DEBUG ScanContract] Handling notification type: $type');
 
-      if (type == 'contractSign' && _isWaitingForUserASign) {
-        final contractId = data['contractId']?.toString();
-        if (contractId != null && contractId.isNotEmpty) {
-          await _saveContractAndNavigateHome(contractId);
-        } else if (!_hasReSignedAfterNotification) {
-          // Re-trigger sign API to get contractId since both have signed
-          print('[DEBUG ScanContract] FCM: Re-triggering sign to get contractId...');
-          _hasReSignedAfterNotification = true;
-          context.read<TempContractCubit>().sign(tempId);
-        }
+      if (type == 'contractSign' && _isWaitingForUserASign && _userBSigned) {
+        // Both users have signed - sync and complete
+        await _syncAndNavigateHome();
       }
     });
 
     print('[DEBUG ScanContract] Notification listeners set up for tempId: $tempId');
   }
 
-  /// Save finalized contract to Isar and navigate home
-  Future<void> _saveContractAndNavigateHome(String contractId) async {
+  /// Sync contracts and navigate home
+  Future<void> _syncAndNavigateHome() async {
     // Dismiss loading if showing
     if (mounted) {
       try {
@@ -194,6 +175,8 @@ class _ScanContractScreenState extends State<ScanContractScreen>
   }
 
   void _startScanning() {
+
+
     setState(() {
       _isScanning = true;
       scannerController = MobileScannerController();
@@ -201,6 +184,7 @@ class _ScanContractScreenState extends State<ScanContractScreen>
   }
 
   void _stopScanning() {
+
     scannerController?.stop();
     scannerController?.dispose();
     scannerController = null;
@@ -221,36 +205,49 @@ class _ScanContractScreenState extends State<ScanContractScreen>
     }
   }
 
-  /// Process manual link input (yack://contract?data=... or yack://tempId format)
-  void _onManualLinkSubmit() {
+  // Process scanned QR code - store and process like manual input
+  void _onQRScanned(String code) {
+
+    _isProcessing = false;
+    
+    // Stop scanning first
+    _stopScanning();
+
+    // Store the scanned code in the controller
+    _linkController.text = code;
+
+    // Show manual input section with the scanned code
+    setState(() {
+      _showManualInput = true;
+    });
+
+    // Auto-trigger join after UI updates
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isProcessing) {
+        _onManualLinkSubmit();
+      }
+    });
+  }
+
+  /// Process manual link input (yack://contract?data=...)
+  void _onManualLinkSubmit() async {
     final input = _linkController.text.trim();
     if (input.isEmpty) {
       SnackBarHandler.showError(context, TranslationHandler.get('field_required_generic'));
       return;
     }
 
-    // Handle full QR code data format (preferred)
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    setState(() => _showManualInput = false);
+
+    // Handle full QR code data format
     if (input.startsWith('yack://contract?data=')) {
-      _onQRScanned(input);
-    } else if (input.startsWith('yack://')) {
-      // Simple format: yack://tempId - not recommended, no preview data
-      final tempId = input.replaceFirst('yack://', '');
-      if (tempId.isNotEmpty) {
-        SnackBarHandler.showWarning(
-          context,
-          TranslationHandler.get('simple_link_no_preview'),
-        );
-        _processContractByTempId(tempId);
-      } else {
-        SnackBarHandler.showError(context, TranslationHandler.get('invalid_contract_qr'));
-      }
+      await _processFullDataUrl(input);
     } else {
-      // Try as plain tempId
-      SnackBarHandler.showWarning(
-        context,
-        TranslationHandler.get('simple_link_no_preview'),
-      );
-      _processContractByTempId(input);
+      SnackBarHandler.showError(context, TranslationHandler.get('invalid_contract_qr'));
+      _isProcessing = false;
     }
   }
 
@@ -317,48 +314,6 @@ class _ScanContractScreenState extends State<ScanContractScreen>
     }
   }
 
-  // Process scanned QR code - immediately join the contract
-  void _onQRScanned(String code) async {
-    if (_isProcessing) return;
-    _isProcessing = true;
-
-    // Stop scanning first
-    _stopScanning();
-
-    // Handle different formats:
-    // 1. Simple tempId (from QR code): "665dd..."
-    // 2. Full data URL (from paste): "yack://contract?data=..."
-
-    if (code.startsWith('yack://contract?data=')) {
-      // Full data URL with preview info
-      await _processFullDataUrl(code);
-    } else {
-      // Simple tempId format (from QR code)
-      // Remove any yack:// prefix if present
-      String tempId = code;
-      if (tempId.startsWith('yack://')) {
-        tempId = tempId.replaceFirst('yack://', '');
-      }
-
-      if (tempId.isEmpty) {
-        if (mounted) {
-          SnackBarHandler.showError(
-            context,
-            TranslationHandler.get('invalid_contract_qr'),
-          );
-        }
-        _isProcessing = false;
-        _navigatingAway = false;
-        return;
-      }
-
-      // Process as simple tempId - will get contract details from server response
-      // Reset processing flag since _processContractByTempId will set it
-      _isProcessing = false;
-      await _processContractByTempId(tempId);
-    }
-  }
-
   /// Process full data URL with embedded contract preview info
   Future<void> _processFullDataUrl(String code) async {
     try {
@@ -386,8 +341,6 @@ class _ScanContractScreenState extends State<ScanContractScreen>
       }
 
       if (!mounted) return;
-
-      // Note: _stopScanning was already called in _onQRScanned
 
       // Show loading dialog
       showDialog(
@@ -439,8 +392,6 @@ class _ScanContractScreenState extends State<ScanContractScreen>
         );
       }
       _isProcessing = false;
-      _navigatingAway = false;
-      _startScanning();
     }
   }
 
@@ -505,10 +456,15 @@ class _ScanContractScreenState extends State<ScanContractScreen>
         } else if (state is TempContractSignSuccess) {
           print('[DEBUG ScanContract] TempContractSignSuccess - contractId: ${state.contractId}');
 
+          // User B has signed
+          setState(() {
+            _userBSigned = true;
+          });
+
           if (state.contractId != null && state.contractId!.isNotEmpty) {
-            // Both users signed - contract is finalized, save to Isar
-            print('[DEBUG ScanContract] Both signed, saving contract...');
-            await _saveContractAndNavigateHome(state.contractId!);
+            // Both users signed - contract is finalized, sync and go home
+            print('[DEBUG ScanContract] Both signed, syncing contracts...');
+            await _syncAndNavigateHome();
           } else {
             // User B signed but User A hasn't signed yet - wait for notification
             print('[DEBUG ScanContract] User B signed, waiting for User A...');

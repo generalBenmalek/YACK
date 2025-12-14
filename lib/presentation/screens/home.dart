@@ -44,7 +44,7 @@ class ContractsScreen extends StatelessWidget {
                     if (data == null || data.isEmpty) {
                       return Center(
                         child: Text(
-                          'No contracts yet',
+                          TranslationHandler.get('no_current_contract_available'),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       );
