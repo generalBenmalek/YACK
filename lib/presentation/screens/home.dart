@@ -55,7 +55,7 @@ class ContractsScreen extends StatelessWidget {
                           (c) =>
                               c.status == ContractStatus.accepted ||
                               c.status == ContractStatus.pending ||
-                              c.status == ContractStatus.onDispute,
+                              c.status == ContractStatus.disputed,
                         )
                         .toList();
                     final pastContracts = data
@@ -180,12 +180,15 @@ class ContractCard extends StatelessWidget {
         return TranslationHandler.get('status_active');
       case ContractStatus.completed:
         return TranslationHandler.get('status_completed');
-      case ContractStatus.onDispute:
+      case ContractStatus.disputed:
         return TranslationHandler.get('status_disputed');
       case ContractStatus.pending:
         return TranslationHandler.get('status_pending');
       case ContractStatus.rejected:
         return TranslationHandler.get('status_rejected');
+      case ContractStatus.active:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
@@ -221,7 +224,7 @@ class ContractCard extends StatelessWidget {
             ),
           ),
           title: Text(
-            contract.name,
+            contract.title,
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),

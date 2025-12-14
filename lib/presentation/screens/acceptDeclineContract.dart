@@ -6,12 +6,15 @@ import 'package:yack/logic/services/translation_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+/// Screen for reviewing and accepting/declining a contract
+/// Both User A and User B see this screen before signing
 class AcceptDeclineContractScreen extends StatefulWidget {
   final String title;
   final double price;
   final String? description;
   final String userFirstName;
   final String userLastName;
+  final bool isUserA; // True if this is the contract creator reviewing
 
   const AcceptDeclineContractScreen({
     super.key,
@@ -20,6 +23,7 @@ class AcceptDeclineContractScreen extends StatefulWidget {
     required this.userFirstName,
     required this.userLastName,
     this.description,
+    this.isUserA = false,
   });
 
   @override
@@ -33,7 +37,7 @@ class _AcceptDeclineContractScreenState
   String? _translatedDescription;
   bool _isTranslating = false;
 
-  // Translation using MyMemory API: Chadli
+  // Translation using MyMemory API
   Future<void> _translateContent() async {
     setState(() => _isTranslating = true);
 
@@ -60,12 +64,10 @@ class _AcceptDeclineContractScreenState
       );
 
       if (titleResponse.statusCode == 200) {
-        // success
         final titleJson = json.decode(titleResponse.body);
         _translatedTitle = titleJson['responseData']['translatedText'];
       }
       if (descResponse.statusCode == 200) {
-        // success
         final descJson = json.decode(descResponse.body);
         _translatedDescription = descJson['responseData']['translatedText'];
       }
@@ -80,10 +82,16 @@ class _AcceptDeclineContractScreenState
     }
   }
 
+  String get _displayName {
+    final name = '${widget.userFirstName} ${widget.userLastName}'.trim();
+    return name.isNotEmpty ? name : 'Unknown';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = theme.colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -93,7 +101,7 @@ class _AcceptDeclineContractScreenState
         backgroundColor: Colors.transparent,
         centerTitle: true,
       ),
-      backgroundColor: color.background,
+      backgroundColor: color.surface,
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -104,14 +112,14 @@ class _AcceptDeclineContractScreenState
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: color.outline.withOpacity(0.5),
+                    color: color.outline.withValues(alpha: 0.5),
                     width: 1.5,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: color.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: color.shadow.withOpacity(0.08),
+                      color: color.shadow.withValues(alpha: 0.08),
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
@@ -128,13 +136,10 @@ class _AcceptDeclineContractScreenState
                         Text(
                           TranslationHandler.resolve(
                             'from_user',
-                            params: {
-                              'name':
-                                  '${widget.userFirstName} ${widget.userLastName}',
-                            },
+                            params: {'name': _displayName},
                           ),
                           style: theme.textTheme.titleSmall?.copyWith(
-                            color: color.onSurface.withOpacity(0.8),
+                            color: color.onSurface.withValues(alpha: 0.8),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -142,10 +147,10 @@ class _AcceptDeclineContractScreenState
                     ),
                     const Divider(height: 25, thickness: 1),
 
-                    // Centered Contract Title
+                    // Contract Title
                     Center(
                       child: Text(
-                        _translatedTitle ?? widget.title, // updated
+                        _translatedTitle ?? widget.title,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: color.onSurface,
@@ -158,11 +163,13 @@ class _AcceptDeclineContractScreenState
                     // Description
                     Expanded(
                       child: SingleChildScrollView(
-                        child: Text( // updated
-                          _translatedDescription ?? widget.description ?? TranslationHandler.get('accept_decline_description'),
+                        child: Text(
+                          _translatedDescription ??
+                              widget.description ??
+                              TranslationHandler.get('accept_decline_description'),
                           textAlign: TextAlign.justify,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: color.onSurface.withOpacity(0.85),
+                            color: color.onSurface.withValues(alpha: 0.85),
                             height: 1.5,
                           ),
                         ),
@@ -170,7 +177,7 @@ class _AcceptDeclineContractScreenState
                     ),
                     const SizedBox(height: 20),
 
-                    // Price aligned bottom-right
+                    // Price
                     Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
@@ -191,9 +198,9 @@ class _AcceptDeclineContractScreenState
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: color.errorContainer.withOpacity(0.15),
+                color: color.errorContainer.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: color.error.withOpacity(0.4)),
+                border: Border.all(color: color.error.withValues(alpha: 0.4)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +225,7 @@ class _AcceptDeclineContractScreenState
             ),
             const SizedBox(height: 12),
 
-            // added translation button: Chadli
+            // Translation button
             TextButton.icon(
               onPressed: _isTranslating ? null : _translateContent,
               icon: _isTranslating
@@ -232,15 +239,15 @@ class _AcceptDeclineContractScreenState
             ),
             const SizedBox(height: 12),
 
-            // Accept / Decline buttons (Chadli)
+            // Accept / Decline buttons
             PrimaryActionButtonAutoReload(
               action: TranslationHandler.get('accept_contract'),
               onClick: () async {
-                await Future.delayed(const Duration(milliseconds: 500));
+                await Future.delayed(const Duration(milliseconds: 300));
                 Navigator.pop(context, true);
               },
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 8),
 
             SecondaryActionButtonAutoReload(
               action: TranslationHandler.get('decline_contract'),
