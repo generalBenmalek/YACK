@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:ed25519_edwards/ed25519_edwards.dart' as ed25519;
 import 'package:pointycastle/export.dart';
 
 class CryptoService {
@@ -15,9 +14,6 @@ class CryptoService {
   static const int _argonMemoryPowerOf2 = 16; // use memoryPowerOf2, not raw KB
   static const int _argonParallelism = 1;
   static const int _keyLength = 32; // 256-bit AES key
-
-  static const int _edPrivateSeedLength = 32;
-  // Note: PrivateKey.bytes (package representation) is usually 64 bytes (seed + pub)
 
   // -----------------------------
   // RANDOM HELPERS
@@ -57,27 +53,6 @@ class CryptoService {
     argon2.deriveKey(passwordBytes, 0, key, 0);
 
     return key;
-  }
-
-  // -----------------------------
-  // GENERATE ED25519 KEY PAIR (fixed)
-  // -----------------------------
-  static Map<String, Uint8List> _generateKeyPair() {
-    // 1) create a 32-byte seed
-    final seed = _randomBytes(_edPrivateSeedLength);
-
-    // 2) derive a PrivateKey from the seed (this validates length)
-    final privateKeyObj = ed25519.newKeyFromSeed(seed);
-
-    // 3) get the corresponding public key
-    final publicKeyObj = ed25519.public(privateKeyObj);
-
-    // Note: privateKeyObj.bytes is the package's private-key representation
-    // (often 64 bytes). publicKeyObj.bytes is 32 bytes.
-    return {
-      'privateKey': Uint8List.fromList(privateKeyObj.bytes),
-      'publicKey': Uint8List.fromList(publicKeyObj.bytes),
-    };
   }
 
   // -----------------------------
@@ -148,13 +123,13 @@ class CryptoService {
   }
 
   static Future<Map<String, String>> generateAndEncryptKeys(String password) async {
-    final keyPair = _generateKeyPair();
+    final keyPair = generateRSAKeyPair();
     final encrypted = encryptPrivateKey(
-      privateKeyBytes: keyPair['privateKey']!,
+      privateKeyBytes: _encodeRSAPrivateKey(keyPair.privateKey as RSAPrivateKey),
       password: password,
     );
     return {
-      'publicKey': base64Encode(keyPair['publicKey']!),
+      'publicKey': _encodeRSAPublicKey(keyPair.publicKey as RSAPublicKey),
       'encryptedPrivateKey': encrypted['ciphertext']!,
       'salt': encrypted['salt']!,
       'iv': encrypted['iv']!,
@@ -162,89 +137,108 @@ class CryptoService {
   }
 
   // -----------------------------
-  // ENCRYPT STRING WITH PUBLIC KEY (asymmetric)
-  // Uses X25519 + AES-GCM hybrid encryption
+  // RSA KEY PAIR GENERATION
+  // -----------------------------
+  static AsymmetricKeyPair<PublicKey, PrivateKey> generateRSAKeyPair() {
+    final keyGen = RSAKeyGenerator()
+      ..init(ParametersWithRandom(
+        RSAKeyGeneratorParameters(BigInt.parse('65537'), 2048, 64),
+        _secureRandom(),
+      ));
+    return keyGen.generateKeyPair();
+  }
+
+  static SecureRandom _secureRandom() {
+    final secureRandom = FortunaRandom();
+    final seedSource = Random.secure();
+    final seeds = <int>[];
+    for (int i = 0; i < 32; i++) {
+      seeds.add(seedSource.nextInt(256));
+    }
+    secureRandom.seed(KeyParameter(Uint8List.fromList(seeds)));
+    return secureRandom;
+  }
+
+  // -----------------------------
+  // RSA KEY ENCODING/DECODING
+  // -----------------------------
+  static String _encodeRSAPublicKey(RSAPublicKey key) {
+    final map = {
+      'n': key.modulus.toString(),
+      'e': key.exponent.toString(),
+    };
+    return base64Encode(utf8.encode(json.encode(map)));
+  }
+
+  static RSAPublicKey _decodeRSAPublicKey(String base64Key) {
+    final jsonStr = utf8.decode(base64Decode(base64Key));
+    final map = json.decode(jsonStr) as Map<String, dynamic>;
+    return RSAPublicKey(
+      BigInt.parse(map['n'] as String),
+      BigInt.parse(map['e'] as String),
+    );
+  }
+
+  static Uint8List _encodeRSAPrivateKey(RSAPrivateKey key) {
+    final map = {
+      'n': key.modulus.toString(),
+      'd': key.privateExponent.toString(),
+      'p': key.p.toString(),
+      'q': key.q.toString(),
+    };
+    return Uint8List.fromList(utf8.encode(json.encode(map)));
+  }
+
+  static RSAPrivateKey _decodeRSAPrivateKey(Uint8List bytes) {
+    final jsonStr = utf8.decode(bytes);
+    final map = json.decode(jsonStr) as Map<String, dynamic>;
+    return RSAPrivateKey(
+      BigInt.parse(map['n'] as String),
+      BigInt.parse(map['d'] as String),
+      BigInt.parse(map['p'] as String),
+      BigInt.parse(map['q'] as String),
+    );
+  }
+
+  // -----------------------------
+  // ENCRYPT STRING WITH PUBLIC KEY (from base64)
   // -----------------------------
   static String encryptWithPublicKey({
     required String plaintext,
     required String publicKeyBase64,
   }) {
-    // Decode recipient's Ed25519 public key
-    final recipientPubBytes = base64Decode(publicKeyBase64);
-
-    // Generate ephemeral X25519 keypair for key agreement
-    final ephemeralSeed = _randomBytes(32);
-    final ephemeralPrivate = ed25519.newKeyFromSeed(ephemeralSeed);
-    final ephemeralPublic = ed25519.public(ephemeralPrivate);
-
-    // For simplicity, we'll use a hash of both public keys as shared secret
-    // (In production, consider proper X25519 key exchange)
-    final sharedInput = Uint8List.fromList([
-      ...ephemeralPrivate.bytes,
-      ...recipientPubBytes,
-    ]);
-    final sharedSecret = SHA256Digest().process(sharedInput);
-
-    // Encrypt plaintext with AES-GCM using the shared secret
-    final iv = _randomBytes(12);
-    final cipher = GCMBlockCipher(AESEngine())
+    final publicKey = _decodeRSAPublicKey(publicKeyBase64);
+    final encryptor = OAEPEncoding(RSAEngine())
       ..init(
         true,
-        AEADParameters(
-          KeyParameter(sharedSecret),
-          128,
-          iv,
-          Uint8List(0),
-        ),
+        PublicKeyParameter<RSAPublicKey>(publicKey),
       );
 
-    final plaintextBytes = Uint8List.fromList(utf8.encode(plaintext));
-    final ciphertext = cipher.process(plaintextBytes);
+    final encrypted = encryptor.process(
+      Uint8List.fromList(utf8.encode(plaintext)),
+    );
 
-    // Package: ephemeralPublic (32) + iv (12) + ciphertext
-    final result = Uint8List.fromList([
-      ...ephemeralPublic.bytes,
-      ...iv,
-      ...ciphertext,
-    ]);
-
-    return base64Encode(result);
+    return base64Encode(encrypted);
   }
 
   // -----------------------------
-  // DECRYPT STRING WITH PRIVATE KEY
+  // DECRYPT STRING WITH PRIVATE KEY (from Uint8List bytes)
   // -----------------------------
   static String decryptWithPrivateKey({
     required String ciphertextBase64,
     required Uint8List privateKeyBytes,
   }) {
-    final data = base64Decode(ciphertextBase64);
-
-    // Extract components
-    final ephemeralPubBytes = data.sublist(0, 32);
-    final iv = data.sublist(32, 44);
-    final ciphertext = data.sublist(44);
-
-    // Derive shared secret
-    final sharedInput = Uint8List.fromList([
-      ...privateKeyBytes,
-      ...ephemeralPubBytes,
-    ]);
-    final sharedSecret = SHA256Digest().process(sharedInput);
-
-    // Decrypt with AES-GCM
-    final cipher = GCMBlockCipher(AESEngine())
+    final privateKey = _decodeRSAPrivateKey(privateKeyBytes);
+    final decryptor = OAEPEncoding(RSAEngine())
       ..init(
         false,
-        AEADParameters(
-          KeyParameter(sharedSecret),
-          128,
-          iv,
-          Uint8List(0),
-        ),
+        PrivateKeyParameter<RSAPrivateKey>(privateKey),
       );
 
-    final plaintextBytes = cipher.process(Uint8List.fromList(ciphertext));
-    return utf8.decode(plaintextBytes);
+    final decrypted = decryptor.process(
+      base64Decode(ciphertextBase64),
+    );
+
+    return utf8.decode(decrypted);
   }
 }
