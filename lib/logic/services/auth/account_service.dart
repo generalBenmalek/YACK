@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:yack/data/repositories/isar_adapter.dart';
 import 'package:yack/logic/services/network/http_handler.dart';
 import 'package:yack/logic/services/user/user_service.dart';
 
@@ -127,6 +128,7 @@ class AccountService {
 
   /// Clear all cached account data (for logout)
   Future<void> clearCachedData() async {
+    // Clear Hive user box
     final box = await Hive.openBox('user');
     await box.delete('firstName');
     await box.delete('lastName');
@@ -136,5 +138,10 @@ class AccountService {
     await box.delete('privateKeySalt');
     await box.delete('privateKeyIV');
     await box.delete('isComplete');
+    await box.delete('decryptedPrivateKey');
+    await box.delete('userId');
+
+    // Clear all Isar data (contracts, messages, media, notifications)
+    await clearAllIsarData();
   }
 }

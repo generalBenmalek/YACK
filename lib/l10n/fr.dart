@@ -361,4 +361,5 @@ const french = {
   'enter_link_manually': 'Entrer le lien manuellement',
   'paste_contract_link': 'Collez le lien ou le code du contrat',
   'join_contract': 'Rejoindre le contrat',
+  'simple_link_no_preview': 'Utilisation d\'un lien simplifié - les détails du contrat peuvent ne pas être disponibles avant de rejoindre.',
 };

@@ -49,8 +49,13 @@ class TempContractService {
     if (hash != null && hash.isNotEmpty) body['hash'] = hash;
 
     final response = await _http.post('/contracts/join', body: body);
+    print('[DEBUG TempContractService] Join response: $response');
+
     final contract = _materializeContract(response, fallbackTempId: tempId);
+    print('[DEBUG TempContractService] Materialized contract - userAName: ${contract.userAName}, userAId: ${contract.userAId}');
+
     final userAPublicKey = _extractUserAPublicKey(response);
+    print('[DEBUG TempContractService] userAPublicKey: $userAPublicKey');
 
     return TempContractJoinResult(
       contract: contract,
@@ -64,8 +69,11 @@ class TempContractService {
     final response = await _http.post('/contracts/sign', body: {
       'tempID': tempId,
     });
+    print('[DEBUG TempContractService] Sign response: $response');
+
     final contract = _materializeContract(response, fallbackTempId: tempId);
     final contractId = _extractContractId(response);
+    print('[DEBUG TempContractService] Sign result - contractId: $contractId');
 
     return TempContractSignResult(
       contract: contract,
@@ -83,8 +91,36 @@ class TempContractService {
 
   String? _extractContractId(dynamic response) {
     if (response is Map) {
-      return response['contractID']?.toString() ??
-             response['contractId']?.toString();
+      // Try direct fields first
+      var contractId = response['contractID']?.toString() ??
+             response['contractId']?.toString() ??
+             response['contract_id']?.toString();
+
+      if (contractId != null && contractId.isNotEmpty) {
+        return contractId;
+      }
+
+      // Try nested in 'contract' object
+      final contract = response['contract'];
+      if (contract is Map) {
+        contractId = contract['_id']?.toString() ??
+                     contract['id']?.toString() ??
+                     contract['contractId']?.toString();
+        if (contractId != null && contractId.isNotEmpty) {
+          return contractId;
+        }
+      }
+
+      // Try nested in 'data' object
+      final data = response['data'];
+      if (data is Map) {
+        contractId = data['contractID']?.toString() ??
+                     data['contractId']?.toString() ??
+                     data['_id']?.toString();
+        if (contractId != null && contractId.isNotEmpty) {
+          return contractId;
+        }
+      }
     }
     return null;
   }
@@ -97,7 +133,7 @@ class TempContractService {
     }
 
     if (!payload.containsKey('tempID')) {
-      throw StateError('Server response missing tempID field.');
+      throw StateError('S mpID field.');
     }
 
     return TempContract.fromJson(payload);

@@ -7,14 +7,30 @@ class ContractListItem {
   final String description;  // Encrypted for caller (decrypted locally)
   final String price;        // Encrypted for caller (decrypted locally)
   final String? detailsHash;
-  final String userAId;
-  final String? userAName;
-  final String? userBId;
-  final String? userBName;
+
+  // Other user info (the party you're contracting with)
+  final String? otherUserId;
+  final String? otherUserName;
+  final String? otherUserPublicKey;
+
+  // Whether the caller is userA (creator) or userB (joiner)
+  final bool isUserA;
+
   final String status;
-  final bool userAAccepted;
-  final bool userBAccepted;
-  final String? disputeReason;
+
+  // Signature status
+  final bool userASigned;
+  final bool userBSigned;
+
+  // Agreement status
+  final bool agreedUserA;
+  final bool agreedUserB;
+
+  // Dispute status
+  final bool disputedUserA;
+  final bool disputedUserB;
+
+  final String? hash;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -24,51 +40,59 @@ class ContractListItem {
     required this.description,
     required this.price,
     this.detailsHash,
-    required this.userAId,
-    this.userAName,
-    this.userBId,
-    this.userBName,
+    this.otherUserId,
+    this.otherUserName,
+    this.otherUserPublicKey,
+    this.isUserA = true,
     required this.status,
-    this.userAAccepted = false,
-    this.userBAccepted = false,
-    this.disputeReason,
+    this.userASigned = false,
+    this.userBSigned = false,
+    this.agreedUserA = false,
+    this.agreedUserB = false,
+    this.disputedUserA = false,
+    this.disputedUserB = false,
+    this.hash,
     this.createdAt,
     this.updatedAt,
   });
 
   factory ContractListItem.fromJson(Map<String, dynamic> json) {
+    // Extract other user info from nested object
+    final otherUser = json['otherUser'];
+    String? otherUserId;
+    String? otherUserName;
+    String? otherUserPublicKey;
+
+    if (otherUser is Map) {
+      otherUserId = otherUser['_id']?.toString();
+      final firstName = otherUser['firstName']?.toString() ?? '';
+      final lastName = otherUser['lastName']?.toString() ?? '';
+      otherUserName = '$firstName $lastName'.trim();
+      if (otherUserName.isEmpty) otherUserName = null;
+      otherUserPublicKey = otherUser['publicKey']?.toString();
+    }
+
     return ContractListItem(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
       detailsHash: json['detailsHash']?.toString(),
-      userAId: json['userA']?['_id']?.toString() ??
-               json['userA']?.toString() ??
-               json['userAId']?.toString() ?? '',
-      userAName: _extractUserName(json['userA']),
-      userBId: json['userB']?['_id']?.toString() ??
-               json['userB']?.toString() ??
-               json['userBId']?.toString(),
-      userBName: _extractUserName(json['userB']),
+      otherUserId: otherUserId,
+      otherUserName: otherUserName,
+      otherUserPublicKey: otherUserPublicKey,
+      isUserA: json['isUserA'] == true,
       status: json['status']?.toString() ?? 'pending',
-      userAAccepted: json['userAAccepted'] == true,
-      userBAccepted: json['userBAccepted'] == true,
-      disputeReason: json['disputeReason']?.toString(),
+      userASigned: json['userASign'] == true || json['userASigned'] == true,
+      userBSigned: json['userBSign'] == true || json['userBSigned'] == true,
+      agreedUserA: json['agreedUserA'] == true,
+      agreedUserB: json['agreedUserB'] == true,
+      disputedUserA: json['disputedUserA'] == true,
+      disputedUserB: json['disputedUserB'] == true,
+      hash: json['hash']?.toString(),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
     );
-  }
-
-  static String? _extractUserName(dynamic user) {
-    if (user is Map) {
-      final firstName = user['firstName']?.toString() ?? '';
-      final lastName = user['lastName']?.toString() ?? '';
-      if (firstName.isNotEmpty || lastName.isNotEmpty) {
-        return '$firstName $lastName'.trim();
-      }
-    }
-    return null;
   }
 
   static DateTime? _parseDate(dynamic value) {
@@ -88,14 +112,18 @@ class ContractListItem {
       'description': description,
       'price': price,
       'detailsHash': detailsHash,
-      'userAId': userAId,
-      'userAName': userAName,
-      'userBId': userBId,
-      'userBName': userBName,
+      'otherUserId': otherUserId,
+      'otherUserName': otherUserName,
+      'otherUserPublicKey': otherUserPublicKey,
+      'isUserA': isUserA,
       'status': status,
-      'userAAccepted': userAAccepted,
-      'userBAccepted': userBAccepted,
-      'disputeReason': disputeReason,
+      'userASigned': userASigned,
+      'userBSigned': userBSigned,
+      'agreedUserA': agreedUserA,
+      'agreedUserB': agreedUserB,
+      'disputedUserA': disputedUserA,
+      'disputedUserB': disputedUserB,
+      'hash': hash,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };

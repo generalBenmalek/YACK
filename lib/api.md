@@ -28,7 +28,21 @@ All endpoints are served from the Express app in `src/index.js`. Unless stated o
 | `POST` | `/accept` | Mark a contract as accepted by the caller. | `contractId` (string, required) | Requires membership; completes contract when both accept. |
 | `POST` | `/dispute` | Flag a contract as disputed. | `contractId` (string, required), `reason` (string, optional) | Fails if contract already completed or disputed by caller. |
 | `GET` | `/verify` | Compare stored contract hash with a provided hash. | Query/body `contractId`, `hash` (string, required) | Response indicates `matches`. |
-| `GET` | `/list` | Fetch all contracts involving the caller. | None | Returns only caller's encrypted fields (`title`, `description`, `price`). |
+| `GET` | `/list` | Fetch all contracts involving the caller. | None | Returns caller's encrypted fields with `otherUser` info and `isUserA` flag. |
+
+### `/list` Response Structure
+Each contract in the response includes:
+- `_id`: Contract ID
+- `otherUser`: Object with `_id`, `firstName`, `lastName`, `publicKey` of the other party
+- `title`, `description`, `price`: Encrypted for the caller (decrypt with private key)
+- `detailsHash`: SHA hash for verification
+- `status`: Contract status (pending, active, completed, disputed)
+- `userASign`, `userBSign`: Signature status
+- `agreedUserA`, `agreedUserB`: Agreement status
+- `disputedUserA`, `disputedUserB`: Dispute flags
+- `hash`: Optional verification hash
+- `isUserA`: Boolean - true if caller is the contract creator
+- `createdAt`, `updatedAt`: Timestamps
 
 ### Encryption Notes
 - Contract details (title, description, price) are encrypted separately for each party using their public keys.

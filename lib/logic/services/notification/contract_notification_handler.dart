@@ -117,10 +117,16 @@ class ContractNotificationHandler {
     final data = message.data;
     if (data.isEmpty) return;
 
+    print('[DEBUG ContractNotificationHandler] Received FCM message: $data');
+
     final typeStr = data['type']?.toString() ?? '';
-    if (!_isContractNotification(typeStr)) return;
+    if (!_isContractNotification(typeStr)) {
+      print('[DEBUG ContractNotificationHandler] Not a contract notification: $typeStr');
+      return;
+    }
 
     final event = ContractNotificationEvent.fromFcmData(data);
+    print('[DEBUG ContractNotificationHandler] Emitting event: ${event.type}, tempId: ${event.tempId}, contractId: ${event.contractId}');
     _eventController.add(event);
 
     // Handle side effects based on notification type

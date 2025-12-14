@@ -88,28 +88,57 @@ Future<Contract> saveContractToIsar({
 }
 
 /// Save contract from ContractListItem API response
-Future<Contract> saveContractFromListItem(ContractListItem item) async {
+Future<Contract> saveContractFromListItem(ContractListItem item, {String? currentUserId}) async {
+  // Determine userA and userB based on isUserA flag
+  String userAId;
+  String? userAName;
+  String? userAPublicKey;
+  String? userBId;
+  String? userBName;
+  String? userBPublicKey;
+
+  if (item.isUserA) {
+    // Current user is userA (creator)
+    userAId = currentUserId ?? '';
+    userAName = null; // Current user, no need to store name
+    userBId = item.otherUserId;
+    userBName = item.otherUserName;
+    userBPublicKey = item.otherUserPublicKey;
+  } else {
+    // Current user is userB (joiner)
+    userAId = item.otherUserId ?? '';
+    userAName = item.otherUserName;
+    userAPublicKey = item.otherUserPublicKey;
+    userBId = currentUserId;
+    userBName = null; // Current user, no need to store name
+  }
+
   return saveContractToIsar(
     externalId: item.id,
     title: item.title,
     description: item.description,
     price: item.price,
-    userAId: item.userAId,
-    userAName: item.userAName,
-    userBId: item.userBId,
-    userBName: item.userBName,
+    userAId: userAId,
+    userAName: userAName,
+    userAPublicKey: userAPublicKey,
+    userBId: userBId,
+    userBName: userBName,
+    userBPublicKey: userBPublicKey,
     detailsHash: item.detailsHash,
     status: item.status,
-    userAAccepted: item.userAAccepted,
-    userBAccepted: item.userBAccepted,
-    disputeReason: item.disputeReason,
+    userAAccepted: item.agreedUserA,
+    userBAccepted: item.agreedUserB,
+    userASigned: item.userASigned,
+    userBSigned: item.userBSigned,
+    disputeReason: item.disputedUserA || item.disputedUserB ? 'Disputed' : null,
+    disputedBy: item.disputedUserA ? userAId : (item.disputedUserB ? userBId : null),
   );
 }
 
 /// Sync all contracts from API to Isar
-Future<void> syncContractsFromApi(List<ContractListItem> contracts) async {
+Future<void> syncContractsFromApi(List<ContractListItem> contracts, {String? currentUserId}) async {
   for (final item in contracts) {
-    await saveContractFromListItem(item);
+    await saveContractFromListItem(item, currentUserId: currentUserId);
   }
 }
 
@@ -394,3 +423,14 @@ Future<void> clearAllNotifications() async {
     await isar.appNotifications.clear();
   });
 }
+
+/// Clear all Isar data (for logout)
+Future<void> clearAllIsarData() async {
+  await isar.writeTxn(() async {
+    await isar.contracts.clear();
+    await isar.messages.clear();
+    await isar.mediaFiles.clear();
+    await isar.appNotifications.clear();
+  });
+}
+

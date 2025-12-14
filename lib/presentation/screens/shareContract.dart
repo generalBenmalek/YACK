@@ -6,9 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:yack/data/models/contract/temp_contract.dart';
-import 'package:yack/data/repositories/isar_adapter.dart';
 import 'package:yack/logic/cubits/contract/temp_contract_cubit.dart';
 import 'package:yack/logic/cubits/contract/temp_contract_state.dart';
+import 'package:yack/logic/cubits/contract/contract_sync_cubit.dart';
 import 'package:yack/logic/services/notification/contract_notification_handler.dart';
 import 'package:yack/logic/services/notification/notification_service.dart';
 import 'package:yack/logic/services/snackBarHandler.dart';
@@ -41,6 +41,7 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
   bool _isWaitingForUserB = true; // User A always waits for User B to join first
   bool _isWaitingForSign = false;
   bool _userBJoined = false;
+  bool _hasReSignedAfterNotification = false; // Prevent infinite re-sign loop
   String? _userBName;
   StreamSubscription<ContractNotificationEvent>? _notificationSubscription;
   StreamSubscription<RemoteMessage>? _firebaseSubscription;
@@ -133,14 +134,32 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
 
   /// Handle when User B signs the contract
   void _handleUserBSigned(String? contractId) {
-    if (_isWaitingForSign) {
+    print('[DEBUG ShareContract] _handleUserBSigned called with contractId: $contractId, _isWaitingForSign: $_isWaitingForSign, _hasReSignedAfterNotification: $_hasReSignedAfterNotification');
+
+    if (contractId != null && contractId.isNotEmpty) {
       // Both users signed - contract complete
+      print('[DEBUG ShareContract] Contract complete with ID: $contractId');
       _onContractComplete(contractId);
+    } else if (_isWaitingForSign && !_hasReSignedAfterNotification) {
+      // User B signed while we're waiting - we already signed, need contractId from our sign response
+      // Re-trigger sign to get the contractId since both have now signed
+      print('[DEBUG ShareContract] Re-triggering sign to get contractId...');
+      _hasReSignedAfterNotification = true;
+      SnackBarHandler.showMessage(
+        context,
+        '${_userBName ?? ''} ${TranslationHandler.get('has_signed_contract')}',
+      );
+      context.read<TempContractCubit>().sign(widget.tempContract.tempId);
+    } else if (_hasReSignedAfterNotification) {
+      // We already re-signed but still no contractId - something is wrong
+      print('[DEBUG ShareContract] Already re-signed but no contractId received');
+      SnackBarHandler.showWarning(
+        context,
+        TranslationHandler.get('waiting_for_acceptance'),
+      );
     } else {
-      // User B signed before us
-      setState(() {
-        _isWaitingForSign = false;
-      });
+      // User B signed before us - just note it
+      print('[DEBUG ShareContract] User B signed before us');
       SnackBarHandler.showMessage(
         context,
         '${_userBName ?? ''} ${TranslationHandler.get('has_signed_contract')}',
@@ -177,20 +196,8 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
   /// Called when both users have signed and contract is complete
   Future<void> _onContractComplete(String? contractId) async {
     if (contractId != null) {
-      // Save contract to Isar
-      await saveContractToIsar(
-        externalId: contractId,
-        title: widget.title,
-        description: widget.description,
-        price: widget.price.toStringAsFixed(2),
-        userAId: widget.tempContract.userAId ?? '',
-        userAName: widget.tempContract.userAName,
-        userBId: widget.tempContract.userBId,
-        userBName: _userBName,
-        status: 'active',
-        userASigned: true,
-        userBSigned: true,
-      );
+      // Sync contracts from backend to get the finalized contract
+      context.read<ContractSyncCubit>().sync();
     }
 
     if (mounted) {
@@ -215,8 +222,10 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
     final jsonString = json.encode(shareData);
     final encodedData = base64Url.encode(utf8.encode(jsonString));
 
-    _qrData = 'yack://contract?data=$encodedData';
-    _shareText = 'yack://${widget.tempContract.tempId}';
+    // QR code uses simple tempId format (more reliable for scanning)
+    _qrData = widget.tempContract.tempId;
+    // Share text uses full data URL so user B gets contract preview info when pasting
+    _shareText = 'yack://contract?data=$encodedData';
   }
 
   void _copyToClipboard() {
@@ -236,22 +245,15 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
 
     return BlocListener<TempContractCubit, TempContractState>(
       listener: (context, state) async {
+        print('[DEBUG ShareContract] BlocListener received state: $state');
+
         if (state is TempContractSignSuccess) {
-          if (state.contractId != null) {
-            // Both users signed - contract is finalized, save to Isar
-            await saveContractToIsar(
-              externalId: state.contractId!,
-              title: widget.title,
-              description: widget.description,
-              price: widget.price.toStringAsFixed(2),
-              userAId: widget.tempContract.userAId ?? '',
-              userAName: widget.tempContract.userAName,
-              userBId: widget.tempContract.userBId,
-              userBName: _userBName,
-              status: 'active',
-              userASigned: true,
-              userBSigned: true,
-            );
+          print('[DEBUG ShareContract] TempContractSignSuccess - contractId: ${state.contractId}');
+
+          if (state.contractId != null && state.contractId!.isNotEmpty) {
+            // Both users signed - contract is finalized, sync from backend
+            print('[DEBUG ShareContract] Syncing contracts from backend...');
+            context.read<ContractSyncCubit>().sync();
 
             setState(() => _isWaitingForSign = false);
 
@@ -264,6 +266,7 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
             }
           } else {
             // Only this user signed - waiting for other user
+            print('[DEBUG ShareContract] Waiting for other user to sign...');
             setState(() => _isWaitingForSign = true);
             SnackBarHandler.showMessage(
               context,
@@ -271,6 +274,7 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
             );
           }
         } else if (state is TempContractError) {
+          print('[DEBUG ShareContract] TempContractError: ${state.message}');
           setState(() => _isWaitingForSign = false);
           SnackBarHandler.showError(context, state.message);
         }

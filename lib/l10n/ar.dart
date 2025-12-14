@@ -349,4 +349,5 @@ const arabic = {
   'enter_link_manually': 'إدخال الرابط يدوياً',
   'paste_contract_link': 'الصق رابط العقد أو الكود',
   'join_contract': 'انضم للعقد',
+  'simple_link_no_preview': 'استخدام رابط مبسط - تفاصيل العقد قد لا تكون متوفرة حتى الانضمام.',
 };

@@ -13,6 +13,7 @@ import 'package:yack/logic/cubits/auth/password_reset_cubit.dart';
 import 'package:yack/logic/cubits/auth/signup_cubit.dart';
 import 'package:yack/logic/cubits/contract/contract_list_cubit.dart';
 import 'package:yack/logic/cubits/contract/contract_state_cubit.dart';
+import 'package:yack/logic/cubits/contract/contract_sync_cubit.dart';
 import 'package:yack/logic/cubits/contract/contract_verification_cubit.dart';
 import 'package:yack/logic/cubits/contract/temp_contract_cubit.dart';
 import 'package:yack/logic/cubits/message/message_cubit.dart';
@@ -89,6 +90,7 @@ void main() async {
               BlocProvider<ContractListCubit>(create: (_) => ContractListCubit()),
               BlocProvider<ContractStateCubit>(create: (_) => ContractStateCubit()),
               BlocProvider<ContractVerificationCubit>(create: (_) => ContractVerificationCubit()),
+              BlocProvider<ContractSyncCubit>(create: (_) => ContractSyncCubit()),
               BlocProvider<TempContractCubit>(create: (_) => TempContractCubit()),
               // Message and Media cubits
               BlocProvider<MessageCubit>(create: (_) => MessageCubit()),

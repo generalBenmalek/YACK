@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yack/logic/utils/passwordPopUp.dart';
 import 'package:yack/logic/services/translation_handler.dart';
+import 'package:yack/logic/services/auth/account_service.dart';
 import 'package:yack/presentation/widgets/secondaryActionButtonAutoLoading.dart';
 import 'package:yack/logic/cubits/auth/auth_cubit.dart';
 import 'package:yack/presentation/widgets/settingWidgets/appearanceSheet.dart';
@@ -300,8 +301,10 @@ class SettingsScreen extends StatelessWidget {
               SecondaryActionButtonAutoReload(
                 action: TranslationHandler.get('logout'),
                 onClick: () async {
+                  // Clear all cached data including Isar
+                  await AccountService().clearCachedData();
 
-                  FirebaseAuth.instance.signOut();
+                  await FirebaseAuth.instance.signOut();
                   context.read<AuthCubit>().markUnauthenticated();
 
                   Navigator.of(context, rootNavigator: true)

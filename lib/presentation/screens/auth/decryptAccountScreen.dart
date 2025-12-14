@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yack/logic/cubits/user/user_cubit.dart';
 import 'package:yack/logic/cubits/user/user_state.dart';
 import 'package:yack/logic/cubits/auth/auth_cubit.dart';
+import 'package:yack/logic/cubits/contract/contract_sync_cubit.dart';
 import 'package:yack/logic/utils/platform.dart';
 import 'package:yack/logic/services/snackBarHandler.dart';
 import 'package:yack/logic/services/translation_handler.dart';
@@ -134,6 +135,9 @@ class _DecryptAccountScreenState extends State<DecryptAccountScreen> {
                       BlocConsumer<UserCubit, UserState>(
                         listener: (context, state) {
                           if (state is UserDecryptSuccess) {
+                            // Sync contracts in background (uses cached decrypted key from Hive)
+                            context.read<ContractSyncCubit>().sync();
+
                             context.read<AuthCubit>().markAuthenticated();
                             Navigator.pushNamedAndRemoveUntil(
                               context,

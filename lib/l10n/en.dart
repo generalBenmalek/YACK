@@ -350,4 +350,5 @@ const english = {
   'enter_link_manually': 'Enter Link Manually',
   'paste_contract_link': 'Paste the contract link or code',
   'join_contract': 'Join Contract',
+  'simple_link_no_preview': 'Using a simplified link - contract details may not be available until joined.',
 };
