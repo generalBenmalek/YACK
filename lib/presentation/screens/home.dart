@@ -3,10 +3,36 @@ import 'package:isar/isar.dart';
 import 'package:yack/presentation/screens/create_contract.dart';
 import 'package:yack/presentation/theme/theme.dart';
 import 'package:yack/data/db/models/contract.dart';
+import 'package:yack/logic/services/contract/contract_sync_service.dart';
 import 'package:yack/logic/services/translation_handler.dart';
 
-class ContractsScreen extends StatelessWidget {
+class ContractsScreen extends StatefulWidget {
   const ContractsScreen({super.key});
+
+  @override
+  State<ContractsScreen> createState() => _ContractsScreenState();
+}
+
+class _ContractsScreenState extends State<ContractsScreen> {
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    if (_isRefreshing) return;
+
+    setState(() => _isRefreshing = true);
+
+    try {
+      final syncService = ContractSyncService();
+      await syncService.syncContracts();
+      print('[ContractsScreen] Contracts synced from backend');
+    } catch (e) {
+      print('[ContractsScreen] Error syncing contracts: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +68,21 @@ class ContractsScreen extends StatelessWidget {
                     final data = snapshot.data;
 
                     if (data == null || data.isEmpty) {
-                      return Center(
-                        child: Text(
-                          TranslationHandler.get('no_current_contract_available'),
-                          style: Theme.of(context).textTheme.titleMedium,
+                      return RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.6,
+                              child: Center(
+                                child: Text(
+                                  TranslationHandler.get('no_current_contract_available'),
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }
@@ -67,27 +104,31 @@ class ContractsScreen extends StatelessWidget {
                         )
                         .toList();
 
-                    return ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                      children: [
-                        if (activeContracts.isNotEmpty)
-                          _SectionHeader(
-                            title: TranslationHandler.get('active_section'),
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                        children: [
+                          if (activeContracts.isNotEmpty)
+                            _SectionHeader(
+                              title: TranslationHandler.get('active_section'),
+                            ),
+                          ...activeContracts.map(
+                            (c) => ContractCard(contract: c, isar: isar),
                           ),
-                        ...activeContracts.map(
-                          (c) => ContractCard(contract: c, isar: isar),
-                        ),
-                        if (activeContracts.isNotEmpty &&
-                            pastContracts.isNotEmpty)
-                          const SizedBox(height: 24),
-                        if (pastContracts.isNotEmpty)
-                          _SectionHeader(
-                            title: TranslationHandler.get('past_section'),
+                          if (activeContracts.isNotEmpty &&
+                              pastContracts.isNotEmpty)
+                            const SizedBox(height: 24),
+                          if (pastContracts.isNotEmpty)
+                            _SectionHeader(
+                              title: TranslationHandler.get('past_section'),
+                            ),
+                          ...pastContracts.map(
+                            (c) => ContractCard(contract: c, isar: isar),
                           ),
-                        ...pastContracts.map(
-                          (c) => ContractCard(contract: c, isar: isar),
-                        ),
-                      ],
+                        ],
+                      ),
                     );
                   },
                 ),
