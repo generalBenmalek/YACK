@@ -11,41 +11,41 @@ import 'package:yack/presentation/widgets/primaryActionButton.dart';
 import 'package:yack/presentation/widgets/titleWidget.dart';
 import 'package:yack/presentation/widgets/inputFormWidget.dart';
 
-/// Screen shown after email verification to set up encryption password
-/// The user must create a password to encrypt their private key
-class InitAccountScreen extends StatefulWidget {
-  const InitAccountScreen({super.key});
+/// Screen shown after login to decrypt and load user's private key
+/// The user must enter their encryption password to access their account
+class DecryptAccountScreen extends StatefulWidget {
+  const DecryptAccountScreen({super.key});
 
   @override
-  State<InitAccountScreen> createState() => _InitAccountScreenState();
+  State<DecryptAccountScreen> createState() => _DecryptAccountScreenState();
 }
 
-class _InitAccountScreenState extends State<InitAccountScreen> {
+class _DecryptAccountScreenState extends State<DecryptAccountScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  bool _profileRequested = false;
 
   @override
   void dispose() {
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_profileRequested) return;
+    _profileRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<UserCubit>().getProfile();
+    });
   }
 
   String? _validatePassword(String? value) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
-      return TranslationHandler.get('init_account_password_required');
-    }
-    if (text.length < 12) {
-      return TranslationHandler.get('init_account_password_min_length');
-    }
-    return null;
-  }
-
-  String? _validateConfirmPassword(String? value) {
-    if (value?.trim() != _passwordController.text.trim()) {
-      return TranslationHandler.get('passwords_do_not_match');
+      return TranslationHandler.get('decrypt_account_password_required');
     }
     return null;
   }
@@ -55,10 +55,7 @@ class _InitAccountScreenState extends State<InitAccountScreen> {
     FocusScope.of(context).unfocus();
 
     final password = _passwordController.text.trim();
-
-    context.read<UserCubit>().finalize(
-      password: password,
-    );
+    context.read<UserCubit>().decryptAndLoad(password: password);
   }
 
   @override
@@ -84,43 +81,42 @@ class _InitAccountScreenState extends State<InitAccountScreen> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TitleWidget(
-                        text: TranslationHandler.get('init_account_title'),
+                        text: TranslationHandler.get('decrypt_account_title'),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        TranslationHandler.get('init_account_subtitle'),
+                        TranslationHandler.get('decrypt_account_subtitle'),
                         style: theme.textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 24),
-                      // Warning container
+                      const SizedBox(height: 32),
+                      // Info container
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.error.withValues(alpha: 0.5),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
-                              Icons.warning_rounded,
-                              color: theme.colorScheme.error,
+                              Icons.lock_outline_rounded,
+                              color: theme.colorScheme.primary,
                               size: 24,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                TranslationHandler.get('init_account_warning'),
+                                TranslationHandler.get('decrypt_account_info'),
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.error,
-                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -129,29 +125,15 @@ class _InitAccountScreenState extends State<InitAccountScreen> {
                       ),
                       const SizedBox(height: 32),
                       CustomTextFormField(
-                        hintText: TranslationHandler.get('init_account_password_label'),
+                        hintText: TranslationHandler.get('decrypt_account_password_label'),
                         isPassword: true,
                         controller: _passwordController,
                         validator: _validatePassword,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        TranslationHandler.get('init_account_password_helper'),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      CustomTextFormField(
-                        hintText: TranslationHandler.get('init_account_confirm_password_label'),
-                        isPassword: true,
-                        controller: _confirmPasswordController,
-                        validator: _validateConfirmPassword,
-                      ),
                       const SizedBox(height: 32),
                       BlocConsumer<UserCubit, UserState>(
                         listener: (context, state) {
-                          if (state is UserFinalizeSuccess) {
+                          if (state is UserDecryptSuccess) {
                             context.read<AuthCubit>().markAuthenticated();
                             Navigator.pushNamedAndRemoveUntil(
                               context,
@@ -159,13 +141,21 @@ class _InitAccountScreenState extends State<InitAccountScreen> {
                               (route) => false,
                             );
                           } else if (state is UserError) {
-                            SnackBarHandler.showError(context, state.message);
+                            SnackBarHandler.showError(
+                              context,
+                              state.message,
+                            );
+                          } else if (state is UserDecryptError) {
+                            SnackBarHandler.showError(
+                              context,
+                              TranslationHandler.get('decrypt_account_error'),
+                            );
                           }
                         },
                         builder: (context, state) {
                           return PrimaryActionButton(
                             isLoading: state is UserLoading,
-                            action: TranslationHandler.get('init_account_submit'),
+                            action: TranslationHandler.get('decrypt_account_submit'),
                             onClick: _onSubmit,
                           );
                         },
