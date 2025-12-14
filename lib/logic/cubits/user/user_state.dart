@@ -40,3 +40,14 @@ class UserError extends UserState {
   List<Object?> get props => [message];
 }
 
+class UserDecryptSuccess extends UserState {
+  const UserDecryptSuccess();
+}
+
+class UserDecryptError extends UserState {
+  const UserDecryptError(this.message);
+  final String message;
+
+  @override
+  List<Object?> get props => [message];
+}
