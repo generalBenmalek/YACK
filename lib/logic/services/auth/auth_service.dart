@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:yack/data/db/online.dart' as online_db;
 import 'package:firebase_database/firebase_database.dart';
 
 class AuthService {
@@ -98,12 +97,6 @@ class AuthService {
           }
         } catch (_) {}
 
-        // Sync contracts from Firebase after successful login (Chadli)
-        await online_db.syncContractsFromUserNode(user.uid);
-        // Then sync using any locally stored keys
-        await online_db.syncContractsUsingStoredKeys(user.uid);
-        // Finally check for completed status updates
-        await online_db.syncCompletedContractsStatus();
       }
     } on FirebaseAuthException catch (e) {
       throw _mapFirebaseLoginError(e);
@@ -288,9 +281,7 @@ class AuthService {
       // logged in + verified - sync contracts from Firebase (Chadli)
       // This ensures contracts are synced when app restarts with existing session
       try {
-        await online_db.syncContractsFromUserNode(user.uid);
-        await online_db.syncContractsUsingStoredKeys(user.uid);
-        await online_db.syncCompletedContractsStatus();
+
       } catch (_) {
         // Sync errors shouldn't block authentication
       }

@@ -1,3 +1,4 @@
+import 'package:hive/hive.dart';
 import 'package:yack/logic/services/network/http_handler.dart';
 
 class UserProfile {
@@ -7,6 +8,8 @@ class UserProfile {
   final String? publicKey;
   final String? encryptedPrivateKey;
   final bool isComplete;
+  final String? salt;
+  final String? iv;
 
   const UserProfile({
     required this.firstName,
@@ -15,6 +18,8 @@ class UserProfile {
     this.publicKey,
     this.encryptedPrivateKey,
     required this.isComplete,
+    this.salt,
+    this.iv,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -25,6 +30,8 @@ class UserProfile {
       publicKey: json['publicKey']?.toString(),
       encryptedPrivateKey: json['encryptedPrivateKey']?.toString(),
       isComplete: json['isComplete'] == true,
+      salt: json['salt']?.toString(),
+      iv: json['iv']?.toString(),
     );
   }
 
@@ -36,6 +43,8 @@ class UserProfile {
       'publicKey': publicKey,
       'encryptedPrivateKey': encryptedPrivateKey,
       'isComplete': isComplete,
+      'salt': salt,
+      'iv': iv,
     };
   }
 }
@@ -49,16 +58,24 @@ class UserService {
   /// Complete account setup with verified email, name, and encryption keys.
   /// Required fields: firstName, lastName, publicKey, encryptedPrivateKey
   Future<void> finalize({
-    required String firstName,
-    required String lastName,
     required String publicKey,
     required String encryptedPrivateKey,
+    required String salt,
+    required String iv,
   }) async {
+    final box = await Hive.openBox('user');
+    final firstName = box.get('firstName')?.toString();
+    final lastName = box.get('lastName')?.toString();
+    if (firstName == null || firstName.isEmpty || lastName == null || lastName.isEmpty) {
+      throw StateError('Missing cached profile name.');
+    }
     await _http.post('/user/finalize', body: {
       'firstName': firstName,
       'lastName': lastName,
       'publicKey': publicKey,
       'encryptedPrivateKey': encryptedPrivateKey,
+      'salt': salt,
+      'iv': iv,
     });
   }
 
@@ -108,4 +125,3 @@ class UserService {
     return <String, dynamic>{};
   }
 }
-
