@@ -1,17 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yack/logic/services/message/message_service.dart';
+import 'package:yack/logic/services/message/message_sync_service.dart';
 
 import 'message_state.dart';
 
 class MessageCubit extends Cubit<MessageState> {
-  MessageCubit({MessageService? service})
-      : _service = service ?? MessageService(),
+  MessageCubit({
+    MessageService? service,
+    MessageSyncService? syncService,
+  })  : _service = service ?? MessageService(),
+        _syncService = syncService ?? MessageSyncService(),
         super(const MessageInitial());
 
   final MessageService _service;
+  final MessageSyncService _syncService;
   String? _currentContractId;
+  int? _currentLocalContractId;
 
-  /// Load messages for a contract
+  /// Load messages for a contract from API (encrypted)
   Future<void> loadMessages({
     required String contractId,
     int? limit,
@@ -24,6 +30,38 @@ class MessageCubit extends Cubit<MessageState> {
         limit: limit,
       );
       emit(MessagesLoaded(messages));
+    } catch (e) {
+      emit(MessageError(e.toString()));
+    }
+  }
+
+  /// Sync messages for a contract from backend to Isar (decrypted)
+  Future<void> syncMessages({
+    required String externalContractId,
+    required int localContractId,
+    int? limit,
+  }) async {
+    _currentContractId = externalContractId;
+    _currentLocalContractId = localContractId;
+    emit(const MessageLoading());
+    try {
+      await _syncService.syncMessagesForContract(
+        externalContractId: externalContractId,
+        localContractId: localContractId,
+        limit: limit,
+      );
+      emit(const MessageSynced());
+    } catch (e) {
+      emit(MessageError(e.toString()));
+    }
+  }
+
+  /// Sync messages for all contracts
+  Future<void> syncAllMessages() async {
+    emit(const MessageLoading());
+    try {
+      await _syncService.syncAllMessages();
+      emit(const MessageSynced());
     } catch (e) {
       emit(MessageError(e.toString()));
     }
@@ -46,9 +84,12 @@ class MessageCubit extends Cubit<MessageState> {
       );
       emit(const MessageSent());
 
-      // Optionally reload messages after sending
-      if (_currentContractId == contractId) {
-        await loadMessages(contractId: contractId);
+      // Optionally sync messages after sending if we have local contract ID
+      if (_currentContractId == contractId && _currentLocalContractId != null) {
+        await syncMessages(
+          externalContractId: contractId,
+          localContractId: _currentLocalContractId!,
+        );
       }
     } catch (e) {
       emit(MessageError(e.toString()));
@@ -57,7 +98,12 @@ class MessageCubit extends Cubit<MessageState> {
 
   /// Refresh messages for the current contract
   Future<void> refresh() async {
-    if (_currentContractId != null) {
+    if (_currentContractId != null && _currentLocalContractId != null) {
+      await syncMessages(
+        externalContractId: _currentContractId!,
+        localContractId: _currentLocalContractId!,
+      );
+    } else if (_currentContractId != null) {
       await loadMessages(contractId: _currentContractId!);
     }
   }

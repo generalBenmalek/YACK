@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:yack/data/repositories/isar_adapter.dart';
+import 'package:yack/logic/services/contract/contract_sync_service.dart';
 
 /// Events emitted by ContractNotificationHandler for UI to react
 enum ContractNotificationType {
@@ -144,38 +144,16 @@ class ContractNotificationHandler {
     ].contains(type);
   }
 
-  /// Handle side effects like updating Isar when contract is signed
+  /// Handle side effects like updating Isar when notifications arrive
+  /// Syncs contracts from backend to ensure local data is up to date
   Future<void> _handleSideEffects(ContractNotificationEvent event) async {
-    switch (event.type) {
-      case ContractNotificationType.contractSign:
-        // When we get a contractSign notification, the other user signed
-        // If contract is fully signed, the contractId will be provided
-        if (event.contractId != null) {
-          // Update contract status in Isar if it exists
-          try {
-            await updateContractStatusInIsar(event.contractId!, 'active');
-          } catch (_) {}
-        }
-        break;
-
-      case ContractNotificationType.contractAccept:
-        if (event.contractId != null) {
-          try {
-            await updateContractStatusInIsar(event.contractId!, 'accepted');
-          } catch (_) {}
-        }
-        break;
-
-      case ContractNotificationType.contractDispute:
-        if (event.contractId != null) {
-          try {
-            await updateContractStatusInIsar(event.contractId!, 'disputed');
-          } catch (_) {}
-        }
-        break;
-
-      default:
-        break;
+    // Import and call sync for any contract-related notification
+    try {
+      final syncService = ContractSyncService();
+      await syncService.syncContracts();
+      print('[ContractNotificationHandler] Synced contracts after ${event.type}');
+    } catch (e) {
+      print('[ContractNotificationHandler] Error syncing contracts: $e');
     }
   }
 

@@ -169,6 +169,7 @@ ContractStatus _mapStringToStatus(String status) {
       return ContractStatus.rejected;
     case 'disputed':
     case 'on dispute':
+    case 'dispatched':
       return ContractStatus.disputed;
     default:
       return ContractStatus.pending;
@@ -252,11 +253,37 @@ Future<Message> saveMessageToIsar({
   DateTime? createdAt,
 }) async {
   // Check if message already exists by external ID
-  final allMessages = await isar.messages.where().findAll();
-  final existing = allMessages.where((m) => m.externalId == externalId).firstOrNull;
+  final existingById = await isar.messages
+      .filter()
+      .externalIdEqualTo(externalId)
+      .findFirst();
 
-  if (existing != null) {
-    return existing;
+  if (existingById != null) {
+    return existingById;
+  }
+
+  // Only check for local duplicates when receiving a server message
+  // This handles the case where we save locally first, then sync from server
+  // We match by: same contract, same sender, same contentHash, and is a local message
+  if (!externalId.startsWith('local_') && contentHash != null && contentHash.isNotEmpty) {
+    final localMessages = await isar.messages
+        .filter()
+        .contractIdEqualTo(contractId)
+        .senderIdEqualTo(senderId)
+        .contentHashEqualTo(contentHash)
+        .findAll();
+
+    // Find a local message to update (one with local_ prefix)
+    final localMessage = localMessages.where((m) => m.externalId?.startsWith('local_') == true).firstOrNull;
+
+    if (localMessage != null) {
+      // Update the local message with the real server ID
+      await isar.writeTxn(() async {
+        localMessage.externalId = externalId;
+        await isar.messages.put(localMessage);
+      });
+      return localMessage;
+    }
   }
 
   final message = Message()

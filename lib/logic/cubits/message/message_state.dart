@@ -28,6 +28,10 @@ class MessageSent extends MessageState {
   const MessageSent();
 }
 
+class MessageSynced extends MessageState {
+  const MessageSynced();
+}
+
 class MessageError extends MessageState {
   const MessageError(this.message);
   final String message;
