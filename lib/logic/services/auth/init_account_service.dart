@@ -19,6 +19,7 @@ class InitAccountService {
 
     final box = await Hive.openBox('user');
     await box.put('publicKey', keyBundle['publicKey']);
+    await box.put('decryptedPrivateKey', keyBundle['privateKey']);
     await box.put('encryptedPrivateKey', keyBundle['encryptedPrivateKey']);
     await box.put('privateKeySalt', keyBundle['salt']);
     await box.put('privateKeyIV', keyBundle['iv']);

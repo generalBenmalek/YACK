@@ -130,6 +130,7 @@ class CryptoService {
     );
     return {
       'publicKey': _encodeRSAPublicKey(keyPair.publicKey as RSAPublicKey),
+      'privateKey': base64Encode(_encodeRSAPrivateKey(keyPair.privateKey as RSAPrivateKey)),
       'encryptedPrivateKey': encrypted['ciphertext']!,
       'salt': encrypted['salt']!,
       'iv': encrypted['iv']!,
