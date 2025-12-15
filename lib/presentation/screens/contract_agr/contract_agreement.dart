@@ -40,7 +40,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
 
-  late String _currentUserId;
+  String _currentUserId = '';
   String? _externalContractId;
   Uint8List? _privateKeyBytes;
   String? _otherUserPublicKey;
@@ -272,21 +272,6 @@ class _ContractAgreementState extends State<ContractAgreement> {
       // Create SHA256 hash of plaintext for verification
       final contentHash = sha256.convert(utf8.encode(text)).toString();
 
-      // Save locally first (optimistic update)
-      final timestamp = DateTime.now();
-      final localExternalId = 'local_${timestamp.millisecondsSinceEpoch}';
-
-      await saveMessageToIsar(
-        contractId: widget.contractId,
-        externalId: localExternalId,
-        senderId: _currentUserId,
-        content: text,
-        contentHash: contentHash,
-        createdAt: timestamp,
-      );
-
-      _scrollToBottom();
-
       // Send to backend
       await context.read<MessageCubit>().sendMessage(
         contractId: _externalContractId!,
@@ -295,8 +280,10 @@ class _ContractAgreementState extends State<ContractAgreement> {
         contentHash: contentHash,
       );
 
-      // Sync to get the real externalId from server
+      // Sync messages from server to get all messages including the one we just sent
       await _syncMessages();
+
+      _scrollToBottom();
 
     } catch (e) {
       print('[ContractAgreement] Error sending message: $e');
@@ -317,15 +304,6 @@ class _ContractAgreementState extends State<ContractAgreement> {
       final file = File(filePath);
       final filename = filePath.split(Platform.pathSeparator).last;
 
-      // Save locally first
-      await saveMediaToIsar(
-        contractId: widget.contractId,
-        externalId: 'local_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: _currentUserId,
-        filename: filename,
-        path: filePath,
-        createdAt: DateTime.now(),
-      );
 
       // Upload to backend
       await context.read<MediaCubit>().uploadMedia(
@@ -709,6 +687,15 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
+  /// Refresh all data from backend
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      _syncContract(),
+      _syncMessages(),
+      _syncMedia(),
+    ]);
+  }
+
   /// Build messages list from Isar with real-time updates
   Widget _buildMessagesList() {
     return StreamBuilder<List<Message>>(
@@ -729,12 +716,23 @@ class _ContractAgreementState extends State<ContractAgreement> {
             final mediaFiles = mediaSnapshot.data ?? [];
 
             if (messages.isEmpty && mediaFiles.isEmpty) {
-              return Center(
-                child: Text(
-                  TranslationHandler.get('no_messages_yet'),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                  ),
+              return RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: Center(
+                        child: Text(
+                          TranslationHandler.get('no_messages_yet'),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
@@ -747,19 +745,24 @@ class _ContractAgreementState extends State<ContractAgreement> {
               return aTime.compareTo(bTime);
             });
 
-            return ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 8),
-              itemCount: allItems.length,
-              itemBuilder: (context, index) {
-                final item = allItems[index];
-                if (item is Message) {
-                  return _buildMessageBubble(item, item.senderId == _currentUserId);
-                } else if (item is MediaFile) {
-                  return _buildMediaBubble(item, item.senderId == _currentUserId);
-                }
-                return const SizedBox.shrink();
-              },
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView.builder(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 8),
+                itemCount: allItems.length,
+                itemBuilder: (context, index) {
+                  print('[ContractAgreement] Building item at index $_currentUserId');
+                  final item = allItems[index];
+                  if (item is Message) {
+                    return _buildMessageBubble(item, item.senderId == _currentUserId);
+                  } else if (item is MediaFile) {
+                    return _buildMediaBubble(item, item.senderId == _currentUserId);
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
             );
           },
         );
