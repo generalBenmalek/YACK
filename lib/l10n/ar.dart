@@ -127,6 +127,7 @@ const arabic = {
   'price_label': 'السعر',
   'notifications_title': 'الإشعارات',
   'no_notifications': 'لا توجد إشعارات بعد',
+  'no_contracts': 'لا توجد عقود بعد',
   'contracts': 'العقود',
   'add_contract_short': 'إضافة',
   'settings_label': 'الإعدادات',

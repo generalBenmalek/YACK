@@ -33,6 +33,32 @@ class _ContractsScreenState extends State<ContractsScreen> {
       }
     }
   }
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.no_sim_outlined,
+            size: 80,
+            color: color.onSurface.withOpacity(0.4),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            TranslationHandler.get('no_contracts'),
+            style: TextStyle(
+              color: color.onSurface.withOpacity(0.6),
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,20 +96,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     if (data == null || data.isEmpty) {
                       return RefreshIndicator(
                         onRefresh: _onRefresh,
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.6,
-                              child: Center(
-                                child: Text(
-                                  TranslationHandler.get('no_current_contract_available'),
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: _buildEmptyState(context)
                       );
                     }
 

@@ -133,6 +133,7 @@ const french = {
   'price_label': 'Prix',
   'notifications_title': 'Notifications',
   'no_notifications': 'Aucune notification pour le moment',
+  'no_contracts': 'Aucun contrat pour le moment',
   'contracts': 'Contrats',
   'add_contract_short': 'Ajouter',
   'settings_label': 'Paramètres',

@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:yack/logic/services/network/http_handler.dart';
 
 class UserProfile {
+  final String? userId;
   final String firstName;
   final String lastName;
   final String email;
@@ -12,6 +13,7 @@ class UserProfile {
   final String? iv;
 
   const UserProfile({
+    this.userId,
     required this.firstName,
     required this.lastName,
     required this.email,
@@ -24,6 +26,7 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
+      userId: json['_id']?.toString() ?? json['id']?.toString(),
       firstName: json['firstName']?.toString() ?? '',
       lastName: json['lastName']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
@@ -37,6 +40,7 @@ class UserProfile {
 
   Map<String, dynamic> toJson() {
     return {
+      'userId': userId,
       'firstName': firstName,
       'lastName': lastName,
       'email': email,

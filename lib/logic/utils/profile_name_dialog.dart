@@ -8,6 +8,8 @@ import 'package:yack/logic/utils/validator.dart';
 import 'package:yack/presentation/widgets/inputFormWidget.dart';
 import 'package:yack/presentation/widgets/primaryActionButton.dart';
 
+import '../services/auth/account_service.dart';
+
 Future<void> showEditNameDialog(BuildContext context) async {
   final userBox = Hive.box('user');
   final firstNameController =
@@ -63,10 +65,20 @@ Future<void> showEditNameDialog(BuildContext context) async {
                         return;
                       }
 
-                      await userBox.putAll({
-                        'firstName': firstNameController.text.trim(),
-                        'lastName': lastNameController.text.trim(),
-                      });
+                      try {
+                        await AccountService().updateProfileName(
+                          firstName: firstNameController.text.trim(),
+                          lastName: lastNameController.text.trim(),
+                        );
+                      } catch (e) {
+                        if (context.mounted) {
+                          SnackBarHandler.showError(
+                            context,
+                            TranslationHandler.get('error_updating_name'),
+                          );
+                        }
+                        return;
+                      }
 
                       if (context.mounted) {
                         Navigator.pop(context);

@@ -50,6 +50,9 @@ class AccountService {
 
     // Cache the profile info locally
     final box = await Hive.openBox('user');
+    if (profile.userId != null) {
+      await box.put('userId', profile.userId);
+    }
     await box.put('firstName', profile.firstName);
     await box.put('lastName', profile.lastName);
     await box.put('email', profile.email);
@@ -74,6 +77,7 @@ class AccountService {
   Future<Map<String, dynamic>> getCachedProfile() async {
     final box = await Hive.openBox('user');
     return {
+      'userId': box.get('userId'),
       'firstName': box.get('firstName'),
       'lastName': box.get('lastName'),
       'email': box.get('email'),

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:yack/presentation/screens/auth/confirm.dart';
-// import 'package:yack/presentation/screens/contract_agr/contract_agreement.dart';
+import 'package:yack/presentation/screens/contract_agr/contract_agreement.dart';
 import 'package:yack/presentation/screens/contract_agr/nomore_contracts.dart';
 import 'package:yack/presentation/screens/root.dart';
 import 'package:yack/presentation/screens/subscription.dart';
@@ -112,11 +112,11 @@ class MyApp extends StatelessWidget {
                 themedRoute(context, const SignContractScreen()),
             '/contract/create_contract': (context) =>
                 themedRoute(context, const CreateContractScreen()),
-            // '/contract/view': (context) {
-            //   final contractId =
-            //   ModalRoute.of(context)!.settings.arguments as int;
-            //   return themedRoute(context, ContractAgreement(contractId: contractId));
-            // },
+            '/contract/view': (context) {
+              final contractId =
+              ModalRoute.of(context)!.settings.arguments as int;
+              return themedRoute(context, ContractAgreement(contractId: contractId));
+            },
             '/settings': (context) =>
                 themedRoute(context, const SettingsScreen()),
             '/profile': (context) =>

@@ -131,6 +131,7 @@ const english = {
   'price_label': 'Price',
   'notifications_title': 'Notifications',
   'no_notifications': 'No notifications yet',
+  'no_contracts': 'No contracts yet',
   'contracts': 'Contracts',
   'add_contract_short': 'Add Contract',
   'settings_label': 'Settings',
