@@ -13,7 +13,15 @@ class Authenticated extends AuthState {}
 
 class Unauthenticated extends AuthState {}
 
-class UnverifiedUser extends AuthState {} // new state
+class UnverifiedUser extends AuthState {}
+
+class UncompletedUser extends AuthState {}
+
+// New: user is authenticated, but account setup not complete (no keys etc.)
+class AccountNotComplete extends AuthState {}
+
+// New: user is authenticated, account complete, but no decryptedPrivateKey cached
+class AccountCompleteButLocked extends AuthState {}
 
 class AuthError extends AuthState {
   final String messageKey;

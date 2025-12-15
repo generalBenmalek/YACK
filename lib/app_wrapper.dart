@@ -34,6 +34,27 @@ class AppWrapper extends StatelessWidget {
         }
 
         // ==========================
+        //    ACCOUNT NOT COMPLETE
+        // ==========================
+        if (state is AccountNotComplete) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushNamedAndRemoveUntil(context, '/init-account', (_) => false);
+          });
+          return; // IMPORTANT
+        }
+
+        // ==========================
+        //   ACCOUNT COMPLETE BUT
+        //   NO DECRYPTED PRIVATE KEY
+        // ==========================
+        if (state is AccountCompleteButLocked) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushNamedAndRemoveUntil(context, '/decrypt-account', (_) => false);
+          });
+          return; // IMPORTANT
+        }
+
+        // ==========================
         //        UNAUTHENTICATED
         // ==========================
         if (state is Unauthenticated || state is AuthError) {

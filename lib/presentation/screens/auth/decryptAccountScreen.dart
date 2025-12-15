@@ -11,6 +11,7 @@ import 'package:yack/logic/services/translation_handler.dart';
 import 'package:yack/presentation/widgets/primaryActionButton.dart';
 import 'package:yack/presentation/widgets/titleWidget.dart';
 import 'package:yack/presentation/widgets/inputFormWidget.dart';
+import 'package:yack/presentation/widgets/hrefTextWidget.dart';
 
 /// Screen shown after login to decrypt and load user's private key
 /// The user must enter their encryption password to access their account
@@ -169,6 +170,20 @@ class _DecryptAccountScreenState extends State<DecryptAccountScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // NEW: go back to Login
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 5,
+                children: [
+                  Text(TranslationHandler.get('already_have_account')),
+                  HrefWidget(
+                    text: TranslationHandler.get('login'),
+                    onClick: () {
+                      Navigator.pushNamed(context, '/login');
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),

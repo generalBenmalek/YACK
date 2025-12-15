@@ -55,49 +55,49 @@ class AuthService {
       box.put("didFirstLogin", true);
       await _saveAuthStatus('authenticated');
 
-      // Fetch and cache first/last name on login
-      if (user != null) {
-        String? firstName = box.get('firstName');
-        String? lastName = box.get('lastName');
+      // // Fetch and cache first/last name on login
+      // if (user != null) {
+      //   String? firstName = box.get('firstName');
+      //   String? lastName = box.get('lastName');
+      //
+      //   // If local names are missing, try to derive from displayName
+      //   if ((firstName == null || firstName.isEmpty) &&
+      //       (lastName == null || lastName.isEmpty)) {
+      //     final displayName = user.displayName ?? '';
+      //     if (displayName.isNotEmpty) {
+      //       final parts = displayName.split(' ');
+      //       if (parts.isNotEmpty) {
+      //         firstName = parts.first;
+      //         if (parts.length > 1) {
+      //           lastName = parts.sublist(1).join(' ');
+      //         }
+      //       }
+      //     }
+      //
+      //     if (firstName != null && firstName.isNotEmpty) {
+      //       await box.put('firstName', firstName);
+      //     }
+      //     if (lastName != null && lastName.isNotEmpty) {
+      //       await box.put('lastName', lastName);
+      //     }
+      //   }
+      //
+      //   // Optionally also try to read from Realtime Database profile node
+      //   try {
+      //     final profileRef = FirebaseDatabase.instance.ref(
+      //       'userProfiles/${user.uid}',
+      //     );
+      //     final snapshot = await profileRef.get();
+      //     final data = snapshot.value;
+      //     if (data is Map) {
+      //       final dbFirst = data['firstName']?.toString() ?? '';
+      //       final dbLast = data['lastName']?.toString() ?? '';
+      //       if (dbFirst.isNotEmpty) await box.put('firstName', dbFirst);
+      //       if (dbLast.isNotEmpty) await box.put('lastName', dbLast);
+      //     }
+      //   } catch (_) {}
 
-        // If local names are missing, try to derive from displayName
-        if ((firstName == null || firstName.isEmpty) &&
-            (lastName == null || lastName.isEmpty)) {
-          final displayName = user.displayName ?? '';
-          if (displayName.isNotEmpty) {
-            final parts = displayName.split(' ');
-            if (parts.isNotEmpty) {
-              firstName = parts.first;
-              if (parts.length > 1) {
-                lastName = parts.sublist(1).join(' ');
-              }
-            }
-          }
-
-          if (firstName != null && firstName.isNotEmpty) {
-            await box.put('firstName', firstName);
-          }
-          if (lastName != null && lastName.isNotEmpty) {
-            await box.put('lastName', lastName);
-          }
-        }
-
-        // Optionally also try to read from Realtime Database profile node
-        try {
-          final profileRef = FirebaseDatabase.instance.ref(
-            'userProfiles/${user.uid}',
-          );
-          final snapshot = await profileRef.get();
-          final data = snapshot.value;
-          if (data is Map) {
-            final dbFirst = data['firstName']?.toString() ?? '';
-            final dbLast = data['lastName']?.toString() ?? '';
-            if (dbFirst.isNotEmpty) await box.put('firstName', dbFirst);
-            if (dbLast.isNotEmpty) await box.put('lastName', dbLast);
-          }
-        } catch (_) {}
-
-      }
+      // }
     } on FirebaseAuthException catch (e) {
       throw _mapFirebaseLoginError(e);
     } catch (_) {
@@ -139,36 +139,36 @@ class AuthService {
 
     try {
       // Create user in Firebase Auth
-      final cred = await auth.createUserWithEmailAndPassword(
+      await auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      final user = cred.user;
+      // final user = cred.user;
 
-      // Update FirebaseAuth profile displayName
-      final fullName = [firstName, lastName]
-          .where((s) => s.trim().isNotEmpty)
-          .join(' ')
-          .trim();
-      if (user != null && fullName.isNotEmpty) {
-        await user.updateDisplayName(fullName);
-      }
+      // // Update FirebaseAuth profile displayName
+      // final fullName = [firstName, lastName]
+      //     .where((s) => s.trim().isNotEmpty)
+      //     .join(' ')
+      //     .trim();
+      // if (user != null && fullName.isNotEmpty) {
+      //   await user.updateDisplayName(fullName);
+      // }
 
-      // Optionally store names in Realtime Database profile node
-      if (user != null) {
-        try {
-          final profileRef = FirebaseDatabase.instance.ref(
-            'userProfiles/${user.uid}',
-          );
-          await profileRef.set({
-            'firstName': firstName,
-            'lastName': lastName,
-            'email': email,
-            'createdAt': ServerValue.timestamp,
-          });
-        } catch (_) {}
-      }
+      // // Optionally store names in Realtime Database profile node
+      // if (user != null) {
+      //   try {
+      //     final profileRef = FirebaseDatabase.instance.ref(
+      //       'userProfiles/${user.uid}',
+      //     );
+      //     await profileRef.set({
+      //       'firstName': firstName,
+      //       'lastName': lastName,
+      //       'email': email,
+      //       'createdAt': ServerValue.timestamp,
+      //     });
+      //   } catch (_) {}
+      // }
 
       // Save local user information
       final userBox = await Hive.openBox('user');

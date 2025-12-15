@@ -10,6 +10,7 @@ import 'package:yack/logic/services/translation_handler.dart';
 import 'package:yack/presentation/widgets/primaryActionButton.dart';
 import 'package:yack/presentation/widgets/titleWidget.dart';
 import 'package:yack/presentation/widgets/inputFormWidget.dart';
+import 'package:yack/presentation/widgets/hrefTextWidget.dart';
 
 /// Screen shown after email verification to set up encryption password
 /// The user must create a password to encrypt their private key
@@ -175,6 +176,20 @@ class _InitAccountScreenState extends State<InitAccountScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // NEW: go back to Sign Up
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 5,
+                children: [
+                  Text(TranslationHandler.get('already_have_account')),
+                  HrefWidget(
+                    text: TranslationHandler.get('sign_up'),
+                    onClick: () {
+                      Navigator.pushNamed(context, '/signup');
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),
