@@ -42,7 +42,6 @@ class _ScanContractScreenState extends State<ScanContractScreen>
   String? _scannedTitle;
   String? _scannedDescription;
   double? _scannedPrice;
-  String? _scannedUserAName;
 
   @override
   void initState() {
@@ -238,69 +237,6 @@ class _ScanContractScreenState extends State<ScanContractScreen>
     }
   }
 
-  /// Process contract by tempId only (for manual input or simple links)
-  Future<void> _processContractByTempId(String tempId) async {
-    if (_isProcessing) return;
-    _isProcessing = true;
-
-    // Stop scanning if it was active
-    _stopScanning();
-
-    setState(() => _showManualInput = false);
-
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        useRootNavigator: true,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    _scannedTempId = tempId;
-    // For manual input, we don't have preview data - will get from server response
-    _scannedTitle = '';
-    _scannedDescription = '';
-    _scannedPrice = 0;
-    _scannedUserAName = '';
-
-    // Get user B's public key for encryption
-    final publicKey = await _getUserPublicKey();
-    if (publicKey == null || publicKey.isEmpty) {
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        SnackBarHandler.showError(context, TranslationHandler.get('missing_public_key'));
-      }
-      _isProcessing = false;
-      return;
-    }
-
-    // For manual input without preview, encrypt placeholder values
-    // The actual contract details will come from the server
-    final titleUserB = CryptoService.encryptWithPublicKey(
-      plaintext: 'Contract',
-      publicKeyBase64: publicKey,
-    );
-    final descriptionUserB = CryptoService.encryptWithPublicKey(
-      plaintext: 'Joined via link',
-      publicKeyBase64: publicKey,
-    );
-    final priceUserB = CryptoService.encryptWithPublicKey(
-      plaintext: '0',
-      publicKeyBase64: publicKey,
-    );
-
-    // Join the temp contract immediately
-    if (mounted) {
-      context.read<TempContractCubit>().join(
-        tempId: tempId,
-        titleUserB: titleUserB,
-        descriptionUserB: descriptionUserB,
-        priceUserB: priceUserB,
-      );
-    }
-  }
-
   /// Process full data URL with embedded contract preview info
   Future<void> _processFullDataUrl(String code) async {
     try {
@@ -321,7 +257,6 @@ class _ScanContractScreenState extends State<ScanContractScreen>
       _scannedPrice = (jsonMap['price'] is num)
           ? (jsonMap['price'] as num).toDouble()
           : double.tryParse(jsonMap['price']?.toString() ?? '0') ?? 0;
-      _scannedUserAName = jsonMap['userAName']?.toString() ?? '';
 
       if (_scannedTempId == null || _scannedTempId!.isEmpty) {
         throw FormatException('Missing tempId');
@@ -398,14 +333,11 @@ class _ScanContractScreenState extends State<ScanContractScreen>
           _setupNotificationListenerForTempContract(state.contract.tempId);
 
           // Use userA name from server response if we don't have it from scan
-          final userAName = (state.contract.userAName != null && state.contract.userAName!.isNotEmpty)
-              ? state.contract.userAName!
-              : (_scannedUserAName ?? 'Unknown');
+          final userAName = state.userAName  ?? 'Unknown';
 
-          // Store for later use when saving contract
-          _scannedUserAName = userAName;
 
-          print('[DEBUG ScanContract] User A name: $userAName (from server: ${state.contract.userAName}, from scan: $_scannedUserAName)');
+
+          print('[DEBUG ScanContract] User A name: $userAName ');
 
           // Show accept/decline screen after successfully joining
           final result = await Navigator.push<bool>(

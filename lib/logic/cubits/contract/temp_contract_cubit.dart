@@ -50,9 +50,11 @@ class TempContractCubit extends Cubit<TempContractState> {
         descriptionUserB: descriptionUserB,
         priceUserB: priceUserB,
       );
+
       emit(TempContractJoinSuccess(
         contract: result.contract,
         userAPublicKey: result.userAPublicKey,
+        userAName: result.userAFullName,
       ));
     } catch (e) {
       emit(TempContractError(e.toString()));

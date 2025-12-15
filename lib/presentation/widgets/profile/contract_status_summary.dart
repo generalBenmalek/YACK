@@ -14,6 +14,8 @@ class ContractStatusSummary extends StatelessWidget {
       ContractStatus.completed: 0,
       ContractStatus.rejected: 0,
       ContractStatus.disputed: 0,
+      ContractStatus.active: 0,
+
     };
 
     for (final contract in contracts) {
@@ -62,9 +64,9 @@ class ContractStatusSummary extends StatelessWidget {
               final tiles = [
                 StatusCountTile(
                   label: TranslationHandler.get('status_active'),
-                  count: counts[ContractStatus.accepted] ?? 0,
+                  count: counts[ContractStatus.active] ?? 0,
                   color: Colors.green,
-                  icon: Icons.check_circle_outline,
+                  icon: Icons.work_outline,
                 ),
                 StatusCountTile(
                   label: TranslationHandler.get('status_pending'),

@@ -29,9 +29,12 @@ class TempContractJoinSuccess extends TempContractState {
   const TempContractJoinSuccess({
     required this.contract,
     this.userAPublicKey,
+    this.userAName,
+
   });
   final TempContract contract;
   final String? userAPublicKey; // For encrypting messages to user A
+  final String? userAName; // For encrypting messages to user A
 
   @override
   List<Object?> get props => [contract, userAPublicKey];

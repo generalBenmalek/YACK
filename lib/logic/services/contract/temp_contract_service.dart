@@ -57,9 +57,14 @@ class TempContractService {
     final userAPublicKey = _extractUserAPublicKey(response);
     print('[DEBUG TempContractService] userAPublicKey: $userAPublicKey');
 
+    // NEW: extract user A full name returned by backend
+    final userAFullName = _extractUserAFullName(response);
+    print('[DEBUG TempContractService] userAFullName: $userAFullName');
+
     return TempContractJoinResult(
       contract: contract,
       userAPublicKey: userAPublicKey,
+      userAFullName: userAFullName,
     );
   }
 
@@ -85,6 +90,32 @@ class TempContractService {
     if (response is Map) {
       return response['userAPublicKey']?.toString() ??
              response['userA']?['publicKey']?.toString();
+    }
+    return null;
+  }
+
+  // NEW: helper to extract userAFullName from response
+  String? _extractUserAFullName(dynamic response) {
+    if (response is Map) {
+      // backend returns 'userAFullName' at top-level in join response
+      final direct = response['userAFullName']?.toString();
+      if (direct != null && direct.isNotEmpty) return direct;
+
+      // fallback: try userA object fields
+      final userA = response['userA'];
+      if (userA is Map) {
+        final first = userA['firstName']?.toString() ?? '';
+        final last = userA['lastName']?.toString() ?? '';
+        final combined = [first, last].where((s) => s.isNotEmpty).join(' ');
+        if (combined.isNotEmpty) return combined;
+      }
+
+      // fallback: try top-level firstName/lastName
+      final topFirst = response['firstName']?.toString();
+      final topLast = response['lastName']?.toString();
+      if ((topFirst ?? '').isNotEmpty || (topLast ?? '').isNotEmpty) {
+        return [topFirst, topLast].where((s) => (s ?? '').isNotEmpty).join(' ');
+      }
     }
     return null;
   }
@@ -164,10 +195,12 @@ class TempContractService {
 class TempContractJoinResult {
   final TempContract contract;
   final String? userAPublicKey;
+  final String? userAFullName; // NEW: user A full name returned by backend
 
   const TempContractJoinResult({
     required this.contract,
     this.userAPublicKey,
+    this.userAFullName,
   });
 }
 
