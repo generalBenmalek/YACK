@@ -19,6 +19,8 @@ class ChangeEncryptionPasswordCubit extends Cubit<ChangeEncryptionPasswordState>
     }
 
     emit(ChangeEncryptionPasswordLoading());
+    // Allow UI to update before heavy crypto operations
+    await Future.delayed(const Duration(milliseconds: 50));
 
     try {
       final box = await Hive.openBox('user');

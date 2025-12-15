@@ -20,6 +20,8 @@ class UserCubit extends Cubit<UserState> {
     required String password,
   }) async {
     emit(const UserLoading());
+    // Allow UI to update before heavy crypto operations
+    await Future.delayed(const Duration(milliseconds: 50));
     try {
       await _initAccountService.initializeAccount(password);
       emit(const UserFinalizeSuccess());
@@ -83,6 +85,8 @@ class UserCubit extends Cubit<UserState> {
   /// Fetches encrypted key from Hive cache and decrypts it.
   Future<void> decryptAndLoad({required String password}) async {
     emit(const UserLoading());
+    // Allow UI to update before heavy crypto operations
+    await Future.delayed(const Duration(milliseconds: 50));
     try {
       final box = await Hive.openBox('user');
       final encryptedPrivateKey = box.get('encryptedPrivateKey') as String?;
