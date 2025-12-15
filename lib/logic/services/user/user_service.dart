@@ -92,9 +92,15 @@ class UserService {
 
   /// Update encrypted private key.
   /// Used for re-encrypting the same private key with a new password.
-  Future<void> updatePrivateKey(String encryptedPrivateKey) async {
+  Future<void> updatePrivateKey({
+    required String encryptedPrivateKey,
+    required String salt,
+    required String iv,
+  }) async {
     await _http.put('/user/private-key', body: {
       'encryptedPrivateKey': encryptedPrivateKey,
+      'salt': salt,
+      'iv': iv,
     });
   }
 

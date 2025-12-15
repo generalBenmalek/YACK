@@ -99,13 +99,7 @@ class _ScanContractScreenState extends State<ScanContractScreen>
 
     // Listen via ContractNotificationHandler
     _notificationSubscription = handler.eventsForTempContract(tempId).listen((event) async {
-      print('[DEBUG ScanContract] ContractNotificationHandler event: ${event.type}, contractId: ${event.contractId}');
-      if (mounted) {
-        SnackBarHandler.showMessage(
-          context,
-          '[DEBUG] Handler: ${event.type} - contractId: ${event.contractId ?? 'none'}',
-        );
-      }
+      print('[ScanContract] ContractNotificationHandler event: ${event.type}, contractId: ${event.contractId}');
 
       switch (event.type) {
         case ContractNotificationType.contractSign:
@@ -125,14 +119,7 @@ class _ScanContractScreenState extends State<ScanContractScreen>
       final data = message.data;
       if (data.isEmpty) return;
 
-      // DEBUG: Show every Firebase message received
-      print('[DEBUG ScanContract] Firebase message received: $data');
-      if (mounted) {
-        SnackBarHandler.showMessage(
-          context,
-          '[DEBUG] FCM: ${data['type'] ?? 'no type'} - tempId: ${data['tempId'] ?? 'none'}',
-        );
-      }
+      print('[ScanContract] Firebase message received: $data');
 
       final notifTempId = data['tempId']?.toString();
       // Only handle notifications for our temp contract

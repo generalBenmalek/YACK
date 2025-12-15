@@ -375,4 +375,14 @@ const arabic = {
   'syncing_messages': 'جاري مزامنة الرسائل...',
   'messages_synced': 'تم مزامنة الرسائل بنجاح',
   'error_syncing_messages': 'فشل مزامنة الرسائل',
+  // Encryption Password
+  'encryption_password': 'كلمة مرور التشفير',
+  'encryption_password_subtitle': 'تغيير كلمة مرور التشفير',
+  'change_encryption_password': 'تغيير كلمة مرور التشفير',
+  'change_encryption_password_warning': 'كلمة المرور هذه تشفر مفتاحك الخاص. إذا فقدتها، ستفقد الوصول إلى جميع عقودك وبياناتك نهائياً.',
+  'old_encryption_password': 'كلمة مرور التشفير الحالية',
+  'new_encryption_password': 'كلمة مرور التشفير الجديدة',
+  'confirm_encryption_password': 'تأكيد كلمة مرور التشفير',
+  'encryption_password_updated_successfully': 'تم تحديث كلمة مرور التشفير بنجاح!',
+  'missing_encryption_data': 'بيانات التشفير مفقودة. يرجى تسجيل الخروج وإعادة إعداد حسابك.',
 };

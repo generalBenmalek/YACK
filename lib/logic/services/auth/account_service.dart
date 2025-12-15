@@ -110,12 +110,22 @@ class AccountService {
   }
 
   /// Update encrypted private key (for password change)
-  Future<void> updateEncryptedPrivateKey(String encryptedPrivateKey) async {
-    await _userService.updatePrivateKey(encryptedPrivateKey);
+  Future<void> updateEncryptedPrivateKey({
+    required String encryptedPrivateKey,
+    required String salt,
+    required String iv,
+  }) async {
+    await _userService.updatePrivateKey(
+      encryptedPrivateKey: encryptedPrivateKey,
+      salt: salt,
+      iv: iv,
+    );
 
     // Update local cache
     final box = await Hive.openBox('user');
     await box.put('encryptedPrivateKey', encryptedPrivateKey);
+    await box.put('privateKeySalt', salt);
+    await box.put('privateKeyIV', iv);
   }
 
   /// Get cached public key

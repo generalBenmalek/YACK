@@ -13,6 +13,7 @@ class ContractStatusSummary extends StatelessWidget {
       ContractStatus.pending: 0,
       ContractStatus.completed: 0,
       ContractStatus.rejected: 0,
+      ContractStatus.disputed: 0,
     };
 
     for (final contract in contracts) {
@@ -39,7 +40,7 @@ class ContractStatusSummary extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -78,10 +79,10 @@ class ContractStatusSummary extends StatelessWidget {
                   icon: Icons.task_alt,
                 ),
                 StatusCountTile(
-                  label: TranslationHandler.get('status_rejected'),
-                  count: counts[ContractStatus.rejected] ?? 0,
-                  color: Colors.redAccent,
-                  icon: Icons.cancel_outlined,
+                  label: TranslationHandler.get('status_disputed'),
+                  count: counts[ContractStatus.disputed] ?? 0,
+                  color: Colors.red,
+                  icon: Icons.warning_amber_rounded,
                 ),
               ];
 

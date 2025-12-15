@@ -74,14 +74,6 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
     _firebaseSubscription = FirebaseMessaging.onMessage.listen((message) {
       final data = message.data;
 
-      // DEBUG: Show every Firebase message received
-      print('[DEBUG ShareContract] Firebase message received: $data');
-      if (mounted) {
-        SnackBarHandler.showMessage(
-          context,
-          '[DEBUG] FCM: ${data['type'] ?? 'no type'} - tempId: ${data['tempId'] ?? 'none'}',
-        );
-      }
 
       if (data.isEmpty) return;
 

@@ -387,4 +387,14 @@ const french = {
   'syncing_messages': 'Synchronisation des messages...',
   'messages_synced': 'Messages synchronisés avec succès',
   'error_syncing_messages': 'Échec de la synchronisation des messages',
+  // Encryption Password
+  'encryption_password': 'Mot de passe de chiffrement',
+  'encryption_password_subtitle': 'Changer votre mot de passe de chiffrement',
+  'change_encryption_password': 'Changer le mot de passe de chiffrement',
+  'change_encryption_password_warning': 'Ce mot de passe chiffre votre clé privée. Si vous le perdez, vous perdrez définitivement l\'accès à tous vos contrats et données.',
+  'old_encryption_password': 'Mot de passe de chiffrement actuel',
+  'new_encryption_password': 'Nouveau mot de passe de chiffrement',
+  'confirm_encryption_password': 'Confirmer le mot de passe de chiffrement',
+  'encryption_password_updated_successfully': 'Mot de passe de chiffrement mis à jour avec succès!',
+  'missing_encryption_data': 'Données de chiffrement manquantes. Veuillez vous déconnecter et reconfigurer votre compte.',
 };

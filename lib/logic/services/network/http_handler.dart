@@ -10,7 +10,7 @@ class HttpHandler {
   HttpHandler._internal();
 
   // server
-  final String baseUrl = "http://aaayme.zapto.org:3000";
+  final String baseUrl = "http://aaayme.zapto.org";
 
   // -----------------------
   // Get Firebase Token

@@ -376,4 +376,14 @@ const english = {
   'syncing_messages': 'Syncing messages...',
   'messages_synced': 'Messages synced successfully',
   'error_syncing_messages': 'Failed to sync messages',
+  // Encryption Password
+  'encryption_password': 'Encryption Password',
+  'encryption_password_subtitle': 'Change your encryption password',
+  'change_encryption_password': 'Change Encryption Password',
+  'change_encryption_password_warning': 'This password encrypts your private key. If you lose it, you will lose access to all your contracts and data permanently.',
+  'old_encryption_password': 'Current Encryption Password',
+  'new_encryption_password': 'New Encryption Password',
+  'confirm_encryption_password': 'Confirm Encryption Password',
+  'encryption_password_updated_successfully': 'Encryption password updated successfully!',
+  'missing_encryption_data': 'Missing encryption data. Please log out and set up your account again.',
 };

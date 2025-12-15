@@ -61,7 +61,7 @@ class UserCubit extends Cubit<UserState> {
   Future<void> updatePrivateKey(String encryptedPrivateKey) async {
     emit(const UserLoading());
     try {
-      await _service.updatePrivateKey(encryptedPrivateKey);
+      await _service.updatePrivateKey(encryptedPrivateKey: encryptedPrivateKey, salt: '', iv: '');
       emit(const UserUpdateSuccess());
     } catch (e) {
       emit(UserError(e.toString()));
