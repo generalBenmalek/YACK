@@ -37,28 +37,35 @@ class _ContractsScreenState extends State<ContractsScreen> {
     final theme = Theme.of(context);
     final color = theme.colorScheme;
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.no_sim_outlined,
-            size: 80,
-            color: color.onSurface.withOpacity(0.4),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            TranslationHandler.get('no_contracts'),
-            style: TextStyle(
-              color: color.onSurface.withOpacity(0.6),
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.no_sim_outlined,
+                  size: 80,
+                  color: color.onSurface.withOpacity(0.4),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  TranslationHandler.get('no_contracts'),
+                  style: TextStyle(
+                    color: color.onSurface.withOpacity(0.6),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
+        );
+      },
+    );  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +253,8 @@ class ContractCard extends StatelessWidget {
   }
 
   Color _getStatusColor() {
+
+
     switch (contract.status) {
       case ContractStatus.active:
       case ContractStatus.accepted:
@@ -279,6 +288,11 @@ class ContractCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    if ((contract.userAAccepted || contract.userBAccepted) && contract.status == ContractStatus.active) {
+      contract.status = ContractStatus.pending;
+    }
+
     return GestureDetector(
       onTap: () {
         // Use root navigator to avoid nested navigator issues with persistent_bottom_nav_bar
