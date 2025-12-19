@@ -11,6 +11,8 @@ import 'app_wrapper.dart';
 import 'package:yack/presentation/screens/auth/forgetPassword.dart';
 import 'package:yack/presentation/screens/auth/login.dart';
 import 'package:yack/presentation/screens/auth/signup.dart';
+import 'package:yack/presentation/screens/auth/initAccountScreen.dart';
+import 'package:yack/presentation/screens/auth/decryptAccountScreen.dart';
 import 'package:yack/presentation/screens/welcome.dart';
 import 'package:yack/presentation/theme/theme.dart';
 import 'package:yack/presentation/screens/profile.dart';
@@ -98,6 +100,10 @@ class MyApp extends StatelessWidget {
                 themedRoute(context,  ConfirmAccount(),transparent: true),
             '/forgot-password': (context) =>
                 themedRoute(context,  ForgetPassword(),transparent: true),
+            '/init-account': (context) =>
+                themedRoute(context, const InitAccountScreen(), transparent: true),
+            '/decrypt-account': (context) =>
+                themedRoute(context, const DecryptAccountScreen(), transparent: true),
 
             // CONTRACT ROUTES
             '/contract/scan_contract': (context) =>

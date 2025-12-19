@@ -72,8 +72,8 @@ class ConfirmAccount extends StatelessWidget {
                         },
                         listener: (context,state){
                           if(state is ConfirmSuccess){
-                            context.read<AuthCubit>().markAuthenticated();
-                            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                            // Navigate to init account to set up encryption password
+                            Navigator.pushNamedAndRemoveUntil(context, '/init-account', (route) => false);
                           }
                           else if(state is ConfirmUnverified){
                             SnackBarHandler.showWarning(

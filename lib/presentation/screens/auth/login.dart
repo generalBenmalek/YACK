@@ -78,8 +78,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       BlocConsumer<LoginCubit,LoginState>(
                         listener: (context, state) {
                           if (state is LoginSuccess) {
-                            context.read<AuthCubit>().markAuthenticated();
-                            Navigator.pushReplacementNamed(context, "/home");
+                            // Navigate to decrypt account to unlock with encryption password
+                            Navigator.pushReplacementNamed(context, "/decrypt-account");
                           } else if (state is LoginError) {
                             SnackBarHandler.showError(context,TranslationHandler.get(state.message!));
                           }

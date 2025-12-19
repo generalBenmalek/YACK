@@ -1,18 +1,31 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:isar/isar.dart';
-import 'package:yack/main.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'dart:async';
-import 'dart:io';
 import 'package:yack/data/db/models/contract.dart';
-import 'package:yack/data/db/models/message.dart' as db;
+import 'package:yack/data/db/models/message.dart';
 import 'package:yack/data/db/models/mediaFile.dart';
+import 'package:yack/data/repositories/isar_adapter.dart';
+import 'package:yack/logic/cubits/contract/contract_state_cubit.dart';
+import 'package:yack/logic/cubits/contract/contract_state_state.dart';
+import 'package:yack/logic/cubits/message/message_cubit.dart';
+import 'package:yack/logic/cubits/message/message_state.dart';
+import 'package:yack/logic/cubits/media/media_cubit.dart';
+import 'package:yack/logic/cubits/media/media_state.dart';
+import 'package:yack/logic/services/auth/cryptoService.dart';
+import 'package:yack/logic/services/contract/contract_sync_service.dart';
+import 'package:yack/logic/services/notification/contract_notification_handler.dart';
+import 'package:yack/logic/services/notification/notification_service.dart';
+import 'package:yack/logic/services/snackBarHandler.dart';
 import 'package:yack/logic/services/translation_handler.dart';
-import 'package:yack/data/db/online.dart' as online_db;
-import 'package:yack/presentation/screens/contract_agr/contract_cubit.dart';
+import 'package:yack/main.dart';
 
 class ContractAgreement extends StatefulWidget {
   final int contractId;
@@ -27,413 +40,186 @@ class _ContractAgreementState extends State<ContractAgreement> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
 
-  late String _currentUserId;
+  String _currentUserId = '';
   String? _externalContractId;
-  String? _contractKey;
-  StreamSubscription? _messagesSubscription;
-  StreamSubscription? _disputeSubscription;
-  StreamSubscription? _closeSubscription;
-  StreamSubscription? _completedSubscription;
-  StreamSubscription? _mediaSubscription;
+  Uint8List? _privateKeyBytes;
+  String? _otherUserPublicKey;
 
-  bool _hasShownCompletionDialog = false;
-  bool _hasShownDisputeDialog = false;
-  bool _initialDisputeCheckDone = false;
+  StreamSubscription<ContractNotificationEvent>? _notificationSubscription;
+  bool _isLoading = true;
+  bool _isSendingMessage = false;
 
   @override
   void initState() {
     super.initState();
-    _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-    _loadExternalIdAndSubscribe();
-  }
-
-  // Load contract external ID and setup Firebase listeners (Chadli)
-  Future<void> _loadExternalIdAndSubscribe() async {
-    final contract = await isar.contracts.get(widget.contractId);
-    if (contract != null) {
-      // Set current user from contract if not from Firebase Auth (Chadli)
-      if (_currentUserId.isEmpty) {
-        _currentUserId = contract.userB.isNotEmpty
-            ? contract.userB
-            : contract.userA;
-      }
-
-      if (contract.externalId != null && contract.externalId!.isNotEmpty) {
-        _externalContractId = contract.externalId;
-
-        final keyResult = await online_db.getKey(_externalContractId!);
-        if (keyResult['status'] == true) {
-          _contractKey = keyResult['key'];
-        }
-
-        // Check if contract was completed while user was away (Chadli)
-        await _checkCompletedStatus();
-
-        _subscribeToFirebaseMessages();
-        _subscribeToDisputeNotifications();
-        _subscribeToCloseRequests();
-        _subscribeToCompletedStatus();
-        _subscribeToMediaFiles();
-      }
-    }
-  }
-
-  // One-time check for completed status on chat entry (Chadli)
-  Future<void> _checkCompletedStatus() async {
-    if (_externalContractId == null) return;
-
-    final completedRef = FirebaseDatabase.instance.ref(
-      'completedContracts/$_externalContractId',
-    );
-    final snapshot = await completedRef.get();
-
-    if (snapshot.exists && snapshot.value != null) {
-      await _updateLocalContractStatus(ContractStatus.completed);
-    }
-  }
-
-  // Listen for contract completion in persistent node (Chadli)
-  void _subscribeToCompletedStatus() {
-    if (_externalContractId == null) return;
-
-    final completedRef = FirebaseDatabase.instance.ref(
-      'completedContracts/$_externalContractId',
-    );
-    _completedSubscription = completedRef.onValue.listen((event) async {
-      final data = event.snapshot.value;
-      if (data != null) {
-        await _updateLocalContractStatus(ContractStatus.completed);
-      }
-    });
-  }
-
-  // Listen to Firebase supportDocs and sync media files (Chadli)
-  void _subscribeToMediaFiles() {
-    if (_externalContractId == null) return;
-
-    final ref = FirebaseDatabase.instance.ref(
-      'contracts/$_externalContractId/supportDocs',
-    );
-    _mediaSubscription = ref.onValue.listen((event) async {
-      final data = event.snapshot.value;
-      if (data == null) return;
-
-      if (data is List) {
-        for (var doc in data) {
-          if (doc is Map) await _syncMediaToIsar(doc);
-        }
-      }
-    });
-  }
-
-  // Sync media file from Firebase to local Isar (Chadli)
-  Future<void> _syncMediaToIsar(Map doc) async {
-    final senderId = doc['userId']?.toString() ?? '';
-    final type = doc['type']?.toString() ?? '';
-    String content = doc['content']?.toString() ?? '';
-
-    if (content.isEmpty || type == 'text') return;
-    if (senderId == _currentUserId) return; // Skip own files (Chadli)
-
-    // Decrypt the URL (Chadli)
-    if (_contractKey != null) {
-      try {
-        content = online_db.decrypt(content, _contractKey!);
-      } catch (_) {
-        return;
-      }
-    }
-
-    // Check if already synced (Chadli)
-    final existing = await isar.mediaFiles
-        .filter()
-        .contractIdEqualTo(widget.contractId)
-        .filePathEqualTo(content)
-        .findFirst();
-
-    if (existing == null) {
-      await isar.writeTxn(() async {
-        await isar.mediaFiles.put(
-          MediaFile()
-            ..contractId = widget.contractId
-            ..senderId = senderId
-            ..filePath =
-                content // URL from Cloudinary (Chadli)
-            ..type = type
-            ..createdAt = DateTime.now(),
-        );
-      });
-    }
-  }
-
-  // Listen to Firebase messages and sync to local Isar (Chadli)
-  void _subscribeToFirebaseMessages() {
-    if (_externalContractId == null) return;
-
-    final ref = FirebaseDatabase.instance.ref(
-      'contracts/$_externalContractId/messages',
-    );
-    _messagesSubscription = ref.onValue.listen((event) async {
-      final data = event.snapshot.value;
-      if (data == null) return;
-
-      // Firebase push() creates Map with unique keys (Chadli)
-      if (data is Map) {
-        for (var entry in data.entries) {
-          final firebaseKey = entry.key.toString();
-          final msg = entry.value;
-          if (msg is Map) await _syncMessageToIsar(msg, firebaseKey);
-        }
-      } else if (data is List) {
-        // Fallback for list format - use index as key (Chadli)
-        for (int i = 0; i < data.length; i++) {
-          final msg = data[i];
-          if (msg is Map) await _syncMessageToIsar(msg, 'list_$i');
-        }
-      }
-      _scrollToBottom();
-    });
-  }
-
-  // Sync a single message from Firebase to Isar using firebaseKey (Chadli)
-  Future<void> _syncMessageToIsar(Map msg, String firebaseKey) async {
-    final senderId = msg['senderId']?.toString() ?? '';
-    String text = msg['text']?.toString() ?? '';
-    final timestamp = msg['timestamp'];
-    final isEncrypted = msg['encrypted'] == true;
-
-    if (text.isEmpty) return;
-
-    if (isEncrypted && _contractKey != null) {
-      try {
-        text = online_db.decrypt(text, _contractKey!);
-      } catch (_) {}
-    }
-
-    final msgTime = timestamp != null
-        ? DateTime.fromMillisecondsSinceEpoch(
-            timestamp is int
-                ? timestamp
-                : int.tryParse(timestamp.toString()) ?? 0,
-          )
-        : DateTime.now();
-
-    // Unique key combines contractId + firebaseKey (Chadli)
-    final uniqueKey = '${widget.contractId}_$firebaseKey';
-
-    // 1. Check if message already exists by unique key (Chadli)
-    final existing = await isar.messages
-        .filter()
-        .firebaseKeyEqualTo(uniqueKey)
-        .findFirst();
-
-    if (existing != null) return;
-
-    // 2. Check for local temporary message to update (Deduplication) (Chadli)
-    // We look for a message with same sender, text and a local key
-    final localMatch = await isar.messages
-        .filter()
-        .contractIdEqualTo(widget.contractId)
-        .senderIdEqualTo(senderId)
-        .textEqualTo(text)
-        .firebaseKeyStartsWith('${widget.contractId}_local_')
-        .sortByCreatedAt() // Pick oldest first to ensure correct FIFO matching
-        .findFirst();
-
-    if (localMatch != null) {
-      // Update it with the real Firebase key.
-      await isar.writeTxn(() async {
-        localMatch.firebaseKey = uniqueKey;
-        await isar.messages.put(localMatch);
-      });
-      return;
-    }
-
-    // 3. Insert new if not found
-    await isar.writeTxn(() async {
-      await isar.messages.put(
-        db.Message()
-          ..contractId = widget.contractId
-          ..senderId = senderId
-          ..text = text
-          ..createdAt = msgTime
-          ..firebaseKey = uniqueKey,
-      );
-    });
-  }
-
-  // Listen for dispute notifications from other party (Chadli)
-  void _subscribeToDisputeNotifications() {
-    if (_externalContractId == null) return;
-
-    final disputeRef = FirebaseDatabase.instance.ref(
-      'dispute/$_externalContractId',
-    );
-    _disputeSubscription = disputeRef.onValue.listen((event) async {
-      final data = event.snapshot.value;
-      if (data == null) return;
-
-      if (data is Map) {
-        final disputedBy = data['disputedBy']?.toString() ?? '';
-
-        // Always update local status if disputed (Chadli)
-        if (disputedBy.isNotEmpty) {
-          await _updateLocalContractStatus(ContractStatus.onDispute);
-        }
-
-        // Only show dialog once and only if disputed by other party (Chadli)
-        // Skip if this is the initial check and contract was already disputed
-        if (!_hasShownDisputeDialog &&
-            disputedBy.isNotEmpty &&
-            disputedBy != _currentUserId &&
-            _initialDisputeCheckDone) {
-          _hasShownDisputeDialog = true;
-          if (mounted) _showDisputeNotificationDialog();
-        }
-
-        // Mark initial check as done after first callback (Chadli)
-        if (!_initialDisputeCheckDone) {
-          _initialDisputeCheckDone = true;
-        }
-      }
-    });
-  }
-
-  // Listen for close requests from other party (Chadli)
-  void _subscribeToCloseRequests() {
-    if (_externalContractId == null) return;
-
-    final closeRef = FirebaseDatabase.instance.ref(
-      'contracts/$_externalContractId/close',
-    );
-    _closeSubscription = closeRef.onValue.listen((event) async {
-      final data = event.snapshot.value;
-      if (data == null || _hasShownCompletionDialog) return;
-
-      if (data is String) {
-        String requesterId = data;
-        if (_contractKey != null) {
-          try {
-            requesterId = online_db.decrypt(data, _contractKey!);
-          } catch (_) {
-            return;
-          }
-        }
-
-        // Show dialog only to OTHER party (Chadli)
-        if (requesterId.isNotEmpty && requesterId != _currentUserId) {
-          _hasShownCompletionDialog = true;
-          if (mounted) _showCompletionConfirmationDialog();
-        }
-      }
-    });
-  }
-
-  // Show dialog when other party raises a dispute (Chadli)
-  void _showDisputeNotificationDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.warning, color: Colors.red, size: 28),
-            const SizedBox(width: 8),
-            Text(TranslationHandler.get('dispute_raised')),
-          ],
-        ),
-        content: Text(
-          TranslationHandler.get('dialog_dispute_raised_message'),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              TranslationHandler.get('dialog_dispute_ok'),
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Show dialog when other party requests completion (Chadli)
-  void _showCompletionConfirmationDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 28),
-            const SizedBox(width: 8),
-            Flexible(child: Text(TranslationHandler.get('completion_request'))),
-          ],
-        ),
-        content: Text(
-          TranslationHandler.get('dialog_completion_request_message'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _hasShownCompletionDialog = false;
-              // Decline the request (Chadli)
-              if (_externalContractId != null) {
-                online_db.declineCompletion(_externalContractId!);
-              }
-            },
-            child: Text(TranslationHandler.get('no')),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              // Confirm completion - update UI immediately (Chadli)
-              await _updateLocalContractStatus(ContractStatus.completed);
-              // Then sync with backend
-              if (_externalContractId != null) {
-                await online_db.closeContract(
-                  _externalContractId!,
-                  _currentUserId,
-                );
-              }
-            },
-            child: Text(
-              TranslationHandler.get('yes'),
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Update local contract status in Isar (Chadli)
-  Future<void> _updateLocalContractStatus(ContractStatus newStatus) async {
-    final contract = await isar.contracts.get(widget.contractId);
-    if (contract != null && contract.status != newStatus) {
-      await isar.writeTxn(() async {
-        contract.status = newStatus;
-        contract.updatedAt = DateTime.now();
-        await isar.contracts.put(contract);
-      });
-      // The Isar watch subscription will automatically trigger UI update (Chadli)
-    }
+    _loadContractAndKeys();
+    _subscribeToNotifications();
   }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _messagesSubscription?.cancel();
-    _disputeSubscription?.cancel();
-    _closeSubscription?.cancel();
-    _completedSubscription?.cancel();
-    _mediaSubscription?.cancel();
+    _notificationSubscription?.cancel();
     super.dispose();
+  }
+
+  /// Load contract from Isar and user keys from Hive
+  Future<void> _loadContractAndKeys() async {
+    try {
+      // Load contract from Isar
+      final contract = await isar.contracts.get(widget.contractId);
+      if (contract == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      _externalContractId = contract.externalId;
+
+      // Get current user ID from Hive
+      final userBox = await Hive.openBox('user');
+      _currentUserId = userBox.get('userId')?.toString() ?? '';
+
+      // Get decrypted private key from Hive (set during account unlock)
+      final cachedKey = userBox.get('decryptedPrivateKey');
+      if (cachedKey != null) {
+        if (cachedKey is Uint8List) {
+          _privateKeyBytes = cachedKey;
+        } else if (cachedKey is List) {
+          _privateKeyBytes = Uint8List.fromList(cachedKey.cast<int>());
+        }
+      }
+
+      // Determine other user's public key
+      final isUserA = contract.userAId == _currentUserId;
+      _otherUserPublicKey = isUserA
+          ? contract.userBPublicKey
+          : contract.userAPublicKey;
+
+      // Sync messages from backend
+      await _syncMessages();
+
+      setState(() => _isLoading = false);
+    } catch (e) {
+      print('[ContractAgreement] Error loading contract: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  /// Subscribe to FCM notifications for real-time updates
+  void _subscribeToNotifications() {
+    final handler = NotificationService().contractHandler;
+
+    _notificationSubscription = handler.events.listen((event) async {
+      // Only process events for this contract
+      if (_externalContractId == null) return;
+      if (event.contractId != _externalContractId) return;
+
+      print('[ContractAgreement] Received notification: ${event.type}, userId: ${event.userId}');
+
+      switch (event.type) {
+        case ContractNotificationType.contractAccept:
+          SnackBarHandler.showSuccess(
+            context,
+            TranslationHandler.get('notification_other_accepted')
+                .replaceAll('{name}', event.username ?? 'User'),
+          );
+          // Sync is handled by notification handler - UI will update via StreamBuilder
+          break;
+
+        case ContractNotificationType.contractDispute:
+          SnackBarHandler.showError(
+            context,
+            TranslationHandler.get('notification_contract_disputed')
+                .replaceAll('{name}', event.username ?? 'User'),
+          );
+          // Sync is handled by notification handler - UI will update via StreamBuilder
+          break;
+
+        case ContractNotificationType.contractMessage:
+          // Sync messages from backend
+          await _syncMessages();
+          break;
+
+        case ContractNotificationType.contractMedia:
+          // Sync media from backend
+          await _syncMedia();
+          break;
+
+        default:
+          break;
+      }
+    });
+  }
+
+
+  /// Sync messages from backend and decrypt them
+  Future<void> _syncMessages() async {
+    if (_externalContractId == null || _privateKeyBytes == null) return;
+
+    try {
+      final messageCubit = context.read<MessageCubit>();
+      await messageCubit.loadMessages(contractId: _externalContractId!);
+
+      final state = messageCubit.state;
+      if (state is MessagesLoaded) {
+        // Decrypt and save messages to Isar
+        for (final msg in state.messages) {
+          String decryptedContent;
+          try {
+            decryptedContent = CryptoService.decryptWithPrivateKey(
+              ciphertextBase64: msg.content,
+              privateKeyBytes: _privateKeyBytes!,
+            );
+          } catch (e) {
+            decryptedContent = '[Unable to decrypt]';
+          }
+
+          await saveMessageToIsar(
+            contractId: widget.contractId,
+            externalId: msg.id,
+            senderId: msg.senderId,
+            senderFirstName: msg.senderFirstName,
+            senderLastName: msg.senderLastName,
+            content: decryptedContent,
+            contentHash: msg.contentHash,
+            createdAt: msg.createdAt,
+          );
+        }
+
+        _scrollToBottom();
+      }
+    } catch (e) {
+      print('[ContractAgreement] Error syncing messages: $e');
+    }
+  }
+
+  /// Sync media from backend
+  Future<void> _syncMedia() async {
+    if (_externalContractId == null) return;
+
+    try {
+      final mediaCubit = context.read<MediaCubit>();
+      await mediaCubit.loadMedia(contractId: _externalContractId!);
+
+      final state = mediaCubit.state;
+      if (state is MediaListLoaded) {
+        for (final media in state.mediaList) {
+          await saveMediaToIsar(
+            contractId: widget.contractId,
+            externalId: media.id,
+            senderId: media.senderId,
+            senderName: media.senderName,
+            filename: media.filename,
+            path: media.path,
+            mimeType: media.mimeType,
+            createdAt: media.createdAt,
+          );
+        }
+      }
+    } catch (e) {
+      print('[ContractAgreement] Error syncing media: $e');
+    }
   }
 
   void _scrollToBottom() {
@@ -448,156 +234,184 @@ class _ContractAgreementState extends State<ContractAgreement> {
     });
   }
 
-  // Send text message with encryption (Chadli)
+  /// Send encrypted message to backend
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+    if (_externalContractId == null) return;
+    if (_privateKeyBytes == null || _otherUserPublicKey == null) {
+      SnackBarHandler.showError(
+        context,
+        TranslationHandler.get('error_encryption_keys_missing'),
+      );
+      return;
+    }
 
     _messageController.clear();
-    final timestamp = DateTime.now();
+    setState(() => _isSendingMessage = true);
 
-    // Generate local key first, will be replaced by Firebase key after push (Chadli)
-    final localKey =
-        'local_${timestamp.millisecondsSinceEpoch}_${_currentUserId.hashCode}';
-    final uniqueKey = '${widget.contractId}_$localKey';
+    try {
+      // Get sender's public key from Hive
+      final userBox = await Hive.openBox('user');
+      final myPublicKey = userBox.get('publicKey')?.toString();
 
-    await isar.writeTxn(() async {
-      await isar.messages.put(
-        db.Message()
-          ..contractId = widget.contractId
-          ..senderId = _currentUserId
-          ..text = text
-          ..createdAt = timestamp
-          ..firebaseKey = uniqueKey,
+      if (myPublicKey == null) {
+        throw Exception('Sender public key not found');
+      }
+
+      // Encrypt message for sender (self) and recipient
+      final contentForSender = CryptoService.encryptWithPublicKey(
+        plaintext: text,
+        publicKeyBase64: myPublicKey,
       );
-    });
+      final contentForRecipient = CryptoService.encryptWithPublicKey(
+        plaintext: text,
+        publicKeyBase64: _otherUserPublicKey!,
+      );
 
-    _scrollToBottom();
+      // Create SHA256 hash of plaintext for verification
+      final contentHash = sha256.convert(utf8.encode(text)).toString();
 
-    if (_externalContractId != null) {
-      try {
-        final ref = FirebaseDatabase.instance.ref(
-          'contracts/$_externalContractId/messages',
-        );
-        String messageToSend = text;
-        bool isEncrypted = false;
-        if (_contractKey != null) {
-          messageToSend = online_db.encrypt(text, _contractKey!);
-          isEncrypted = true;
-        }
+      // Send to backend
+      await context.read<MessageCubit>().sendMessage(
+        contractId: _externalContractId!,
+        contentForSender: contentForSender,
+        contentForRecipient: contentForRecipient,
+        contentHash: contentHash,
+      );
 
-        // Push returns a reference with the generated key (Chadli)
-        final newRef = ref.push();
-        await newRef.set({
-          'senderId': _currentUserId,
-          'text': messageToSend,
-          'timestamp': timestamp.millisecondsSinceEpoch,
-          'encrypted': isEncrypted,
-        });
+      // Sync messages from server to get all messages including the one we just sent
+      await _syncMessages();
 
-        // Update local message with Firebase key (Chadli)
-        final firebaseUniqueKey = '${widget.contractId}_${newRef.key}';
-        final localMsg = await isar.messages
-            .filter()
-            .firebaseKeyEqualTo(uniqueKey)
-            .findFirst();
-        if (localMsg != null) {
-          await isar.writeTxn(() async {
-            localMsg.firebaseKey = firebaseUniqueKey;
-            await isar.messages.put(localMsg);
-          });
-        }
-      } catch (_) {}
+      _scrollToBottom();
+
+    } catch (e) {
+      print('[ContractAgreement] Error sending message: $e');
+      SnackBarHandler.showError(
+        context,
+        TranslationHandler.get('error_sending_message'),
+      );
+    } finally {
+      setState(() => _isSendingMessage = false);
     }
   }
 
-  // Send media file with upload to Cloudinary (Chadli)
-  Future<void> _sendMedia(String filePath, String type) async {
-    final timestamp = DateTime.now();
+  /// Send media file to backend
+  Future<void> _sendMedia(String filePath) async {
+    if (_externalContractId == null) return;
 
-    await isar.writeTxn(() async {
-      await isar.mediaFiles.put(
-        MediaFile()
-          ..contractId = widget.contractId
-          ..senderId = _currentUserId
-          ..filePath = filePath
-          ..type = type
-          ..createdAt = timestamp,
+    try {
+      final file = File(filePath);
+      final filename = filePath.split(Platform.pathSeparator).last;
+
+
+      // Upload to backend
+      await context.read<MediaCubit>().uploadMedia(
+        contractId: _externalContractId!,
+        file: file,
+        filename: filename,
       );
-    });
 
-    final fileMessage = type == 'image'
-        ? TranslationHandler.get('message_shared_image')
-        : TranslationHandler.get('message_shared_video');
-    await isar.writeTxn(() async {
-      await isar.messages.put(
-        db.Message()
-          ..contractId = widget.contractId
-          ..senderId = _currentUserId
-          ..text = fileMessage
-          ..createdAt = timestamp,
+      // Sync to get the real data from server
+      await _syncMedia();
+
+      SnackBarHandler.showSuccess(
+        context,
+        TranslationHandler.get('media_uploaded_success'),
       );
-    });
+    } catch (e) {
+      print('[ContractAgreement] Error sending media: $e');
+      SnackBarHandler.showError(
+        context,
+        TranslationHandler.get('error_uploading_media'),
+      );
+    }
+  }
 
-    _scrollToBottom();
+  /// Accept contract
+  Future<void> _acceptContract() async {
+    if (_externalContractId == null) return;
 
-    if (_externalContractId != null) {
-      try {
-        final file = File(filePath);
-        await online_db.addFile(
-          _externalContractId!,
-          _currentUserId,
-          file,
-          type,
-        );
+    try {
+      await context.read<ContractStateCubit>().accept(_externalContractId!);
 
-        final ref = FirebaseDatabase.instance.ref(
-          'contracts/$_externalContractId/messages',
-        );
-        String messageToSend = fileMessage;
-        if (_contractKey != null) {
-          messageToSend = online_db.encrypt(fileMessage, _contractKey!);
-        }
+      SnackBarHandler.showSuccess(
+        context,
+        TranslationHandler.get('contract_accepted'),
+      );
 
-        await ref.push().set({
-          'senderId': _currentUserId,
-          'text': messageToSend,
-          'timestamp': timestamp.millisecondsSinceEpoch,
-          'encrypted': _contractKey != null,
-        });
-      } catch (_) {}
+      // Sync from backend to get updated status
+      await _syncContract();
+    } catch (e) {
+      SnackBarHandler.showError(
+        context,
+        TranslationHandler.get('error_accepting_contract'),
+      );
+    }
+  }
+
+  /// Dispute contract
+  Future<void> _disputeContract({String? reason}) async {
+    if (_externalContractId == null) return;
+
+    try {
+      await context.read<ContractStateCubit>().dispute(
+        _externalContractId!,
+        reason: reason,
+      );
+
+      SnackBarHandler.showWarning(
+        context,
+        TranslationHandler.get('contract_disputed'),
+      );
+
+      // Sync from backend to get updated status
+      await _syncContract();
+    } catch (e) {
+      SnackBarHandler.showError(
+        context,
+        TranslationHandler.get('error_disputing_contract'),
+      );
+    }
+  }
+
+  /// Sync contract from backend
+  Future<void> _syncContract() async {
+    try {
+      final syncService = ContractSyncService();
+      await syncService.syncContracts();
+      print('[ContractAgreement] Contract synced from backend');
+    } catch (e) {
+      print('[ContractAgreement] Error syncing contract: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ContractCubit(widget.contractId)..loadContract(),
-      child: StreamBuilder<Contract?>(
-        stream: isar.contracts.watchObject(
-          widget.contractId,
-          fireImmediately: true,
-        ),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (!snapshot.hasData || snapshot.data == null) {
-            return Scaffold(
-              body: Center(
-                child: Text(
-                  TranslationHandler.get('error_contract_not_found'),
-                ),
-              ),
-            );
-          }
-          final contract = snapshot.data!;
-          return _buildPage(context, contract);
-        },
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return StreamBuilder<Contract?>(
+      stream: isar.contracts.watchObject(
+        widget.contractId,
+        fireImmediately: true,
       ),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data == null) {
+          return Scaffold(
+            body: Center(
+              child: Text(TranslationHandler.get('error_contract_not_found')),
+            ),
+          );
+        }
+
+        final contract = snapshot.data!;
+
+        return _buildPage(context, contract);
+      },
     );
   }
 
@@ -609,8 +423,9 @@ class _ContractAgreementState extends State<ContractAgreement> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          TranslationHandler.get('contract_agreement_title'),
+          contract.title,
           style: theme.textTheme.titleMedium,
+          overflow: TextOverflow.ellipsis,
         ),
         centerTitle: true,
         backgroundColor: colors.surface,
@@ -641,17 +456,9 @@ class _ContractAgreementState extends State<ContractAgreement> {
   Widget _buildStatusSection(BuildContext context, Contract contract) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final cubit = context.read<ContractCubit>();
 
-    if (contract.status == ContractStatus.pending) {
-      return _buildStatusBadge(
-        colors,
-        Colors.orange,
-        Icons.hourglass_empty,
-        'status_pending',
-      );
-    }
-    if (contract.status == ContractStatus.onDispute) {
+    // Show status badges for terminal states
+    if (contract.status == ContractStatus.disputed) {
       return _buildStatusBadge(
         colors,
         Colors.red,
@@ -667,6 +474,14 @@ class _ContractAgreementState extends State<ContractAgreement> {
         'status_completed',
       );
     }
+    if (contract.status == ContractStatus.accepted) {
+      return _buildStatusBadge(
+        colors,
+        Colors.green,
+        Icons.check_circle,
+        'status_accepted',
+      );
+    }
     if (contract.status == ContractStatus.rejected) {
       return _buildStatusBadge(
         colors,
@@ -676,31 +491,55 @@ class _ContractAgreementState extends State<ContractAgreement> {
       );
     }
 
-    return Container(
-      color: colors.surface,
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildActionButton(
-              TranslationHandler.get('dispute'),
-              Icons.gavel,
-              Colors.white,
-              Colors.red,
-              () => _showDisputeConfirmation(context, cubit),
+    // Show pending acceptance status
+    final isUserA = contract.userAId == _currentUserId;
+    final myAccepted = isUserA ? contract.userAAccepted : contract.userBAccepted;
+    final otherAccepted = isUserA ? contract.userBAccepted : contract.userAAccepted;
+
+    if (myAccepted && !otherAccepted) {
+      return _buildStatusBadge(
+        colors,
+        Colors.orange,
+        Icons.hourglass_empty,
+        'waiting_for_other_accept',
+      );
+    }
+
+    // Show action buttons for active contracts
+    return BlocListener<ContractStateCubit, ContractStateState>(
+      listener: (context, state) {
+        if (state is ContractStateError) {
+          SnackBarHandler.showError(context, state.message);
+        }
+      },
+      child: Container(
+        color: colors.surface,
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                TranslationHandler.get('dispute'),
+                Icons.gavel,
+                Colors.white,
+                Colors.red,
+                () => _showDisputeConfirmation(context),
+              ),
             ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: _buildActionButton(
-              TranslationHandler.get('complete'),
-              Icons.check_circle,
-              Colors.white,
-              Colors.green,
-              () => _showCompleteConfirmation(context, cubit),
+            const SizedBox(width: 20),
+            Expanded(
+              child: _buildActionButton(
+                myAccepted
+                    ? TranslationHandler.get('accepted')
+                    : TranslationHandler.get('accept'),
+                Icons.check_circle,
+                Colors.white,
+                myAccepted ? Colors.grey : Colors.green,
+                myAccepted ? null : () => _showAcceptConfirmation(context),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -740,38 +579,55 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
-  void _showCompleteConfirmation(BuildContext context, ContractCubit cubit) {
+  void _showAcceptConfirmation(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(TranslationHandler.get('complete_contract')),
-        content: Text(TranslationHandler.get('complete_contract_warning')),
+        title: Text(TranslationHandler.get('accept_contract')),
+        content: Text(TranslationHandler.get('accept_contract_confirmation')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(TranslationHandler.get('cancel')),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             onPressed: () {
               Navigator.pop(ctx);
-              cubit.completeContract();
+              _acceptContract();
             },
-            child: Text(TranslationHandler.get('complete')),
+            child: Text(
+              TranslationHandler.get('accept'),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showDisputeConfirmation(BuildContext context, ContractCubit cubit) {
+  void _showDisputeConfirmation(BuildContext context) {
+    final reasonController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(
-          TranslationHandler.get('dialog_dispute_confirmation_title'),
-        ),
-        content: Text(
-          TranslationHandler.get('dialog_dispute_confirmation_message'),
+        title: Text(TranslationHandler.get('dispute_contract')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(TranslationHandler.get('dispute_contract_warning')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              decoration: InputDecoration(
+                hintText: TranslationHandler.get('dispute_reason_optional'),
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -782,9 +638,12 @@ class _ContractAgreementState extends State<ContractAgreement> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Navigator.pop(ctx);
-              cubit.disputeContract();
+              _disputeContract(reason: reasonController.text.trim());
             },
-            child: Text(TranslationHandler.get('dispute')),
+            child: Text(
+              TranslationHandler.get('dispute'),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -796,7 +655,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
     IconData icon,
     Color textColor,
     Color bgColor,
-    VoidCallback onPressed,
+    VoidCallback? onPressed,
   ) {
     return Material(
       color: bgColor,
@@ -828,9 +687,18 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
-  // Build messages list with media files support (Chadli)
+  /// Refresh all data from backend
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      _syncContract(),
+      _syncMessages(),
+      _syncMedia(),
+    ]);
+  }
+
+  /// Build messages list from Isar with real-time updates
   Widget _buildMessagesList() {
-    return StreamBuilder<List<db.Message>>(
+    return StreamBuilder<List<Message>>(
       stream: isar.messages
           .filter()
           .contractIdEqualTo(widget.contractId)
@@ -848,14 +716,23 @@ class _ContractAgreementState extends State<ContractAgreement> {
             final mediaFiles = mediaSnapshot.data ?? [];
 
             if (messages.isEmpty && mediaFiles.isEmpty) {
-              return Center(
-                child: Text(
-                  TranslationHandler.get('no_messages_yet'),
-                  style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.5),
-                  ),
+              return RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: Center(
+                        child: Text(
+                          TranslationHandler.get('no_messages_yet'),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
@@ -863,34 +740,29 @@ class _ContractAgreementState extends State<ContractAgreement> {
             // Combine messages and media into a single sorted list
             final List<dynamic> allItems = [...messages, ...mediaFiles];
             allItems.sort((a, b) {
-              final aTime = a is db.Message
-                  ? a.createdAt
-                  : (a as MediaFile).createdAt;
-              final bTime = b is db.Message
-                  ? b.createdAt
-                  : (b as MediaFile).createdAt;
+              final aTime = a is Message ? a.createdAt : (a as MediaFile).createdAt;
+              final bTime = b is Message ? b.createdAt : (b as MediaFile).createdAt;
               return aTime.compareTo(bTime);
             });
 
-            return ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 8),
-              itemCount: allItems.length,
-              itemBuilder: (context, index) {
-                final item = allItems[index];
-                if (item is db.Message) {
-                  return _buildMessageBubble(
-                    item,
-                    item.senderId == _currentUserId,
-                  );
-                } else if (item is MediaFile) {
-                  return _buildMediaBubble(
-                    item,
-                    item.senderId == _currentUserId,
-                  );
-                }
-                return const SizedBox.shrink();
-              },
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView.builder(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 8),
+                itemCount: allItems.length,
+                itemBuilder: (context, index) {
+                  print('[ContractAgreement] Building item at index $_currentUserId');
+                  final item = allItems[index];
+                  if (item is Message) {
+                    return _buildMessageBubble(item, item.senderId == _currentUserId);
+                  } else if (item is MediaFile) {
+                    return _buildMediaBubble(item, item.senderId == _currentUserId);
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
             );
           },
         );
@@ -898,15 +770,14 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
-  Widget _buildMessageBubble(db.Message message, bool isMe) {
+  Widget _buildMessageBubble(Message message, bool isMe) {
     final colors = Theme.of(context).colorScheme;
+    final senderName = _getSenderName(message);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(
-        mainAxisAlignment: isMe
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
@@ -914,7 +785,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
               radius: 14,
               backgroundColor: colors.surfaceContainerHighest,
               child: Text(
-                message.senderId.substring(0, 1).toUpperCase(),
+                senderName.isNotEmpty ? senderName[0].toUpperCase() : '?',
                 style: TextStyle(fontSize: 12, color: colors.onSurface),
               ),
             ),
@@ -927,27 +798,19 @@ class _ContractAgreementState extends State<ContractAgreement> {
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
-                  bottomLeft: isMe
-                      ? const Radius.circular(16)
-                      : const Radius.circular(4),
-                  bottomRight: isMe
-                      ? const Radius.circular(4)
-                      : const Radius.circular(16),
+                  bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(4),
+                  bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(16),
                 ),
                 color: isMe ? colors.primary : colors.surface,
                 boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 2,
-                    offset: Offset(0, 1),
-                  ),
+                  BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    message.text,
+                    message.content,
                     style: TextStyle(
                       color: isMe ? colors.onPrimary : colors.onSurface,
                       fontSize: 14,
@@ -955,7 +818,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${message.createdAt.hour}:${message.createdAt.minute.toString().padLeft(2, '0')}',
+                    _formatTime(message.createdAt),
                     style: TextStyle(
                       color: isMe
                           ? colors.onPrimary.withOpacity(0.7)
@@ -987,17 +850,18 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
-  // Build media file bubble - supports local files and URLs (Chadli)
   Widget _buildMediaBubble(MediaFile media, bool isMe) {
     final colors = Theme.of(context).colorScheme;
-    final isUrl = media.filePath.startsWith('http');
+    final isUrl = media.path.startsWith('http');
+    final isImage = media.mimeType?.startsWith('image') == true ||
+        media.filename.toLowerCase().endsWith('.png') ||
+        media.filename.toLowerCase().endsWith('.jpg') ||
+        media.filename.toLowerCase().endsWith('.jpeg');
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(
-        mainAxisAlignment: isMe
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
@@ -1005,7 +869,9 @@ class _ContractAgreementState extends State<ContractAgreement> {
               radius: 14,
               backgroundColor: colors.surfaceContainerHighest,
               child: Text(
-                media.senderId.substring(0, 1).toUpperCase(),
+                media.senderName?.isNotEmpty == true
+                    ? media.senderName![0].toUpperCase()
+                    : '?',
                 style: TextStyle(fontSize: 12, color: colors.onSurface),
               ),
             ),
@@ -1018,11 +884,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
                 borderRadius: BorderRadius.circular(12),
                 color: isMe ? colors.primary : colors.surface,
                 boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 2,
-                    offset: Offset(0, 1),
-                  ),
+                  BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
                 ],
               ),
               child: ClipRRect(
@@ -1030,70 +892,60 @@ class _ContractAgreementState extends State<ContractAgreement> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (media.type == 'image')
+                    if (isImage)
                       isUrl
                           ? Image.network(
-                              media.filePath,
+                              media.path,
                               fit: BoxFit.cover,
                               width: 200,
                               height: 150,
                               loadingBuilder: (_, child, progress) =>
                                   progress == null
-                                  ? child
-                                  : Container(
-                                      width: 200,
-                                      height: 150,
-                                      color: colors.surfaceContainerHighest,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 200,
-                                height: 150,
-                                color: colors.surfaceContainerHighest,
-                                child: Icon(
-                                  Icons.broken_image,
-                                  color: colors.onSurface.withOpacity(0.5),
-                                ),
-                              ),
+                                      ? child
+                                      : Container(
+                                          width: 200,
+                                          height: 150,
+                                          color: colors.surfaceContainerHighest,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        ),
+                              errorBuilder: (_, __, ___) => _buildBrokenImagePlaceholder(colors),
                             )
                           : Image.file(
-                              File(media.filePath),
+                              File(media.path),
                               fit: BoxFit.cover,
                               width: 200,
                               height: 150,
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 200,
-                                height: 150,
-                                color: colors.surfaceContainerHighest,
-                                child: Icon(
-                                  Icons.broken_image,
-                                  color: colors.onSurface.withOpacity(0.5),
-                                ),
-                              ),
+                              errorBuilder: (_, __, ___) => _buildBrokenImagePlaceholder(colors),
                             )
                     else
-                      Container(
-                        width: 200,
-                        height: 150,
-                        color: colors.surfaceContainerHighest,
-                        child: Icon(
-                          Icons.videocam,
-                          size: 50,
-                          color: colors.primary,
-                        ),
-                      ),
+                      _buildFilePlaceholder(colors, media.filename),
                     Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Text(
-                        '${media.createdAt.hour}:${media.createdAt.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(
-                          color: isMe
-                              ? colors.onPrimary.withOpacity(0.7)
-                              : colors.onSurface.withOpacity(0.5),
-                          fontSize: 10,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            media.filename,
+                            style: TextStyle(
+                              color: isMe ? colors.onPrimary : colors.onSurface,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatTime(media.createdAt),
+                            style: TextStyle(
+                              color: isMe
+                                  ? colors.onPrimary.withOpacity(0.7)
+                                  : colors.onSurface.withOpacity(0.5),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1121,16 +973,53 @@ class _ContractAgreementState extends State<ContractAgreement> {
     );
   }
 
+  Widget _buildBrokenImagePlaceholder(ColorScheme colors) {
+    return Container(
+      width: 200,
+      height: 150,
+      color: colors.surfaceContainerHighest,
+      child: Icon(
+        Icons.broken_image,
+        color: colors.onSurface.withOpacity(0.5),
+      ),
+    );
+  }
+
+  Widget _buildFilePlaceholder(ColorScheme colors, String filename) {
+    final extension = filename.split('.').last.toLowerCase();
+    IconData icon;
+
+    switch (extension) {
+      case 'pdf':
+        icon = Icons.picture_as_pdf;
+        break;
+      case 'doc':
+      case 'docx':
+        icon = Icons.description;
+        break;
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+        icon = Icons.videocam;
+        break;
+      default:
+        icon = Icons.insert_drive_file;
+    }
+
+    return Container(
+      width: 200,
+      height: 100,
+      color: colors.surfaceContainerHighest,
+      child: Icon(icon, size: 40, color: colors.primary),
+    );
+  }
+
   Widget _buildChatInputBar(ColorScheme colors) {
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2)),
         ],
       ),
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12, top: 12),
@@ -1147,10 +1036,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
               decoration: InputDecoration(
                 hintText: TranslationHandler.get('type_your_message'),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 hintStyle: TextStyle(color: colors.onSurface.withOpacity(0.5)),
               ),
               maxLines: null,
@@ -1163,11 +1049,20 @@ class _ContractAgreementState extends State<ContractAgreement> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: colors.primary,
+              color: _isSendingMessage ? colors.surfaceContainerHighest : colors.primary,
             ),
             child: IconButton(
-              onPressed: _sendMessage,
-              icon: Icon(Icons.send, color: colors.onPrimary, size: 20),
+              onPressed: _isSendingMessage ? null : _sendMessage,
+              icon: _isSendingMessage
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.primary,
+                      ),
+                    )
+                  : Icon(Icons.send, color: colors.onPrimary, size: 20),
             ),
           ),
         ],
@@ -1255,32 +1150,33 @@ class _ContractAgreementState extends State<ContractAgreement> {
   Future<void> _pickImageFromCamera() async {
     Navigator.pop(context);
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) await _sendMedia(image.path, 'image');
+    if (image != null) await _sendMedia(image.path);
   }
 
   Future<void> _pickImageFromGallery() async {
     Navigator.pop(context);
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) await _sendMedia(image.path, 'image');
+    if (image != null) await _sendMedia(image.path);
   }
 
   Future<void> _pickVideo() async {
     Navigator.pop(context);
     final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) await _sendMedia(video.path, 'video');
+    if (video != null) await _sendMedia(video.path);
   }
 
   void _showContractDetails(Contract contract) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
+    final isUserA = contract.userAId == _currentUserId;
+    final otherName = isUserA ? contract.userBName : contract.userAName;
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           backgroundColor: colors.surface,
           child: Container(
             padding: const EdgeInsets.all(24),
@@ -1321,11 +1217,16 @@ class _ContractAgreementState extends State<ContractAgreement> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 _buildDetailRow(
-                  TranslationHandler.get('contract_name'),
-                  contract.name,
-                  Icons.badge,
+                  TranslationHandler.get('contract_title'),
+                  contract.title,
+                  Icons.title,
+                ),
+                _buildDetailRow(
+                  TranslationHandler.get('other_party'),
+                  otherName ?? TranslationHandler.get('unknown'),
+                  Icons.person,
                 ),
                 _buildDetailRow(
                   TranslationHandler.get('price'),
@@ -1338,11 +1239,18 @@ class _ContractAgreementState extends State<ContractAgreement> {
                   style: theme.textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  contract.description,
-                  style: TextStyle(
-                    color: colors.onSurface.withOpacity(0.7),
-                    fontSize: 14,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    contract.description,
+                    style: TextStyle(
+                      color: colors.onSurface.withOpacity(0.8),
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -1371,11 +1279,13 @@ class _ContractAgreementState extends State<ContractAgreement> {
 
   String _getStatusText(ContractStatus status) {
     switch (status) {
-      case ContractStatus.accepted:
+      case ContractStatus.active:
         return TranslationHandler.get('status_active');
+      case ContractStatus.accepted:
+        return TranslationHandler.get('status_accepted');
       case ContractStatus.pending:
         return TranslationHandler.get('status_pending');
-      case ContractStatus.onDispute:
+      case ContractStatus.disputed:
         return TranslationHandler.get('status_disputed');
       case ContractStatus.completed:
         return TranslationHandler.get('status_completed');
@@ -1390,7 +1300,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1424,4 +1334,18 @@ class _ContractAgreementState extends State<ContractAgreement> {
       ),
     );
   }
+
+  String _getSenderName(Message message) {
+    if (message.senderId == _currentUserId) {
+      return 'Me';
+    }
+    final first = message.senderFirstName ?? '';
+    final last = message.senderLastName ?? '';
+    return '$first $last'.trim().isNotEmpty ? '$first $last'.trim() : 'User';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
 }
+

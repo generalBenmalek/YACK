@@ -8,14 +8,24 @@ part 'mediaFile.g.dart';
 class MediaFile {
   Id id = Isar.autoIncrement;
 
-  late int contractId;     // foreign key
+  @Index()
+  late int contractId;     // foreign key (local Isar contract ID)
+
+  // External MongoDB media ID for deduplication
+  @Index(unique: true, replace: true)
+  String? externalId;
+
   late String senderId;
+  String? senderName;
 
-  /// Path to local storage file
-  late String filePath;
+  /// Original filename
+  late String filename;
 
-  /// Image, PDF, Doc, Video, etc.
-  late String type; // or enum
+  /// Path to local storage file or remote URL
+  late String path;
+
+  /// MIME type (image/png, application/pdf, video/mp4, etc.)
+  String? mimeType;
 
   late DateTime createdAt;
 

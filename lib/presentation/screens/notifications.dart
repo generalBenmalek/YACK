@@ -186,7 +186,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             ),
                           ),
                           subtitle: Text(
-                            n.description,
+                            n.body,
                             style: theme.textTheme.bodySmall,
                           ),
                           trailing: Text(

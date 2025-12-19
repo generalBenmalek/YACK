@@ -1,3 +1,14 @@
+import com.android.build.gradle.BaseExtension
+
+subprojects {
+    afterEvaluate {
+        extensions.findByType(BaseExtension::class.java)?.apply {
+            compileSdkVersion(36)
+        }
+    }
+}
+
+
 allprojects {
     repositories {
         google()

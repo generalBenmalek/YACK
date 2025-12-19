@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yack/logic/utils/passwordPopUp.dart';
+import 'package:yack/logic/utils/encryptionPasswordPopUp.dart';
 import 'package:yack/logic/services/translation_handler.dart';
+import 'package:yack/logic/services/auth/account_service.dart';
 import 'package:yack/presentation/widgets/secondaryActionButtonAutoLoading.dart';
 import 'package:yack/logic/cubits/auth/auth_cubit.dart';
 import 'package:yack/presentation/widgets/settingWidgets/appearanceSheet.dart';
@@ -140,6 +142,27 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: TranslationHandler.get('password_subtitle'),
                     onTap: () {
                       showChangePasswordDialog(context);
+                    },
+                  ),
+                  Divider(height: 1, color: theme.dividerTheme.color),
+                  SettingsItem(
+                    icon: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.lock_outline,
+                        size: 28,
+                        color: theme.iconTheme.color,
+                      ),
+                    ),
+                    title: TranslationHandler.get('encryption_password'),
+                    subtitle: TranslationHandler.get('encryption_password_subtitle'),
+                    onTap: () {
+                      showChangeEncryptionPasswordDialog(context);
                     },
                   ),
                   Divider(height: 1, color: theme.dividerTheme.color),
@@ -300,8 +323,10 @@ class SettingsScreen extends StatelessWidget {
               SecondaryActionButtonAutoReload(
                 action: TranslationHandler.get('logout'),
                 onClick: () async {
+                  // Clear all cached data including Isar
+                  await AccountService().clearCachedData();
 
-                  FirebaseAuth.instance.signOut();
+                  await FirebaseAuth.instance.signOut();
                   context.read<AuthCubit>().markUnauthenticated();
 
                   Navigator.of(context, rootNavigator: true)

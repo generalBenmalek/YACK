@@ -3,10 +3,69 @@ import 'package:isar/isar.dart';
 import 'package:yack/presentation/screens/create_contract.dart';
 import 'package:yack/presentation/theme/theme.dart';
 import 'package:yack/data/db/models/contract.dart';
+import 'package:yack/logic/services/contract/contract_sync_service.dart';
 import 'package:yack/logic/services/translation_handler.dart';
 
-class ContractsScreen extends StatelessWidget {
+class ContractsScreen extends StatefulWidget {
   const ContractsScreen({super.key});
+
+  @override
+  State<ContractsScreen> createState() => _ContractsScreenState();
+}
+
+class _ContractsScreenState extends State<ContractsScreen> {
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    if (_isRefreshing) return;
+
+    setState(() => _isRefreshing = true);
+
+    try {
+      final syncService = ContractSyncService();
+      await syncService.syncContracts();
+      print('[ContractsScreen] Contracts synced from backend');
+    } catch (e) {
+      print('[ContractsScreen] Error syncing contracts: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.no_sim_outlined,
+                  size: 80,
+                  color: color.onSurface.withOpacity(0.4),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  TranslationHandler.get('no_contracts'),
+                  style: TextStyle(
+                    color: color.onSurface.withOpacity(0.6),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,20 +101,19 @@ class ContractsScreen extends StatelessWidget {
                     final data = snapshot.data;
 
                     if (data == null || data.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No contracts yet',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                      return RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        child: _buildEmptyState(context)
                       );
                     }
 
                     final activeContracts = data
                         .where(
                           (c) =>
+                              c.status == ContractStatus.active ||
                               c.status == ContractStatus.accepted ||
                               c.status == ContractStatus.pending ||
-                              c.status == ContractStatus.onDispute,
+                              c.status == ContractStatus.disputed,
                         )
                         .toList();
                     final pastContracts = data
@@ -66,27 +124,31 @@ class ContractsScreen extends StatelessWidget {
                         )
                         .toList();
 
-                    return ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                      children: [
-                        if (activeContracts.isNotEmpty)
-                          _SectionHeader(
-                            title: TranslationHandler.get('active_section'),
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                        children: [
+                          if (activeContracts.isNotEmpty)
+                            _SectionHeader(
+                              title: TranslationHandler.get('active_section'),
+                            ),
+                          ...activeContracts.map(
+                            (c) => ContractCard(contract: c, isar: isar),
                           ),
-                        ...activeContracts.map(
-                          (c) => ContractCard(contract: c, isar: isar),
-                        ),
-                        if (activeContracts.isNotEmpty &&
-                            pastContracts.isNotEmpty)
-                          const SizedBox(height: 24),
-                        if (pastContracts.isNotEmpty)
-                          _SectionHeader(
-                            title: TranslationHandler.get('past_section'),
+                          if (activeContracts.isNotEmpty &&
+                              pastContracts.isNotEmpty)
+                            const SizedBox(height: 24),
+                          if (pastContracts.isNotEmpty)
+                            _SectionHeader(
+                              title: TranslationHandler.get('past_section'),
+                            ),
+                          ...pastContracts.map(
+                            (c) => ContractCard(contract: c, isar: isar),
                           ),
-                        ...pastContracts.map(
-                          (c) => ContractCard(contract: c, isar: isar),
-                        ),
-                      ],
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -174,13 +236,14 @@ class ContractCard extends StatelessWidget {
   }
 
   String _getStatusLabel() {
-    // updated: Chadli
     switch (contract.status) {
+      case ContractStatus.active:
+        return TranslationHandler.get('status_active');
       case ContractStatus.accepted:
         return TranslationHandler.get('status_active');
       case ContractStatus.completed:
         return TranslationHandler.get('status_completed');
-      case ContractStatus.onDispute:
+      case ContractStatus.disputed:
         return TranslationHandler.get('status_disputed');
       case ContractStatus.pending:
         return TranslationHandler.get('status_pending');
@@ -189,8 +252,47 @@ class ContractCard extends StatelessWidget {
     }
   }
 
+  Color _getStatusColor() {
+
+
+    switch (contract.status) {
+      case ContractStatus.active:
+      case ContractStatus.accepted:
+        return AppTheme.yackGreen;
+      case ContractStatus.pending:
+        return Colors.orange;
+      case ContractStatus.disputed:
+        return Colors.red;
+      case ContractStatus.completed:
+        return Colors.blue;
+      case ContractStatus.rejected:
+        return Colors.grey;
+    }
+  }
+
+  Color _getStatusBackgroundColor() {
+    switch (contract.status) {
+      case ContractStatus.active:
+      case ContractStatus.accepted:
+        return AppTheme.yackGreenLight;
+      case ContractStatus.pending:
+        return Colors.orange.withValues(alpha: 0.15);
+      case ContractStatus.disputed:
+        return Colors.red.withValues(alpha: 0.15);
+      case ContractStatus.completed:
+        return Colors.blue.withValues(alpha: 0.15);
+      case ContractStatus.rejected:
+        return AppTheme.yackGrayLight;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    if ((contract.userAAccepted || contract.userBAccepted) && contract.status == ContractStatus.active) {
+      contract.status = ContractStatus.pending;
+    }
+
     return GestureDetector(
       onTap: () {
         // Use root navigator to avoid nested navigator issues with persistent_bottom_nav_bar
@@ -202,65 +304,125 @@ class ContractCard extends StatelessWidget {
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.yackGreenLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.description,
-              color: AppTheme.yackGreen,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            contract.name,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          subtitle: Text(
-            '${contract.price} DA',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+              // Header row with icon, title and status
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppTheme.yackGreenLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.description,
+                      color: AppTheme.yackGreen,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          contract.title,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${contract.price} ${TranslationHandler.get('currency')}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.yackGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusBackgroundColor(),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getStatusLabel(),
+                      style: TextStyle(
+                        color: _getStatusColor(),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // Description
+              if (contract.description.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  contract.description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                decoration: BoxDecoration(
-                  color: contract.status == ContractStatus.accepted
-                      ? AppTheme.yackGreenLight
-                      : AppTheme.yackGrayLight,
-                  borderRadius: BorderRadius.circular(12),
+              ],
+              // Other user name
+              if (contract.userAName != null || contract.userBName != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      contract.userAName ?? contract.userBName ?? '',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  _getStatusLabel(),
-                  style: TextStyle(
-                    color: contract.status == ContractStatus.accepted
-                        ? AppTheme.yackGreen
-                        : AppTheme.yackGray,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+              ],
+              // Delete button for completed/rejected contracts
+              if (contract.status == ContractStatus.completed ||
+                  contract.status == ContractStatus.rejected) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _deleteContract(context),
+                    icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                    label: Text(
+                      TranslationHandler.get('delete'),
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
                 ),
-              ),
-              if (contract.status == ContractStatus.completed ||
-                  contract.status == ContractStatus.rejected)
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteContract(context),
-                ),
+              ],
             ],
           ),
         ),
