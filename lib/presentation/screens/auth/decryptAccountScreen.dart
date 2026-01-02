@@ -135,7 +135,14 @@ class _DecryptAccountScreenState extends State<DecryptAccountScreen> {
                       const SizedBox(height: 32),
                       BlocConsumer<UserCubit, UserState>(
                         listener: (context, state) {
-                          if (state is UserDecryptSuccess) {
+                          if (state is UserProfileMissingKeys) {
+                            // Keys are missing, redirect to init account
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/init-account',
+                              (route) => false,
+                            );
+                          } else if (state is UserDecryptSuccess) {
                             // Sync contracts in background (uses cached decrypted key from Hive)
                             context.read<ContractSyncCubit>().sync();
 
