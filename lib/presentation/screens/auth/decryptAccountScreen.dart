@@ -177,16 +177,16 @@ class _DecryptAccountScreenState extends State<DecryptAccountScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // NEW: go back to Login
+              // NEW: go to Sign Up
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 spacing: 5,
                 children: [
-                  Text(TranslationHandler.get('already_have_account')),
+                  Text(TranslationHandler.get('dont_have_account')),
                   HrefWidget(
-                    text: TranslationHandler.get('login'),
+                    text: TranslationHandler.get('sign_up'),
                     onClick: () {
-                      Navigator.pushNamed(context, '/login');
+                      Navigator.pushNamed(context, '/signup');
                     },
                   ),
                 ],
