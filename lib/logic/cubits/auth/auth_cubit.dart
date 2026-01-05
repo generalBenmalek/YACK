@@ -47,7 +47,7 @@ class AuthCubit extends Cubit<AuthState> {
       }
     } catch (e) {
       // If online check fails (e.g. no internet), emit error
-      emit(AuthError(e.toString()));
+      // emit(AuthError(e.toString()));
 
       // Schedule a retry after some delay (e.g. 5 seconds)
       Future.delayed(const Duration(seconds: 5), () {
@@ -66,6 +66,7 @@ class AuthCubit extends Cubit<AuthState> {
   /// - Authenticated
   Future<void> _evaluateAccountStateAndEmit({required bool fromOnlineCheck}) async {
     try {
+
       // When coming from online, refresh profile cache to have latest isComplete, keys, etc.
       if (fromOnlineCheck) {
         await _accountService.fetchAndCacheProfile();
@@ -91,8 +92,7 @@ class AuthCubit extends Cubit<AuthState> {
       // Account complete and decryptedPrivateKey exists -> fully authenticated
       emit(Authenticated());
     } catch (_) {
-      // Fallback: if anything fails here but auth was ok, consider unauthenticated
-      emit(Unauthenticated());
+      throw 'error';
     }
   }
 

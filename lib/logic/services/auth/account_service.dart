@@ -11,38 +11,6 @@ class AccountService {
 
   final UserService _userService;
 
-  /// Finalize account setup after Firebase authentication
-  /// This should be called after email verification to complete the account setup
-  /// with encryption keys for end-to-end encryption
-  Future<void> finalizeAccount({
-    required String publicKey,
-    required String encryptedPrivateKey,
-    required String salt,
-    required String iv,
-  }) async {
-    await _userService.finalize(
-      publicKey: publicKey,
-      encryptedPrivateKey: encryptedPrivateKey,
-      salt: salt,
-      iv: iv,
-    );
-
-    // Cache the profile info locally
-    final box = await Hive.openBox('user');
-    final cachedFirstName = box.get('firstName');
-    final cachedLastName = box.get('lastName');
-    if (cachedFirstName != null) {
-      await box.put('firstName', cachedFirstName);
-    }
-    if (cachedLastName != null) {
-      await box.put('lastName', cachedLastName);
-    }
-    await box.put('publicKey', publicKey);
-    await box.put('encryptedPrivateKey', encryptedPrivateKey);
-    await box.put('privateKeySalt', salt);
-    await box.put('privateKeyIV', iv);
-    await box.put('isComplete', true);
-  }
 
   /// Fetch and cache user profile from backend
   Future<UserProfile> fetchAndCacheProfile() async {

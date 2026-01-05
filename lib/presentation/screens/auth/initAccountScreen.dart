@@ -176,16 +176,16 @@ class _InitAccountScreenState extends State<InitAccountScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // NEW: go back to Sign Up
+              // NEW: go back to Login
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 spacing: 5,
                 children: [
                   Text(TranslationHandler.get('already_have_account')),
                   HrefWidget(
-                    text: TranslationHandler.get('sign_up'),
+                    text: TranslationHandler.get('login'),
                     onClick: () {
-                      Navigator.pushNamed(context, '/signup');
+                      Navigator.pushNamed(context, '/login');
                     },
                   ),
                 ],

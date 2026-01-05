@@ -24,6 +24,9 @@ class UserCubit extends Cubit<UserState> {
     await Future.delayed(const Duration(milliseconds: 50));
     try {
       await _initAccountService.initializeAccount(password);
+
+      final box = await Hive.openBox('user');
+      await box.put('isComplete', true);
       emit(const UserFinalizeSuccess());
     } catch (e) {
       emit(UserError(e.toString()));
@@ -36,6 +39,22 @@ class UserCubit extends Cubit<UserState> {
     try {
       final profile = await _service.getProfile();
 
+      // Check if keys are missing - this means account setup was not completed
+      if (profile.isComplete == false || (profile.publicKey == null || profile.publicKey!.isEmpty) && (profile.encryptedPrivateKey == null || profile.encryptedPrivateKey!.isEmpty)) {
+        // Still cache other profile info
+        try {
+          final box = await Hive.openBox('user');
+          await box.put('firstName', profile.firstName);
+          await box.put('lastName', profile.lastName);
+          await box.put('email', profile.email);
+          await box.put('isComplete', false);
+        } catch (e) {
+          // Ignore caching errors
+        }
+        emit(const UserProfileMissingKeys());
+        return;
+      }
+
       try {
         final box = await Hive.openBox('user');
         await box.put('encryptedPrivateKey', profile.encryptedPrivateKey);
@@ -47,6 +66,8 @@ class UserCubit extends Cubit<UserState> {
 
         await box.put('email', profile.email);
         await box.put('publicKey', profile.publicKey);
+
+        await box.put('isComplete', true);
 
       } catch (e) {
         // Ignore caching errors

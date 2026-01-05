@@ -51,3 +51,10 @@ class UserDecryptError extends UserState {
   @override
   List<Object?> get props => [message];
 }
+
+/// State emitted when profile is loaded but encryption keys are missing
+/// This indicates the account setup was not completed
+class UserProfileMissingKeys extends UserState {
+  const UserProfileMissingKeys();
+}
+

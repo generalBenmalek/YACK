@@ -293,32 +293,31 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
             centerTitle: true,
           ),
           backgroundColor: color.surface,
-          body: Padding(
+          body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 // Contract preview card
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: color.outline.withValues(alpha: 0.5),
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      color: color.surface,
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.shadow.withValues(alpha: 0.08),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: color.outline.withValues(alpha: 0.5),
+                      width: 1.5,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                    borderRadius: BorderRadius.circular(12),
+                    color: color.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.shadow.withValues(alpha: 0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                         // Contract title
                         Text(
                           widget.title,
@@ -435,11 +434,8 @@ class _ShareContractScreenState extends State<ShareContractScreen> {
                       ],
                     ),
                   ),
-                ),
 
                 const SizedBox(height: 20),
-
-                // Status message - waiting for user B or processing
                 if (_isWaitingForUserB && !_userBJoined)
                   Container(
                     padding: const EdgeInsets.all(16),
