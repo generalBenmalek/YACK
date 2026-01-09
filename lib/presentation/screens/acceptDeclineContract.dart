@@ -37,29 +37,38 @@ class _AcceptDeclineContractScreenState
   String? _translatedDescription;
   bool _isTranslating = false;
 
-  // Translation using MyMemory API
   Future<void> _translateContent() async {
     setState(() => _isTranslating = true);
 
     try {
       final currentLang = TranslationHandler.currentLanguage;
-      final targetLang = currentLang == 'ar'
-          ? 'ar'
-          : currentLang == 'fr'
-          ? 'fr'
-          : 'en';
+      final targetLang = currentLang == 'ar' ? 'ar' : currentLang == 'fr' ? 'fr' : 'en';
+      String sourceLang = 'en';
+      
+      if (widget.title.contains(RegExp(r'[\u0600-\u06FF]'))) {
+        sourceLang = 'ar';
+      } else if (widget.title.contains(RegExp(r'[àâäéèêëïîôùûüÿæœçÀÂÄÉÈÊËÏÎÔÙÛÜŸÆŒÇ]'))) {
+        sourceLang = 'fr';
+      }
+      
+      if (sourceLang == targetLang) {
+        SnackBarHandler.showMessage(
+          context,
+          'Content is already in ${TranslationHandler.get(targetLang == 'ar' ? 'arabic' : targetLang == 'fr' ? 'french' : 'english')}',
+        );
+        setState(() => _isTranslating = false);
+        return;
+      }
 
-      // translate title
       final titleResponse = await http.get(
         Uri.parse(
-          'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(widget.title)}&langpair=en|$targetLang',
+          'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(widget.title)}&langpair=$sourceLang|$targetLang',
         ),
       );
 
-      // translate description
       final descResponse = await http.get(
         Uri.parse(
-          'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(widget.description ?? '')}&langpair=en|$targetLang',
+          'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(widget.description ?? '')}&langpair=$sourceLang|$targetLang',
         ),
       );
 

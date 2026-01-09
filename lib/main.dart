@@ -21,6 +21,8 @@ import 'package:yack/logic/cubits/media/media_cubit.dart';
 import 'package:yack/logic/cubits/user/user_cubit.dart';
 import 'package:yack/logic/cubits/notification/notification_cubit.dart';
 import 'package:yack/logic/services/notification/notification_service.dart';
+import 'package:yack/logic/services/notification/notification_router_service.dart';
+import 'package:yack/logic/services/crashlytics_service.dart';
 import 'app.dart';
 import 'firebase_options.dart';
 import 'package:yack/logic/services/translation_handler.dart';
@@ -46,11 +48,8 @@ void main() async {
   ], directory: dir.path);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Initialize background message handler
+  await CrashlyticsService.initialize();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-  // Initialize NotificationService for FCM
   await NotificationService().initialize();
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -67,14 +66,10 @@ void main() async {
   );
 
   await Hive.initFlutter();
-  
   await Hive.openBox('contracts');
-
   final userBox = await Hive.openBox('user');
-
-
-  // Initialize Translation Handler
   await TranslationHandler.initialize(userBox);
+  NotificationRouterService.initialize();
 
 
   runApp(

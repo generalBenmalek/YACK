@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
+import 'package:yack/logic/services/crashlytics_service.dart';
 
 class HttpHandler {
   static final HttpHandler _instance = HttpHandler._internal();
@@ -9,12 +10,8 @@ class HttpHandler {
 
   HttpHandler._internal();
 
-  // server
   final String baseUrl = "https://yack.leapcell.app";
 
-  // -----------------------
-  // Get Firebase Token
-  // -----------------------
   Future<String?> _getIdToken() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("User not logged in");
@@ -22,16 +19,10 @@ class HttpHandler {
     return await user.getIdToken(true);
   }
 
-  // -----------------------
-  // Get FCM Token
-  // -----------------------
   Future<String?> _getFcmToken() async {
     return await FirebaseMessaging.instance.getToken();
   }
 
-  // -----------------------
-  // Common headers
-  // -----------------------
   Future<Map<String, String>> _headers() async {
     final token = await _getIdToken();
     return {
@@ -40,13 +31,8 @@ class HttpHandler {
     };
   }
 
-  // -----------------------
-  // POST request
-  // -----------------------
   Future<dynamic> post(String endpoint, {Map<String, dynamic>? body}) async {
     final url = Uri.parse("$baseUrl$endpoint");
-
-    // always add FCM token to body
     final fcm = await _getFcmToken();
     body ??= {};
     if (fcm != null) body["fcmToken"] = fcm;
@@ -60,23 +46,12 @@ class HttpHandler {
     return _handleResponse(response);
   }
 
-  // -----------------------
-  // GET request
-  // -----------------------
   Future<dynamic> get(String endpoint) async {
     final url = Uri.parse("$baseUrl$endpoint");
-
-    final response = await http.get(
-      url,
-      headers: await _headers(),
-    );
-
+    final response = await http.get(url, headers: await _headers());
     return _handleResponse(response);
   }
 
-  // -----------------------
-  // PUT request
-  // -----------------------
   Future<dynamic> put(String endpoint, {Map<String, dynamic>? body}) async {
     final url = Uri.parse("$baseUrl$endpoint");
 
@@ -93,9 +68,6 @@ class HttpHandler {
     return _handleResponse(response);
   }
 
-  // -----------------------
-  // PATCH request
-  // -----------------------
   Future<dynamic> patch(String endpoint, {Map<String, dynamic>? body}) async {
     final url = Uri.parse("$baseUrl$endpoint");
 
@@ -112,9 +84,6 @@ class HttpHandler {
     return _handleResponse(response);
   }
 
-  // -----------------------
-  // DELETE request
-  // -----------------------
   Future<dynamic> delete(String endpoint) async {
     final url = Uri.parse("$baseUrl$endpoint");
 
@@ -126,20 +95,20 @@ class HttpHandler {
     return _handleResponse(response);
   }
 
-  // -----------------------
-  // Handle server responses
-  // -----------------------
   dynamic _handleResponse(http.Response res) {
     final status = res.statusCode;
-
     try {
       final json = jsonDecode(res.body);
-
       if (status >= 200 && status < 300) return json;
-
-      throw Exception(json["error"] ?? "Unknown server error");
-    } catch (_) {
-      throw Exception("Invalid server response (${res.statusCode}): ${res.body}");
+      final errorMessage = json["error"] ?? "Unknown server error";
+      final error = Exception(errorMessage);
+      CrashlyticsService.recordError(error, StackTrace.current, reason: 'HTTP $status: $errorMessage');
+      throw error;
+    } catch (e) {
+      final errorMessage = "Invalid response (${res.statusCode}): ${res.body}";
+      final error = Exception(errorMessage);
+      CrashlyticsService.recordError(error, StackTrace.current, reason: errorMessage);
+      throw error;
     }
   }
 }
