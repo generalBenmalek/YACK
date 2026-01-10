@@ -18,11 +18,14 @@ class MediaFile {
   late String senderId;
   String? senderName;
 
-  /// Original filename
-  late String filename;
+  /// Original filename from backend (originalFilename field)
+  late String originalFilename;
 
-  /// Path to local storage file or remote URL
-  late String path;
+  /// Cloudinary path (content field from backend)
+  late String content;
+
+  /// Full URL for display (url field from backend)
+  late String url;
 
   /// MIME type (image/png, application/pdf, video/mp4, etc.)
   String? mimeType;

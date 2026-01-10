@@ -210,8 +210,9 @@ class _ContractAgreementState extends State<ContractAgreement> {
             externalId: media.id,
             senderId: media.senderId,
             senderName: media.senderName,
-            filename: media.filename,
-            path: media.path,
+            originalFilename: media.originalFilename,
+            content: media.content,
+            url: media.url,
             mimeType: media.mimeType,
             createdAt: media.createdAt,
           );
@@ -852,11 +853,11 @@ class _ContractAgreementState extends State<ContractAgreement> {
 
   Widget _buildMediaBubble(MediaFile media, bool isMe) {
     final colors = Theme.of(context).colorScheme;
-    final isUrl = media.path.startsWith('http');
+    final isUrl = media.url.startsWith('http');
     final isImage = media.mimeType?.startsWith('image') == true ||
-        media.filename.toLowerCase().endsWith('.png') ||
-        media.filename.toLowerCase().endsWith('.jpg') ||
-        media.filename.toLowerCase().endsWith('.jpeg');
+        media.originalFilename.toLowerCase().endsWith('.png') ||
+        media.originalFilename.toLowerCase().endsWith('.jpg') ||
+        media.originalFilename.toLowerCase().endsWith('.jpeg');
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
@@ -895,7 +896,7 @@ class _ContractAgreementState extends State<ContractAgreement> {
                     if (isImage)
                       isUrl
                           ? Image.network(
-                              media.path,
+                              media.url,
                               fit: BoxFit.cover,
                               width: 200,
                               height: 150,
@@ -913,21 +914,21 @@ class _ContractAgreementState extends State<ContractAgreement> {
                               errorBuilder: (_, __, ___) => _buildBrokenImagePlaceholder(colors),
                             )
                           : Image.file(
-                              File(media.path),
+                              File(media.content),
                               fit: BoxFit.cover,
                               width: 200,
                               height: 150,
                               errorBuilder: (_, __, ___) => _buildBrokenImagePlaceholder(colors),
                             )
                     else
-                      _buildFilePlaceholder(colors, media.filename),
+                      _buildFilePlaceholder(colors, media.originalFilename),
                     Padding(
                       padding: const EdgeInsets.all(8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            media.filename,
+                            media.originalFilename,
                             style: TextStyle(
                               color: isMe ? colors.onPrimary : colors.onSurface,
                               fontSize: 12,

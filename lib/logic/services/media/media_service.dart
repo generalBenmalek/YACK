@@ -3,12 +3,23 @@ import 'dart:io';
 import 'package:yack/logic/services/network/http_handler.dart';
 
 /// Represents a media entry from the API
+/// Maps to backend response structure:
+/// {
+///   "_id": "...",
+///   "who": { "_id": "...", "firstName": "...", "lastName": "..." },
+///   "content": "cloudinary/path",
+///   "url": "https://cloudinary.com/...",
+///   "originalFilename": "proof.png",
+///   "mimeType": "image/png",
+///   "createdAt": "..."
+/// }
 class ContractMedia {
   final String id;
   final String senderId;
   final String? senderName;
-  final String filename;
-  final String path;
+  final String originalFilename;
+  final String content; // Cloudinary path
+  final String url; // Full URL for display
   final String? mimeType;
   final DateTime createdAt;
 
@@ -16,8 +27,9 @@ class ContractMedia {
     required this.id,
     required this.senderId,
     this.senderName,
-    required this.filename,
-    required this.path,
+    required this.originalFilename,
+    required this.content,
+    required this.url,
     this.mimeType,
     required this.createdAt,
   });
@@ -37,12 +49,25 @@ class ContractMedia {
       senderId = who?.toString() ?? json['senderId']?.toString() ?? '';
     }
 
+    // Map backend fields: originalFilename, content, url
+    final originalFilename = json['originalFilename']?.toString() ??
+        json['filename']?.toString() ??
+        json['name']?.toString() ??
+        '';
+
+    final content = json['content']?.toString() ??
+        json['path']?.toString() ??
+        '';
+
+    final url = json['url']?.toString() ?? content;
+
     return ContractMedia(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       senderId: senderId,
       senderName: senderName,
-      filename: json['filename']?.toString() ?? json['name']?.toString() ?? '',
-      path: json['path']?.toString() ?? json['url']?.toString() ?? '',
+      originalFilename: originalFilename,
+      content: content,
+      url: url,
       mimeType: json['mimeType']?.toString() ?? json['type']?.toString(),
       createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
     );
@@ -63,12 +88,18 @@ class ContractMedia {
       'id': id,
       'senderId': senderId,
       'senderName': senderName,
-      'filename': filename,
-      'path': path,
+      'originalFilename': originalFilename,
+      'content': content,
+      'url': url,
       'mimeType': mimeType,
       'createdAt': createdAt.toIso8601String(),
     };
   }
+
+  /// Helper to get display filename
+  String get displayFilename => originalFilename.isNotEmpty
+      ? originalFilename
+      : content.split('/').last;
 }
 
 class MediaService {
@@ -78,7 +109,8 @@ class MediaService {
   final HttpHandler _http;
 
   /// Store an uploaded media payload and attach metadata to the contract.
-  /// file: The file to upload
+  /// POST /media/send
+  /// Body: { "contractId": "...", "file": { "filename": "...", "buffer": "<base64>" } }
   /// Returns: The stored media record
   Future<ContractMedia> send({
     required String contractId,
@@ -103,9 +135,21 @@ class MediaService {
   }
 
   /// Return all media entries for a contract.
+  /// GET /media/all?contractId=...
   Future<List<ContractMedia>> getAll({required String contractId}) async {
     final response = await _http.get('/media/all?contractId=$contractId');
     return _parseMediaList(response);
+  }
+
+  /// Get a specific media by ID.
+  /// GET /media/get?contractId=...&mediaId=...
+  /// Returns media details with fresh URL from Cloudinary
+  Future<ContractMedia> get({
+    required String contractId,
+    required String mediaId,
+  }) async {
+    final response = await _http.get('/media/get?contractId=$contractId&mediaId=$mediaId');
+    return _parseMediaResponse(response);
   }
 
   ContractMedia _parseMediaResponse(dynamic response) {
@@ -135,4 +179,3 @@ class MediaService {
         .toList();
   }
 }
-

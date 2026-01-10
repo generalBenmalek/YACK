@@ -338,8 +338,9 @@ Future<MediaFile> saveMediaToIsar({
   required String externalId,
   required String senderId,
   String? senderName,
-  required String filename,
-  required String path,
+  required String originalFilename,
+  required String content,
+  required String url,
   String? mimeType,
   DateTime? createdAt,
 }) async {
@@ -356,8 +357,9 @@ Future<MediaFile> saveMediaToIsar({
     ..externalId = externalId
     ..senderId = senderId
     ..senderName = senderName
-    ..filename = filename
-    ..path = path
+    ..originalFilename = originalFilename
+    ..content = content
+    ..url = url
     ..mimeType = mimeType
     ..createdAt = createdAt ?? DateTime.now();
 
@@ -376,8 +378,9 @@ Future<void> saveMediaFromApi(int contractId, List<ContractMedia> mediaList) asy
       externalId: m.id,
       senderId: m.senderId,
       senderName: m.senderName,
-      filename: m.filename,
-      path: m.path,
+      originalFilename: m.originalFilename,
+      content: m.content,
+      url: m.url,
       mimeType: m.mimeType,
       createdAt: m.createdAt,
     );
