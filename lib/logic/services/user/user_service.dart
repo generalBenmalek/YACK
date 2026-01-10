@@ -70,9 +70,14 @@ class UserService {
     final box = await Hive.openBox('user');
     final firstName = box.get('firstName')?.toString();
     final lastName = box.get('lastName')?.toString();
+
     if (firstName == null || firstName.isEmpty || lastName == null || lastName.isEmpty) {
-      throw StateError('Missing cached profile name.');
+      // throw StateError('Missing cached profile name.');
+      // set "" for both
+      box.put('firstName', '');
+      box.put('lastName', '');
     }
+
     await _http.post('/user/finalize', body: {
       'firstName': firstName,
       'lastName': lastName,

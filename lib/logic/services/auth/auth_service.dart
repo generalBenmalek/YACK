@@ -147,29 +147,14 @@ class AuthService {
         password: password,
       );
 
-      // final user = cred.user;
+      // Save local user information
+      final userBox = await Hive.openBox('user');
+      await userBox.putAll({
+        'firstName': firstName,
+        'lastName': lastName,
+        'didFirstLogin': true,
+      });
 
-      // // Update FirebaseAuth profile displayName
-      // final fullName = [firstName, lastName]
-      //     .where((s) => s.trim().isNotEmpty)
-      //     .join(' ')
-      //     .trim();
-      // if (user != null && fullName.isNotEmpty) {
-      //   await user.updateDisplayName(fullName);
-      // }
-
-      // // Optionally store names in Realtime Database profile node
-      // if (user != null) {
-      //   try {
-      //     final profileRef = FirebaseDatabase.instance.ref(
-      //       'userProfiles/${user.uid}',
-      //     );
-      //     await profileRef.set({
-      //       'firstName': firstName,
-      //       'lastName': lastName,
-      //       'email': email,
-      //       'createdAt': ServerValue.timestamp,
-      //     });
 
       await _saveAuthStatus('unverified');
     } on FirebaseAuthException catch (e) {
