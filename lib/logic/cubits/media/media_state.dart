@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:yack/logic/services/media/media_service.dart';
 
@@ -25,6 +24,14 @@ class MediaListLoaded extends MediaState {
   List<Object?> get props => [mediaList];
 }
 
+class MediaLoaded extends MediaState {
+  const MediaLoaded(this.media);
+  final ContractMedia media;
+
+  @override
+  List<Object?> get props => [media];
+}
+
 class MediaUploaded extends MediaState {
   const MediaUploaded(this.media);
   final ContractMedia media;
@@ -40,4 +47,3 @@ class MediaError extends MediaState {
   @override
   List<Object?> get props => [message];
 }
-

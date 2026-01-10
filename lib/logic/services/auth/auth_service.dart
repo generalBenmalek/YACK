@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:yack/logic/services/crashlytics_service.dart';
 
 class AuthService {
   // Keys for persisting auth status in Hive
@@ -99,8 +100,10 @@ class AuthService {
 
       // }
     } on FirebaseAuthException catch (e) {
+      CrashlyticsService.recordError(e, StackTrace.current, reason: 'Login: ${e.code}');
       throw _mapFirebaseLoginError(e);
-    } catch (_) {
+    } catch (e, stack) {
+      CrashlyticsService.recordError(e, stack, reason: 'Login error');
       throw "auth_unexpected_error";
     }
   }
@@ -167,21 +170,10 @@ class AuthService {
       //       'email': email,
       //       'createdAt': ServerValue.timestamp,
       //     });
-      //   } catch (_) {}
-      // }
 
-      // Save local user information
-      final userBox = await Hive.openBox('user');
-      await userBox.putAll({
-        'firstName': firstName,
-        'lastName': lastName,
-        'didFirstLogin': true,
-      });
-
-      // New accounts are typically unverified until email is confirmed
       await _saveAuthStatus('unverified');
     } on FirebaseAuthException catch (e) {
-      // Firebase error codes mapped to translation keys
+      CrashlyticsService.recordError(e, StackTrace.current, reason: 'Signup: ${e.code}');
       if (e.code == "email-already-in-use") {
         throw "auth_email_in_use";
       } else if (e.code == "invalid-email") {
@@ -191,7 +183,8 @@ class AuthService {
       } else {
         throw "auth_unknown_error";
       }
-    } catch (_) {
+    } catch (e, stack) {
+      CrashlyticsService.recordError(e, stack, reason: 'Signup error');
       throw "auth_unexpected_error";
     }
   }

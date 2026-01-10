@@ -7,6 +7,7 @@ import 'package:yack/presentation/screens/contract_agr/contract_agreement.dart';
 import 'package:yack/presentation/screens/contract_agr/nomore_contracts.dart';
 import 'package:yack/presentation/screens/root.dart';
 import 'package:yack/presentation/screens/subscription.dart';
+import 'package:yack/logic/services/notification/notification_router_service.dart';
 import 'app_wrapper.dart';
 import 'package:yack/presentation/screens/auth/forgetPassword.dart';
 import 'package:yack/presentation/screens/auth/login.dart';
@@ -76,6 +77,7 @@ class MyApp extends StatelessWidget {
       valueListenable: userBox.listenable(keys: ['theme','language']),
       builder: (context, box, _) {
         return MaterialApp(
+          navigatorKey: NotificationRouterService.navigatorKey,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
